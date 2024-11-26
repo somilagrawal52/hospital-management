@@ -50,7 +50,7 @@
     <!-- ======= Header ======= -->
     <header id="header" class="header fixed-top d-flex align-items-center">
       <div class="d-flex align-items-center justify-content-between">
-        <a href="index.html" class="logo d-flex align-items-center">
+        <a href="/" class="logo d-flex align-items-center">
           <img src="assets/img/logo.png" alt="" />
           <span class="d-none d-lg-block">NiceAdmin</span>
         </a>
@@ -120,7 +120,7 @@
               <li>
                 <a
                   class="dropdown-item d-flex align-items-center"
-                  href="users-profile.html"
+                  href="/profile"
                 >
                   <i class="bi bi-person"></i>
                   <span>My Profile</span>
@@ -131,7 +131,7 @@
               </li>
 <!--v-->
               <li>
-                <a class="dropdown-item d-flex align-items-center" href="#">
+                <a class="dropdown-item d-flex align-items-center" href="/logout">
                   <i class="bi bi-box-arrow-right"></i>
                   <span>Sign Out</span>
                 </a>
@@ -150,7 +150,7 @@
     <aside id="sidebar" class="sidebar">
       <ul class="sidebar-nav" id="sidebar-nav">
         <li class="nav-item">
-          <a class="nav-link collapsed" href="index.html">
+          <a class="nav-link collapsed" href="/">
             <i class="bi bi-grid"></i>
             <span>Dashboard</span>
           </a>
@@ -161,7 +161,7 @@
 
        
           <li class="nav-item">
-            <a href="forms-layouts.html" class="nav-link">
+            <a href="/doctors-registration" class="nav-link">
               <i class="bi bi-journal-text"></i><span>Doctors Registrations</span>
             </a>
           </li>
@@ -170,7 +170,7 @@
 
         
           <li class="nav-item">
-            <a href="tables-data.html" class="nav-link collapsed">
+            <a href="/doctors-detail" class="nav-link collapsed">
               <i class="bi bi-layout-text-window-reverse"></i><span>Doctors Details</span>
             </a>
           </li>
@@ -183,7 +183,7 @@
        <!--v-->
 
         <li class="nav-item">
-          <a class="nav-link collapsed" href="users-profile.html">
+          <a class="nav-link collapsed" href="/profile">
             <i class="bi bi-person"></i>
             <span>Profile</span>
           </a>
@@ -193,19 +193,14 @@
         <!--v-->
 
         <li class="nav-item">
-          <a class="nav-link collapsed" href="pages-register.html">
+          <a class="nav-link collapsed" href="/register">
             <i class="bi bi-card-list"></i>
             <span>Register</span>
           </a>
         </li>
         <!-- End Register Page Nav -->
 
-        <li class="nav-item">
-          <a class="nav-link collapsed" href="pages-login.html">
-            <i class="bi bi-box-arrow-in-right"></i>
-            <span>Login</span>
-          </a>
-        </li>
+        <!--v-->
         <!-- End Login Page Nav -->
         <!--v-->
         <!--v-->
@@ -218,7 +213,7 @@
         <h1>Doctors Registrations</h1>
         <nav>
           <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="index.html">Home</a></li>
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
             <li class="breadcrumb-item">Forms</li>
             <li class="breadcrumb-item active">Layouts</li>
           </ol>
@@ -235,16 +230,16 @@
                 <h5 class="card-title">Doctors Registration Form</h5>
 
                 <!-- Vertical Form -->
-                <form class="row g-3">
+                <form class="row g-3" action="/doctors-registration" method="post" novalidate>
                   <div class="col-12">
                     <label for="inputNanme4" class="form-label"
                       >Your Name</label
                     >
-                    <input type="text" class="form-control" id="inputNanme4" />
+                    <input type="text" class="form-control" id="inputNanme4" name="fullname" />
                   </div>
                   <div class="col-12">
                     <label for="inputEmail4" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="inputEmail4" />
+                    <input type="email" class="form-control" id="inputEmail4" name="email" />
                   </div>
                   <fieldset class="row mb-3">
                     <legend class="col-form-label col-sm-2 pt-0">Gender</legend>
@@ -253,9 +248,9 @@
                         <input
                           class="form-check-input"
                           type="radio"
-                          name="gridRadios"
+                          name="gender"
                           id="gridRadios1"
-                          value="option1"
+                          value="Male"
                           checked
                         />
                         <label class="form-check-label" for="gridRadios1">
@@ -266,9 +261,9 @@
                         <input
                           class="form-check-input"
                           type="radio"
-                          name="gridRadios"
+                          name="gender"
                           id="gridRadios2"
-                          value="option2"
+                          value="Female"
                         />
                         <label class="form-check-label" for="gridRadios2">
                           Female
@@ -278,9 +273,9 @@
                         <input
                           class="form-check-input"
                           type="radio"
-                          name="gridRadios"
+                          name="gender"
                           id="gridRadios"
-                          value="option"
+                          value="Others"
                         
                         />
                         <label class="form-check-label" for="gridRadios3">
@@ -297,6 +292,7 @@
                       type="password"
                       class="form-control"
                       id="inputPassword4"
+                      name="password"
                     />
                   </div>
                   <div class="col-12">
@@ -304,24 +300,24 @@
                       >Number</label
                     >
                     
-                      <input type="number" class="form-control" />
+                      <input type="number" class="form-control" name="number"/>
                     
                   </div>
-                  <div class="col-12">
+                  <!-- <div class="col-12">
                     <label for="inputNumber" class="form-label"
                       >File Upload</label
                     >
                     
                       <input class="form-control" type="file" id="formFile" />
                    
-                  </div>
+                  </div> -->
                   <div class="col-12">
                     <label for="inputAddress" class="form-label">Address</label>
                     <input
                       type="text"
                       class="form-control"
                       id="inputAddress"
-                    
+                      name="address"
                     />
                   </div>
                   <div class="text-center">
