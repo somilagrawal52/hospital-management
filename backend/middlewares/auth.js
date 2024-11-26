@@ -5,8 +5,8 @@ function checkforauthentication(_cookieName) {
     const tokencookievalue = req.cookies[_cookieName];
     console.log("Token cookie value:", tokencookievalue);
     if (!tokencookievalue) {
-      console.log("No token found, redirecting to /user/signin");
-      return res.redirect("/user/pages-login.html");
+      console.log("No token found, redirecting to /login");
+      return res.redirect("/login");
     }
 
     try {
@@ -17,7 +17,7 @@ function checkforauthentication(_cookieName) {
     } catch (error) {
       console.error("Token validation Error:", error);
       res.clearCookie(_cookieName);
-      return res.redirect("/user/pages-login.html");
+      return res.redirect("/login");
     }
   };
 }
