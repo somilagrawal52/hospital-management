@@ -71,4 +71,8 @@ router.post("/messages", sendmsg);
 
 router.get("/message", messagesdetailtable);
 
+router.get("/home/register", adminregistertodb);
+
+router.get("/home/login", adminloginfromdb);
+
 module.exports = router;

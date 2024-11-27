@@ -1,6 +1,5 @@
 const express = require("express");
 const User = require("../models/user");
-const Doctor = require("../models/doctors");
 const path = require("path");
 
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
