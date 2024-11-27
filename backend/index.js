@@ -23,6 +23,14 @@ app.use(
   "/user",
   express.static(path.join(__dirname, "..", "frontend", "Admin"))
 );
+app.use(
+  "/assets",
+  express.static(path.join(__dirname, "..", "frontend", "patient", "assets"))
+);
+app.use(
+  "/user",
+  express.static(path.join(__dirname, "..", "frontend", "patient"))
+);
 
 app.use("/", userRoute);
 
