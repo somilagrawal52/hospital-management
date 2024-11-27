@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const Appointment = require("../models/appointment");
+const Message = require("../models/messages");
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "patient");
 
 async function getservices(req, res) {
@@ -56,6 +57,33 @@ async function appointmentdetailtable(req, res) {
   }
 }
 
+async function sendmsg(req, res) {
+  const { fullname, question, msgbody } = req.body;
+  console.log(req.body);
+  try {
+    await Message.create({
+      fullname,
+      question,
+      msgbody,
+    });
+    console.log("Message Send");
+    return res.redirect("/messages");
+  } catch (error) {
+    console.log(error);
+    return res.redirect("/messages");
+  }
+}
+
+async function messagesdetailtable(req, res) {
+  try {
+    const messages = await Message.find({});
+    res.json(messages);
+  } catch (error) {
+    console.error("Error fetching doctors:", error);
+    res.status(500).send("Server error");
+  }
+}
+
 module.exports = {
   getservices,
   appointment,
@@ -65,4 +93,6 @@ module.exports = {
   doctors,
   bookappointment,
   appointmentdetailtable,
+  messagesdetailtable,
+  sendmsg,
 };

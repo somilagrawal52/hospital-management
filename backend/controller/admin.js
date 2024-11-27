@@ -44,6 +44,10 @@ async function adminprofile(req, res) {
   return res.sendFile(path.join(frontendPath, "users-profile.html"));
 }
 
+async function showallmsg(req, res) {
+  return res.sendFile(path.join(frontendPath, "pages-faq.html"));
+}
+
 module.exports = {
   adminlogin,
   adminregister,
@@ -51,4 +55,5 @@ module.exports = {
   adminloginfromdb,
   adminlogout,
   adminprofile,
+  showallmsg,
 };

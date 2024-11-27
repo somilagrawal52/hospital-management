@@ -8,6 +8,7 @@ const {
   adminloginfromdb,
   adminlogout,
   adminprofile,
+  showallmsg,
 } = require("../controller/admin");
 const {
   doctorsregistration,
@@ -23,6 +24,8 @@ const {
   home,
   bookappointment,
   appointmentdetailtable,
+  sendmsg,
+  messagesdetailtable,
 } = require("../controller/patient");
 const { register } = require("module");
 
@@ -61,5 +64,11 @@ router.post("/appointment", bookappointment);
 router.get("/register", register);
 
 router.get("/home", home);
+
+router.get("/showmsg", showallmsg);
+
+router.post("/messages", sendmsg);
+
+router.get("/message", messagesdetailtable);
 
 module.exports = router;
