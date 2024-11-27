@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
 
-    <title>Dashboard - NiceAdmin Bootstrap Template</title>
+    <title>Dashboard - Hospital Admin Bootstrap Template</title>
     <meta content="" name="description" />
     <meta content="" name="keywords" />
 
@@ -45,7 +45,7 @@
       <div class="d-flex align-items-center justify-content-between">
         <a href="/" class="logo d-flex align-items-center">
           <img src="assets/img/logo.png" alt="" />
-          <span class="d-none d-lg-block">NiceAdmin</span>
+          <span class="d-none d-lg-block">Hospital Admin</span>
         </a>
         <i class="bi bi-list toggle-sidebar-btn"></i>
       </div>
@@ -270,75 +270,15 @@
                     <table class="table table-borderless datatable">
                       <thead>
                         <tr>
-                          <th scope="col">#</th>
-                          <th scope="col">Patient</th>
-                          <th scope="col">Doctor</th>
-                          <th scope="col">Price</th>
-                          <th scope="col">Status</th>
+                          <th scope="col">Name</th>
+                          <th scope="col">Email</th>
+                          <th scope="col">Gender</th>
+                          <th scope="col">P. NO.</th>
+                          <th scope="col">Address</th>
                         </tr>
                       </thead>
                       <tbody>
-                        <tr>
-                          <th scope="row"><a href="#">#2457</a></th>
-                          <td>Brandon Jacob</td>
-                          <td>
-                            <a href="#" class="text-primary"
-                              >At praesentium minu</a
-                            >
-                          </td>
-                          <td>$64</td>
-                          <td>
-                            <span class="badge bg-success">Approved</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <th scope="row"><a href="#">#2147</a></th>
-                          <td>Bridie Kessler</td>
-                          <td>
-                            <a href="#" class="text-primary"
-                              >Blanditiis dolor omnis similique</a
-                            >
-                          </td>
-                          <td>$47</td>
-                          <td><span class="badge bg-warning">Pending</span></td>
-                        </tr>
-                        <tr>
-                          <th scope="row"><a href="#">#2049</a></th>
-                          <td>Ashleigh Langosh</td>
-                          <td>
-                            <a href="#" class="text-primary"
-                              >At recusandae consectetur</a
-                            >
-                          </td>
-                          <td>$147</td>
-                          <td>
-                            <span class="badge bg-success">Approved</span>
-                          </td>
-                        </tr>
-                        <tr>
-                          <th scope="row"><a href="#">#2644</a></th>
-                          <td>Angus Grady</td>
-                          <td>
-                            <a href="#" class="text-primar"
-                              >Ut voluptatem id earum et</a
-                            >
-                          </td>
-                          <td>$67</td>
-                          <td><span class="badge bg-danger">Rejected</span></td>
-                        </tr>
-                        <tr>
-                          <th scope="row"><a href="#">#2644</a></th>
-                          <td>Raheem Lehner</td>
-                          <td>
-                            <a href="#" class="text-primary"
-                              >Sunt similique distinctio</a
-                            >
-                          </td>
-                          <td>$165</td>
-                          <td>
-                            <span class="badge bg-success">Approved</span>
-                          </td>
-                        </tr>
+                        <!-- here appointments will come -->
                       </tbody>
                     </table>
                   </div>
@@ -358,7 +298,7 @@
     <!-- ======= Footer ======= -->
     <footer id="footer" class="footer">
       <div class="copyright">
-        &copy; Copyright <strong><span>NiceAdmin</span></strong
+        &copy; Copyright <strong><span>Hospital Admin</span></strong
         >. All Rights Reserved
       </div>
       <div class="credits">
@@ -385,5 +325,30 @@
 
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
+    <script>
+      async function fetchDoctorsData() {
+        try {
+          const response=await fetch("/appointments")
+          const appointments=await response.json()
+
+          const tablebody=document.querySelector(".datatable  tbody")
+          tablebody.innerHTML = "";
+          appointments.forEach(appointment => {
+            const row = document.createElement('tr'); 
+          row.innerHTML =
+           ` <td>${appointment.fullname}</td> 
+           <td>${appointment.email}</td> 
+           <td>${appointment.number}</td>
+            <td>${appointment.address}</td>
+             <td>${appointment.gender}</td> `; 
+             tablebody.appendChild(row);
+          });  
+            
+        } catch (error) {
+          console.error(error)
+        }
+      }
+      window.onload = fetchDoctorsData;
+    </script>
   </body>
 </html>
