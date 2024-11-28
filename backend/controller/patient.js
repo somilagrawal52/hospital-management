@@ -29,14 +29,13 @@ async function doctors(req, res) {
 }
 
 async function bookappointment(req, res) {
-  const { fullname, email, number, address, gender } = req.body;
+  const { fullname, email, number, address } = req.body;
   console.log(req.body);
   try {
     await Appointment.create({
       fullname,
       email,
       number,
-      gender,
       address,
     });
     console.log("Appointment created successfully");

@@ -163,9 +163,7 @@
       <!-- End Page Title -->
 
       <section class="section faq">
-        <div class="row">
-          <div class="col-lg-8"></div>
-        </div>
+        <div class="row"></div>
       </section>
     </main>
     <!-- End #main -->
@@ -206,21 +204,17 @@
           const response = await fetch("/message");
           const messages = await response.json();
 
-          const messagebody = document.querySelector(".col-lg-8");
+          const messagebody = document.querySelector(".row");
           // tablebody.innerHTML = "";
           messages.forEach((message) => {
-            const row = document.createElement("div");
-            row.classList.add("card-header");
-            row.innerHTML = `<h6>Name:-${message.fullname}</h6>`;
-            messagebody.appendChild(row);
-
-            const subrow = document.createElement("div");
-            subrow.classList.add("card-body");
-            subrow.innerHTML = `<h5 class="card-title">${message.question}</h5>
-                                <p>${message.msgbody}</p>`;
-            messagebody.appendChild(subrow);
-            const footer = document.createElement("hr");
-            messagebody.appendChild(footer);
+            const header = document.createElement("div");
+            header.classList.add("col-lg-6");
+            header.innerHTML = `<div class="card"><div class="card-header"><h6>Name:-${message.fullname}</h6></div>
+            <div class="card-body">
+              <h5 class="card-title">${message.question}</h5>
+                                <p>${message.msgbody}</p>
+              </div></div>`;
+            messagebody.appendChild(header);
           });
         } catch (error) {
           console.error(error);
