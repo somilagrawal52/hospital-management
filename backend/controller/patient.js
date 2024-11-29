@@ -33,30 +33,35 @@ async function doctors(req, res) {
 
 async function bookappointment(req, res) {
   const { fullname, email, number, address, doctor, date } = req.body;
-  console.log(req.body);
+  const [doctorName, doctorId] = doctor.split("|");
+  console.log({ fullname, email, number, address, doctorName, doctorId, date });
   try {
-    const doctordetail = await Doctor.findOne({
-      fullname: doctor,
-    });
+    const doctordetail = await Doctor.findOne({ _id: doctorId });
+    console.log("Doctor detail found:", doctordetail);
     await Appointment.create({
       fullname,
       email,
       number,
       address,
-      doctor: doctordetail._id,
+      doctor,
+      doctorid: doctorId,
       date,
     });
     console.log("Appointment created successfully");
-
-    const obj = {
-      email: [email, doctordetail.email],
+    console.log("Patient Email:", email);
+    const patientmail = {
+      to: email,
       subject: "Appointment Booked",
-      body: [
-        `Dear ${fullname} your Appointment has been booked`,
-        `${doctordetail.fullname} you have been booked for ${date}`,
-      ],
+      text: `${fullname} your Appointment is booked`,
     };
-    await mailsender(obj);
+    console.log("Doctor Email:", doctordetail.email);
+    const doctormail = {
+      to: doctordetail.email,
+      subject: "Appointment Booked",
+      text: `${doctordetail.fullname} you have been booked for ${date} by ${fullname}`,
+    };
+    mailsender(patientmail);
+    mailsender(doctormail);
     return res.redirect("/appointment");
   } catch (error) {
     console.log(error);

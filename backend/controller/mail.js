@@ -1,4 +1,3 @@
-const Doctor = require("../models/doctors");
 const nodemailer = require("nodemailer");
 const { text } = require("express");
 
@@ -15,9 +14,9 @@ async function mailsender(obj) {
   });
   let mail = {
     from: "somilagrawal2004@gmail.com",
-    to: [obj.email].join(","),
+    to: obj.to,
     subject: obj.subject,
-    text: [obj.body].join(","),
+    text: obj.text,
   };
 
   mailtransporter.sendMail(mail, function (err, info) {

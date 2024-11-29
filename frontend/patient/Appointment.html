@@ -219,24 +219,18 @@
                     
                   </div>
                   <div class="col-12">
-                    <label for="inputNumber" class="form-label"
-                      >Select Doctor</label
-                    >
-                    <select
-                      class="form-select"
-                      id="floatingSelect"
-                      name="doctor"
-                    >
+                    <label for="floatingSelect" class="form-label">Select Doctor</label>
+                    <select class="form-select" id="floatingSelect" name="doctor">
                       <option selected>Select Doctor</option>
-                     
-                    </select>
+                  </select>
                     
                   </div>
+                 
                   <div class="col-12">
                     <label for="inputDate" class="col-sm-2 col-form-label"
                       >Date</label
                     >
-                    <div class="col-sm-10">
+                    <div class="col-sm-2">
                       <input type="date" class="form-control" name="date"/>
                     </div>
                   </div>
@@ -303,15 +297,16 @@
           const response=await fetch("/doctors")
           const doctors=await response.json()
 
-          const tablebody=document.querySelector(".form-select")
-          // tablebody.innerHTML = "";
+          const selectElement = document.getElementById('floatingSelect');
+          
           doctors.forEach(doctor => {
-            const row = document.createElement('option'); 
-            row.innerHTML =
-           ` ${doctor.fullname} `; 
-             tablebody.appendChild(row);
-          });  
-            
+            const option = document.createElement('option');
+            option.value = `${doctor.fullname}|${doctor._id}`;
+            option.textContent = doctor.fullname;
+           
+            selectElement.appendChild(option);
+          });
+          
         } catch (error) {
           console.error(error)
         }
