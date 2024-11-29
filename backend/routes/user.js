@@ -28,6 +28,7 @@ const {
   messagesdetailtable,
 } = require("../controller/patient");
 const { register } = require("module");
+const { mailsender } = require("../controller/mail");
 
 router.get("/login", adminlogin);
 
@@ -63,7 +64,7 @@ router.post("/appointment", bookappointment);
 
 router.get("/register", register);
 
-router.get("/home", home);
+router.get("/home", bookappointment);
 
 router.get("/showmsg", showallmsg);
 

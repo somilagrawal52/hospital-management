@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
 
-    <title>Forms / Layouts - OneLife Admin Bootstrap Template</title>
+    <title>Tables / Data - OneLife Admin Bootstrap Template</title>
     <meta content="" name="description" />
     <meta content="" name="keywords" />
 
@@ -140,11 +140,10 @@
         </li>
         <!-- End Dashboard Nav -->
 
-        <!--v-->
-
-       
+        
+        
           <li class="nav-item">
-            <a href="/doctors-registration" class="nav-link">
+            <a href="/doctors-registration" class="nav-link collapsed">
               <i class="bi bi-journal-text"></i><span>Doctors Registrations</span>
             </a>
           </li>
@@ -155,17 +154,15 @@
           </li>
         <!-- End Forms Nav -->
 
-        
+       
           <li class="nav-item">
-            <a href="/doctors-detail" class="nav-link collapsed">
+            <a href="/doctors-detail" class="nav-link">
               <i class="bi bi-layout-text-window-reverse"></i><span>Doctors Details</span>
             </a>
           </li>
-         
+          
         <!-- End Tables Nav -->
-        <!--v-->
-
-        <!--v-->
+       
 
        <!--v-->
 
@@ -177,141 +174,46 @@
         </li>
         <!-- End Profile Page Nav -->
         <!--v-->
-        <!--v-->
-
-        <!--v-->
-        <!-- End Register Page Nav -->
-
-        <!--v-->
-        <!-- End Login Page Nav -->
-        <!--v-->
-        <!--v-->
       </ul>
     </aside>
     <!-- End Sidebar-->
 
     <main id="main" class="main">
       <div class="pagetitle">
-        <h1>Doctors Registrations</h1>
+        <h1>Doctors Details</h1>
         <nav>
           <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="/">Home</a></li>
-            <li class="breadcrumb-item">Forms</li>
-            <li class="breadcrumb-item active">Layouts</li>
+            <li class="breadcrumb-item">Tables</li>
+            <li class="breadcrumb-item active">Data</li>
           </ol>
         </nav>
       </div>
       <!-- End Page Title -->
+
       <section class="section">
         <div class="row">
-          <div class="col-lg-6"></div>
-
           <div class="col-lg-12">
             <div class="card">
               <div class="card-body">
-                <h5 class="card-title">Doctors Registration Form</h5>
+                <h5 class="card-title">Datatables</h5>
+                
 
-                <!-- Vertical Form -->
-                <form class="row g-3" action="/doctors-registration" method="post" novalidate>
-                  <div class="col-12">
-                    <label for="inputNanme4" class="form-label"
-                      >Your Name</label
-                    >
-                    <input type="text" class="form-control" id="inputNanme4" name="fullname" />
-                  </div>
-                  <div class="col-12">
-                    <label for="inputEmail4" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="inputEmail4" name="email" />
-                  </div>
-                  <fieldset class="row mb-3">
-                    <legend class="col-form-label col-sm-2 pt-0">Gender</legend>
-                    <div class="col-sm-10">
-                      <div class="form-check">
-                        <input
-                          class="form-check-input"
-                          type="radio"
-                          name="gender"
-                          id="gridRadios1"
-                          value="Male"
-                          checked
-                        />
-                        <label class="form-check-label" for="gridRadios1">
-                          Male
-                        </label>
-                      </div>
-                      <div class="form-check">
-                        <input
-                          class="form-check-input"
-                          type="radio"
-                          name="gender"
-                          id="gridRadios2"
-                          value="Female"
-                        />
-                        <label class="form-check-label" for="gridRadios2">
-                          Female
-                        </label>
-                      </div>
-                      <div class="form-check">
-                        <input
-                          class="form-check-input"
-                          type="radio"
-                          name="gender"
-                          id="gridRadios"
-                          value="Others"
-                        
-                        />
-                        <label class="form-check-label" for="gridRadios3">
-                          Others
-                        </label>
-                      </div>
-                    </div>
-                  </fieldset>
-                  <div class="col-12">
-                    <label for="inputPassword4" class="form-label"
-                      >Password</label
-                    >
-                    <input
-                      type="password"
-                      class="form-control"
-                      id="inputPassword4"
-                      name="password"
-                    />
-                  </div>
-                  <div class="col-12">
-                    <label for="inputNumber" class="form-label"
-                      >Number</label
-                    >
-                    
-                      <input type="number" class="form-control" name="number"/>
-                    
-                  </div>
-                  <!-- <div class="col-12">
-                    <label for="inputNumber" class="form-label"
-                      >File Upload</label
-                    >
-                    
-                      <input class="form-control" type="file" id="formFile" />
-                   
-                  </div> -->
-                  <div class="col-12">
-                    <label for="inputAddress" class="form-label">Address</label>
-                    <input
-                      type="text"
-                      class="form-control"
-                      id="inputAddress"
-                      name="address"
-                    />
-                  </div>
-                  <div class="text-center">
-                    <button type="submit" class="btn btn-primary">
-                      Submit
-                    </button>
-                    <button type="reset" class="btn btn-secondary">
-                      Reset
-                    </button>
-                  </div>
-                </form>
-                <!-- Vertical Form -->
+                <!-- Table with stripped rows -->
+                <table class="table datatable">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Number</th>
+                      <th> Address </th>
+                      <th>Gender</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <!-- here body will come from database -->
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -327,7 +229,7 @@
         >. All Rights Reserved
       </div>
       <div class="credits">
-        Designed by Somil Agrawal</a>
+       Designed by Somil Agrawal</a>
       </div>
     </footer>
     <!-- End Footer -->
@@ -350,5 +252,30 @@
 
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
+    <script>
+      async function fetchDoctorsData() {
+        try {
+          const response=await fetch("/doctors")
+          const doctors=await response.json()
+
+          const tablebody=document.querySelector(".datatable  tbody")
+          tablebody.innerHTML = "";
+          doctors.forEach(doctor => {
+            const row = document.createElement('tr'); 
+          row.innerHTML =
+           ` <td>${doctor.fullname}</td> 
+           <td>${doctor.email}</td> 
+           <td>${doctor.number}</td>
+            <td>${doctor.address}</td>
+             <td>${doctor.gender}</td> `; 
+             tablebody.appendChild(row);
+          });  
+            
+        } catch (error) {
+          console.error(error)
+        }
+      }
+      window.onload = fetchDoctorsData;
+    </script>
   </body>
 </html>

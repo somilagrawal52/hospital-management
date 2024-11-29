@@ -1,5 +1,5 @@
 /**
- * Template Name: Hospital Admin
+ * Template Name: OneLife Admin
  * Template URL: https://Somil Agrawal.com/nice-admin-bootstrap-admin-html-template/
  * Updated: Apr 20 2024 with Bootstrap v5.3.3
  * Author: Somil Agrawal.com

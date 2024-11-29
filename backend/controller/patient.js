@@ -2,6 +2,9 @@ const express = require("express");
 const path = require("path");
 const Appointment = require("../models/appointment");
 const Message = require("../models/messages");
+const { mailsender } = require("./mail");
+const Doctor = require("../models/doctors");
+const { default: mongoose } = require("mongoose");
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "patient");
 
 async function getservices(req, res) {
@@ -29,16 +32,31 @@ async function doctors(req, res) {
 }
 
 async function bookappointment(req, res) {
-  const { fullname, email, number, address } = req.body;
+  const { fullname, email, number, address, doctor, date } = req.body;
   console.log(req.body);
   try {
+    const doctordetail = await Doctor.findOne({
+      fullname: doctor,
+    });
     await Appointment.create({
       fullname,
       email,
       number,
       address,
+      doctor: doctordetail._id,
+      date,
     });
     console.log("Appointment created successfully");
+
+    const obj = {
+      email: [email, doctordetail.email],
+      subject: "Appointment Booked",
+      body: [
+        `Dear ${fullname} your Appointment has been booked`,
+        `${doctordetail.fullname} you have been booked for ${date}`,
+      ],
+    };
+    await mailsender(obj);
     return res.redirect("/appointment");
   } catch (error) {
     console.log(error);

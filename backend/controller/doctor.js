@@ -1,5 +1,6 @@
 const Doctor = require("../models/doctors");
 const path = require("path");
+const { mailsender } = require("./mail");
 
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
 
@@ -30,6 +31,12 @@ async function doctorsregistrationtodb(req, res) {
       address,
     });
     console.log("Doctor created successfully");
+    const obj = {
+      email,
+      subject: "Welcome Message!",
+      body: `Welcome to OneLife ${fullname}`,
+    };
+    await mailsender(obj);
     return res.redirect("/doctors-registration");
   } catch (error) {
     console.log(error);
