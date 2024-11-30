@@ -36,6 +36,11 @@ const doctorschema = new mongoose.Schema(
     },
     image: {
       type: String,
+      required: true,
+    },
+    department: {
+      type: String,
+      required: true,
     },
     salt: {
       type: String,

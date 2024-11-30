@@ -20,6 +20,9 @@ const {
   doctorsdetailtable,
   doctorsregistrationtodb,
   doctorsdetailpage,
+  doctorsdashboard,
+  doctorsloginpage,
+  doctorsregistrationpage,
 } = require("../controller/doctor");
 const {
   getservices,
@@ -68,6 +71,10 @@ router.post(
   doctorsregistrationtodb
 );
 
+router.get("/doctorlogin", doctorsloginpage);
+
+router.get("/doctorregistration", doctorsregistrationpage);
+
 router.get("/profile", adminprofile);
 
 router.get("/doctors-detail", doctorsdetailpage);
@@ -89,6 +96,8 @@ router.get("/register", register);
 router.get("/home", appointment);
 
 router.get("/showmsg", showallmsg);
+
+router.get("/doctor", doctorsdashboard);
 
 router.post("/messages", sendmsg);
 

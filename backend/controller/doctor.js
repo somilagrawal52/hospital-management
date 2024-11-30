@@ -3,7 +3,13 @@ const path = require("path");
 const { mailsender } = require("./mail");
 
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
-
+const frontendDoctor = path.resolve(
+  __dirname,
+  "..",
+  "..",
+  "frontend",
+  "doctor"
+);
 // Ensure multer is imported and the storage configuration is defined here:
 const multer = require("multer");
 
@@ -22,6 +28,14 @@ async function doctorsregistration(req, res) {
   return res.sendFile(path.join(frontendPath, "doctors-registration.html"));
 }
 
+async function doctorsloginpage(req, res) {
+  return res.sendFile(path.join(frontendDoctor, "doctors-login.html"));
+}
+
+async function doctorsregistrationpage(req, res) {
+  return res.sendFile(path.join(frontendDoctor, "doctors-registration.html"));
+}
+
 async function doctorsdetailtable(req, res) {
   try {
     const doctors = await Doctor.find({});
@@ -32,14 +46,26 @@ async function doctorsdetailtable(req, res) {
   }
 }
 
+async function doctorsdashboard(req, res) {
+  return res.sendFile(path.join(frontendDoctor, "doctor-dashboard.html"));
+}
+
 async function doctorsregistrationtodb(req, res) {
-  const { fullname, email, password, number, country, state, city, gender } =
-    req.body;
-  console.log(req.body);
+  const {
+    fullname,
+    email,
+    password,
+    number,
+    country,
+    state,
+    city,
+    gender,
+    department,
+  } = req.body;
 
   try {
     // Ensure req.file is logged for debugging
-    console.log("Uploaded file:", req.file);
+    console.log("Uploaded file");
 
     if (!req.file) {
       console.error("No file uploaded");
@@ -55,9 +81,10 @@ async function doctorsregistrationtodb(req, res) {
       country,
       state,
       city,
+      department,
       image: `/img/${req.file.filename}`,
     });
-    console.log("Doctor created successfully", newDoctor);
+    console.log("Doctor created successfully");
 
     const obj = {
       to: email,
@@ -82,4 +109,7 @@ module.exports = {
   doctorsdetailtable,
   doctorsregistrationtodb,
   doctorsdetailpage,
+  doctorsdashboard,
+  doctorsregistrationpage,
+  doctorsloginpage,
 };
