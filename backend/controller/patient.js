@@ -32,9 +32,20 @@ async function doctors(req, res) {
 }
 
 async function bookappointment(req, res) {
-  const { fullname, email, number, address, doctor, date } = req.body;
+  const { fullname, email, number, country, city, state, doctor, date } =
+    req.body;
   const [doctorName, doctorId] = doctor.split("|");
-  console.log({ fullname, email, number, address, doctorName, doctorId, date });
+  console.log({
+    fullname,
+    email,
+    number,
+    country,
+    state,
+    city,
+    doctorName,
+    doctorId,
+    date,
+  });
   try {
     const doctordetail = await Doctor.findOne({ _id: doctorId });
     console.log("Doctor detail found:", doctordetail);
@@ -42,7 +53,9 @@ async function bookappointment(req, res) {
       fullname,
       email,
       number,
-      address,
+      country,
+      city,
+      state,
       doctor,
       doctorid: doctorId,
       date,

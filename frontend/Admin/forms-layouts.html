@@ -293,15 +293,50 @@
                       <input class="form-control" type="file" id="formFile" />
                    
                   </div> -->
-                  <div class="col-12">
-                    <label for="inputAddress" class="form-label">Address</label>
-                    <input
-                      type="text"
-                      class="form-control"
-                      id="inputAddress"
-                      name="address"
-                    />
+                  <label for="inputDate">Address</label>
+                  <div class="col-md-6">
+                    <div class="form-floating mb-3">
+                      <select
+                        class="form-select"
+                        id="floatingcountry"
+                        aria-label="Country"
+                        name="country"
+                        onchange="fetchState()"
+                      >
+                        <option selected>Select Country</option>
+                        
+                      </select>
+                      <label for="floatingSelect">Country</label>
+                    </div>
                   </div>
+                  <div class="col-md-4">
+                    <div class="form-floating mb-3">
+                      <select
+                        class="form-select"
+                        id="floatingstate"
+                        aria-label="State"
+                        name="state"
+                        onchange="fetchCity()"
+                      >
+                        <option selected>Select State</option>
+                      </select>
+                      <label for="floatingSelect">State</label>
+                    </div>
+                  </div>
+                  <div class="col-md-2">
+                    <div class="form-floating mb-3">
+                      <select
+                        class="form-select"
+                        id="floatingcity"
+                        aria-label="State"
+                        name="city"
+                      >
+                        <option selected>Select City</option>
+                       </select>
+                      <label for="floatingSelect">City</label>
+                    </div>
+                  </div>
+                  
                   <div class="text-center">
                     <button type="submit" class="btn btn-primary">
                       Submit
@@ -350,5 +385,48 @@
 
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
+    <script>
+        async function fetchCountry() {
+        const response=await fetch("/countries")
+        const countries=await response.json()
+
+        const CountrySelect=document.getElementById("floatingcountry")
+
+        countries.forEach(country => {
+          const option=document.createElement("option")
+          option.value=country.isoCode;
+          option.textContent=country.name;
+          CountrySelect.appendChild(option)
+        });
+      }
+      async function fetchState() {
+        const CountrySelect=document.getElementById("floatingcountry").value
+        const response=await fetch(`/states/${CountrySelect}`)
+        const states=await response.json()
+
+        const StateSelect=document.getElementById("floatingstate")
+        states.forEach(state => {
+          const option=document.createElement("option")
+          option.value=state.isoCode;
+          option.textContent=state.name;
+          StateSelect.appendChild(option)
+        });
+      }
+      async function fetchCity() {
+        const StateSelect=document.getElementById("floatingstate").value
+        const response=await fetch(`/cities/${StateSelect}`)
+        const cities=await response.json()
+
+        const CitySelect=document.getElementById("floatingcity")
+
+        cities.forEach(city => {
+          const option=document.createElement("option")
+          option.value=city.isoCode;
+          option.textContent=city.name;
+          CitySelect.appendChild(option)
+        });
+      }
+      window.onload=fetchCountry()
+    </script>
   </body>
 </html>

@@ -2,6 +2,11 @@ const express = require("express");
 const router = express.Router();
 const path = require("path");
 const {
+  getallcities,
+  getallcountries,
+  getallstates,
+} = require("../controller/address");
+const {
   adminlogin,
   adminregister,
   adminregistertodb,
@@ -28,7 +33,6 @@ const {
   messagesdetailtable,
 } = require("../controller/patient");
 const { register } = require("module");
-const { mailsender } = require("../controller/mail");
 
 router.get("/login", adminlogin);
 
@@ -64,7 +68,7 @@ router.post("/appointment", bookappointment);
 
 router.get("/register", register);
 
-router.get("/home", bookappointment);
+router.get("/home", appointment);
 
 router.get("/showmsg", showallmsg);
 
@@ -75,5 +79,11 @@ router.get("/message", messagesdetailtable);
 router.get("/home/register", adminregistertodb);
 
 router.get("/home/login", adminloginfromdb);
+
+router.get("/countries", getallcountries);
+
+router.get("/states/:countryCode", getallstates);
+
+router.get("/cities/:stateCode", getallcities);
 
 module.exports = router;
