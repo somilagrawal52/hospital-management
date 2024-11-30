@@ -19,9 +19,9 @@ async function getallstates(req, res) {
 async function getallcities(req, res) {
   const stateCode = req.params.stateCode;
   const countryCode = req.params.countryCode;
-  console.log(stateCode);
+
   const cities = City.getCitiesOfState(countryCode, stateCode);
-  console.log(cities);
+
   res.json(cities);
 }
 

@@ -32,7 +32,21 @@ const {
   sendmsg,
   messagesdetailtable,
 } = require("../controller/patient");
-const { register } = require("module");
+const { register } = require("../controller/patient");
+const multer = require("multer");
+
+const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    return cb(null, path.resolve(frontendPath, `./assets/img/`));
+  },
+  filename: function (req, file, cb) {
+    return cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage: storage });
 
 router.get("/login", adminlogin);
 
@@ -48,7 +62,11 @@ router.get("/doctors-registration", doctorsregistration);
 
 router.get("/doctors", doctorsdetailtable);
 
-router.post("/doctors-registration", doctorsregistrationtodb);
+router.post(
+  "/doctors-registration",
+  upload.single("image"),
+  doctorsregistrationtodb
+);
 
 router.get("/profile", adminprofile);
 

@@ -212,7 +212,7 @@
                 <h5 class="card-title">Doctors Registration Form</h5>
 
                 <!-- Vertical Form -->
-                <form class="row g-3" action="/doctors-registration" method="post" novalidate>
+                <form class="row g-3" action="/doctors-registration" method="post" enctype="multipart/form-data">
                   <div class="col-12">
                     <label for="inputNanme4" class="form-label"
                       >Your Name</label
@@ -285,14 +285,14 @@
                       <input type="number" class="form-control" name="number"/>
                     
                   </div>
-                  <!-- <div class="col-12">
+                  <div class="col-12">
                     <label for="inputNumber" class="form-label"
                       >File Upload</label
                     >
                     
-                      <input class="form-control" type="file" id="formFile" />
+                      <input class="form-control" type="file" id="formFile" name="image"/>
                    
-                  </div> -->
+                  </div>
                   <label for="inputDate">Address</label>
                   <div class="col-md-6">
                     <div class="form-floating mb-3">

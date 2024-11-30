@@ -255,13 +255,15 @@
                       Recent Patients 
                     </h5>
 
-                    <table class="table table-borderless datatable">
+                    <table class="table table-borderless">
                       <thead>
                         <tr>
                           <th scope="col">Name</th>
                           <th scope="col">Email</th>
                           <th scope="col">P. NO.</th>
+                          <th scope="col">Doctor Attending</th>
                           <th scope="col">Address</th>
+                          
                         </tr>
                       </thead>
                       <tbody>
@@ -318,7 +320,7 @@
           const response=await fetch("/appointments")
           const appointments=await response.json()
 
-          const tablebody=document.querySelector(".datatable  tbody")
+          const tablebody=document.querySelector(".table  tbody")
           tablebody.innerHTML = "";
           appointments.forEach(appointment => {
             const row = document.createElement('tr'); 
@@ -326,7 +328,8 @@
            ` <td>${appointment.fullname}</td> 
            <td>${appointment.email}</td> 
             <td>${appointment.number}</td>
-             <td>${appointment.address}</td> `; 
+             <td>${appointment.doctor}</td>
+              <td>${appointment.country},${appointment.state},${appointment.city}</td> `; 
              tablebody.appendChild(row);
           });  
             

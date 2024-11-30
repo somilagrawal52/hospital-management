@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { createHmac, randomBytes } = require("crypto");
 const { createtokenforuser } = require("../services/auth");
+const { type } = require("os");
 
 const doctorschema = new mongoose.Schema(
   {
@@ -32,6 +33,9 @@ const doctorschema = new mongoose.Schema(
     city: {
       type: String,
       required: true,
+    },
+    image: {
+      type: String,
     },
     salt: {
       type: String,

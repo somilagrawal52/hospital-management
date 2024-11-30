@@ -40,11 +40,11 @@ async function adminlogout(req, res) {
 }
 
 async function adminprofile(req, res) {
-  return res.sendFile(path.join(frontendPath, "users-profile.html"));
+  return res.sendFile(path.join(frontendPath, "admin-profile.html"));
 }
 
 async function showallmsg(req, res) {
-  return res.sendFile(path.join(frontendPath, "pages-faq.html"));
+  return res.sendFile(path.join(frontendPath, "messages.html"));
 }
 
 module.exports = {
