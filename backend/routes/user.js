@@ -84,6 +84,6 @@ router.get("/countries", getallcountries);
 
 router.get("/states/:countryCode", getallstates);
 
-router.get("/cities/:stateCode", getallcities);
+router.get("/cities/:countryCode/:stateCode", getallcities);
 
 module.exports = router;

@@ -376,7 +376,8 @@
       }
       async function fetchCity() {
         const StateSelect=document.getElementById("floatingstate").value
-        const response=await fetch(`/cities/${StateSelect}`)
+        const CountrySelect=document.getElementById("floatingcountry").value
+        const response=await fetch(`/cities/${CountrySelect}/${StateSelect}`)
         const cities=await response.json()
 
         const CitySelect=document.getElementById("floatingcity")
