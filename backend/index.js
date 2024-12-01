@@ -4,6 +4,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const userRoute = require("./routes/user");
+const { checkforauthentication } = require("./middlewares/auth");
 const app = express();
 const PORT = process.env.PORT || 8000;
 
@@ -34,17 +35,8 @@ app.use(
 
 app.use("/", userRoute);
 
-app.get("/", (req, res) => {
+app.get("/", checkforauthentication("token"), (req, res) => {
   console.log("root route");
-  const token = req.cookies.token;
-  console.log("Token at root:", token);
-
-  if (!token) {
-    console.log("No token found");
-    return res.redirect("/login");
-  }
-
-  console.log("Token found");
   const filePath = path.join(
     __dirname,
     "..",
@@ -52,7 +44,6 @@ app.get("/", (req, res) => {
     "Admin",
     "index.html"
   );
-
   return res.sendFile(filePath);
 });
 

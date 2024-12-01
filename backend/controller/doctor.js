@@ -10,7 +10,7 @@ const frontendDoctor = path.resolve(
   "frontend",
   "doctor"
 );
-// Ensure multer is imported and the storage configuration is defined here:
+
 const multer = require("multer");
 
 const storage = multer.diskStorage({
@@ -106,6 +106,5 @@ module.exports = {
   doctorsregistrationtodb,
   doctorsdetailpage,
   doctorsdashboard,
-  doctorsregistrationpage,
   doctorsloginpage,
 };
