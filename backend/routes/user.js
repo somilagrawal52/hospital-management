@@ -22,7 +22,6 @@ const {
   doctorsdetailpage,
   doctorsdashboard,
   doctorsloginpage,
-  doctorsregistrationpage,
 } = require("../controller/doctor");
 const {
   getservices,
@@ -72,8 +71,6 @@ router.post(
 );
 
 router.get("/doctorlogin", doctorsloginpage);
-
-router.get("/doctorregistration", doctorsregistrationpage);
 
 router.get("/profile", adminprofile);
 

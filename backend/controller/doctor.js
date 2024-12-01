@@ -32,10 +32,6 @@ async function doctorsloginpage(req, res) {
   return res.sendFile(path.join(frontendDoctor, "doctors-login.html"));
 }
 
-async function doctorsregistrationpage(req, res) {
-  return res.sendFile(path.join(frontendDoctor, "doctors-registration.html"));
-}
-
 async function doctorsdetailtable(req, res) {
   try {
     const doctors = await Doctor.find({});
