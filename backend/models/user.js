@@ -13,13 +13,34 @@ const userschema = new mongoose.Schema(
       unique: true,
       required: true,
     },
+    gender: {
+      type: String,
+    },
+    number: {
+      type: Number,
+    },
+    country: {
+      type: String,
+    },
+    state: {
+      type: String,
+    },
+    city: {
+      type: String,
+    },
+    image: {
+      type: String,
+    },
+    department: {
+      type: String,
+    },
     salt: {
       type: String,
     },
     role: {
       type: String,
       required: true,
-      default: "ADMIN",
+      default: "NORMAL",
     },
     password: {
       type: String,

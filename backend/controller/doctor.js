@@ -1,4 +1,4 @@
-const Doctor = require("../models/doctors");
+const User = require("../models/user");
 const path = require("path");
 const { mailsender } = require("./mail");
 
@@ -34,7 +34,7 @@ async function doctorsloginpage(req, res) {
 
 async function doctorsdetailtable(req, res) {
   try {
-    const doctors = await Doctor.find({});
+    const doctors = await User.find({ role: "DOCTOR" });
     res.json(doctors);
   } catch (error) {
     console.error("Error fetching doctors:", error);
@@ -68,7 +68,7 @@ async function doctorsregistrationtodb(req, res) {
       return res.status(400).send("Image file is required");
     }
 
-    const newDoctor = await Doctor.create({
+    const newDoctor = await User.create({
       fullname,
       email,
       password,
@@ -79,6 +79,7 @@ async function doctorsregistrationtodb(req, res) {
       city,
       department,
       image: `/img/${req.file.filename}`,
+      role: "DOCTOR",
     });
     console.log("Doctor created successfully");
 
@@ -101,7 +102,7 @@ async function doctorloginfromdb(req, res) {
   console.log("doctor email:", email);
 
   try {
-    const token = await Doctor.matchpassword(email, password);
+    const token = await User.matchpassword(email, password);
     console.log(token);
     return res.cookie("token", token).redirect("/doctor");
   } catch (error) {

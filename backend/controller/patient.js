@@ -3,8 +3,7 @@ const path = require("path");
 const Appointment = require("../models/appointment");
 const Message = require("../models/messages");
 const { mailsender } = require("./mail");
-const Doctor = require("../models/doctors");
-const { default: mongoose } = require("mongoose");
+const User = require("../models/user");
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "patient");
 
 async function getservices(req, res) {
@@ -47,7 +46,7 @@ async function bookappointment(req, res) {
     date,
   });
   try {
-    const doctordetail = await Doctor.findOne({ _id: doctorId });
+    const doctordetail = await User.findOne({ _id: doctorId });
     console.log("Doctor detail found:", doctordetail);
     await Appointment.create({
       fullname,
