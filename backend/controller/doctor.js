@@ -96,8 +96,26 @@ async function doctorsregistrationtodb(req, res) {
   }
 }
 
+async function doctorloginfromdb(req, res) {
+  const { email, password } = req.body;
+  console.log("doctor email:", email);
+
+  try {
+    const token = await Doctor.matchpassword(email, password);
+    console.log(token);
+    return res.cookie("token", token).redirect("/doctor");
+  } catch (error) {
+    console.error(error);
+    return res.sendFile(path.join(frontendDoctor, "doctors-login.html"));
+  }
+}
+
 async function doctorsdetailpage(req, res) {
   return res.sendFile(path.join(frontendPath, "doctors-detail.html"));
+}
+
+async function doctorlogout(req, res) {
+  res.clearCookie("token").redirect("/doctorlogin");
 }
 
 module.exports = {
@@ -107,4 +125,6 @@ module.exports = {
   doctorsdetailpage,
   doctorsdashboard,
   doctorsloginpage,
+  doctorloginfromdb,
+  doctorlogout,
 };

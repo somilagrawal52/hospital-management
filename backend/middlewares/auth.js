@@ -1,11 +1,15 @@
 const { validatetoken } = require("../services/auth");
 
-function checkforauthentication(_cookieName) {
+function checkforauthentication() {
   return (req, res, next) => {
-    const tokencookievalue = req.cookies[_cookieName];
+    console.log(req.cookies);
+    const tokencookievalue = req.cookies.token;
     console.log("Token cookie value:", tokencookievalue);
     if (!tokencookievalue) {
-      console.log("No token found, redirecting to /login");
+      console.log("No token found, redirecting to login");
+      if (req.originalUrl.startsWith("/doctor")) {
+        return res.redirect("/doctorlogin");
+      }
       return res.redirect("/login");
     }
 
@@ -22,6 +26,29 @@ function checkforauthentication(_cookieName) {
   };
 }
 
+function restrictTo(roles = []) {
+  return function (req, res, next) {
+    console.log("User info: ", req.user);
+
+    if (!req.user) {
+      if (req.originalUrl.startsWith("/admin")) {
+        return res.redirect("/login");
+      } else if (req.originalUrl.startsWith("/doctor")) {
+        return res.redirect("/doctorlogin");
+      } else {
+        return res.redirect("/login");
+      }
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ message: "You are not authorized" });
+    }
+
+    next();
+  };
+}
+
 module.exports = {
   checkforauthentication,
+  restrictTo,
 };

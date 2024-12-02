@@ -22,6 +22,8 @@ const {
   doctorsdetailpage,
   doctorsdashboard,
   doctorsloginpage,
+  doctorloginfromdb,
+  doctorlogout,
 } = require("../controller/doctor");
 const {
   getservices,
@@ -36,6 +38,7 @@ const {
 } = require("../controller/patient");
 const { register } = require("../controller/patient");
 const multer = require("multer");
+const { restrictTo, checkforauthentication } = require("../middlewares/auth");
 
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
 
@@ -60,7 +63,14 @@ router.post("/login", adminloginfromdb);
 
 router.get("/logout", adminlogout);
 
-router.get("/doctors-registration", doctorsregistration);
+router.get("/doctorlogout", doctorlogout);
+
+router.get(
+  "/doctors-registration",
+  checkforauthentication(),
+  restrictTo(["ADMIN"]),
+  doctorsregistration
+);
 
 router.get("/doctors", doctorsdetailtable);
 
@@ -69,6 +79,8 @@ router.post(
   upload.single("image"),
   doctorsregistrationtodb
 );
+
+router.post("/doctorlogin", doctorloginfromdb);
 
 router.get("/doctorlogin", doctorsloginpage);
 
@@ -94,15 +106,16 @@ router.get("/home", appointment);
 
 router.get("/showmsg", showallmsg);
 
-router.get("/doctor", doctorsdashboard);
+router.get(
+  "/doctor",
+  checkforauthentication(),
+  restrictTo(["DOCTOR"]),
+  doctorsdashboard
+);
 
 router.post("/messages", sendmsg);
 
 router.get("/message", messagesdetailtable);
-
-router.get("/home/register", adminregistertodb);
-
-router.get("/home/login", adminloginfromdb);
 
 router.get("/countries", getallcountries);
 

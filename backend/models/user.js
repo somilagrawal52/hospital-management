@@ -16,6 +16,11 @@ const userschema = new mongoose.Schema(
     salt: {
       type: String,
     },
+    role: {
+      type: String,
+      required: true,
+      default: "ADMIN",
+    },
     password: {
       type: String,
       required: true,
@@ -45,9 +50,6 @@ userschema.static("matchpassword", async function (email, password) {
 
   const salt = user.salt;
   const hashedpassword = user.password;
-
-  console.log("Salt:", salt);
-  console.log("Hashed Password:", hashedpassword);
 
   const providedhash = createHmac("sha256", salt)
     .update(password)
