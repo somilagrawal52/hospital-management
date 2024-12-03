@@ -10,7 +10,7 @@ function checkforauthentication() {
       if (req.originalUrl.startsWith("/doctor")) {
         return res.redirect("/doctorlogin");
       }
-      return res.redirect("/login");
+      return res.redirect("/admin/login");
     }
 
     try {
@@ -21,7 +21,7 @@ function checkforauthentication() {
     } catch (error) {
       console.error("Token validation Error:", error);
       res.clearCookie(_cookieName);
-      return res.redirect("/login");
+      return res.redirect("/admin/login");
     }
   };
 }
@@ -32,11 +32,11 @@ function restrictTo(roles = []) {
 
     if (!req.user) {
       if (req.originalUrl.startsWith("/admin")) {
-        return res.redirect("/login");
+        return res.redirect("/admin/login");
       } else if (req.originalUrl.startsWith("/doctor")) {
         return res.redirect("/doctorlogin");
       } else {
-        return res.redirect("/login");
+        return res.redirect("/admin/login");
       }
     }
 

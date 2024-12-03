@@ -15,6 +15,10 @@ const appointmentschema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    // amount: {
+    //   type: Number,
+    //   required: true,
+    // },
     country: {
       type: String,
       required: true,

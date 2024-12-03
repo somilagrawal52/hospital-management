@@ -31,8 +31,17 @@ async function doctors(req, res) {
 }
 
 async function bookappointment(req, res) {
-  const { fullname, email, number, country, city, state, doctor, date } =
-    req.body;
+  const {
+    fullname,
+    email,
+    number,
+    country,
+    city,
+    state,
+    doctor,
+    date,
+    // amount,
+  } = req.body;
   const [doctorName, doctorId] = doctor.split("|");
   console.log({
     fullname,
@@ -44,6 +53,7 @@ async function bookappointment(req, res) {
     doctorName,
     doctorId,
     date,
+    // amount,
   });
   try {
     const doctordetail = await User.findOne({ _id: doctorId });
@@ -55,9 +65,10 @@ async function bookappointment(req, res) {
       country,
       city,
       state,
-      doctor,
+      doctor: doctorName,
       doctorid: doctorId,
       date,
+      // amount: amount * 100,
     });
     console.log("Appointment created successfully");
     console.log("Patient Email:", email);

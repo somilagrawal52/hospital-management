@@ -53,13 +53,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage: storage });
 
-router.get("/login", adminlogin);
+router.get("/admin/login", adminlogin);
 
-router.get("/register", adminregister);
-
-router.post("/register", adminregistertodb);
-
-router.post("/login", adminloginfromdb);
+router.post("/admin/login", adminloginfromdb);
 
 router.get("/logout", adminlogout);
 
@@ -102,7 +98,7 @@ router.post("/appointment", bookappointment);
 
 router.get("/register", register);
 
-router.get("/home", appointment);
+router.get("/", appointment);
 
 router.get("/showmsg", showallmsg);
 
