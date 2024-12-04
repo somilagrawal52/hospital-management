@@ -37,14 +37,7 @@
     <!-- Template Main CSS File -->
     <link href="assets/css/style.css" rel="stylesheet" />
 
-    <!-- =======================================================
-  * Template Name: OneLife
-  * Template URL: https://Somil Agrawal.com/nice-admin-bootstrap-admin-html-template/
-  * Updated: Apr 20 2024 with Bootstrap v5.3.3
-  * Author: Somil Agrawal.com
-  * License: https://Somil Agrawal.com/license/
-  ======================================================== -->
-  </head>
+    </head>
 
   <body>
     <!-- ======= Header ======= -->
@@ -133,7 +126,7 @@
 
        
           <li class="nav-item">
-            <a href="/appointment" class="nav-link">
+            <a href="/" class="nav-link">
               <i class="bi bi-journal-text"></i><span>Book Appointment</span>
             </a>
           </li>
@@ -191,7 +184,7 @@
                 <h5 class="card-title">Book Appointment Form</h5>
 
                 <!-- Vertical Form -->
-                <form class="row g-3" novalidate onsubmit="payNow(event)">
+                <form class="row g-3" method="post" action="/appointment" onsubmit="payNow(event)" novalidate>
                   <div class="col-12">
                     <label for="inputNanme4" class="form-label"
                       >Your Name</label
@@ -385,7 +378,7 @@
       }
       window.onload=fetchCountry()
       async function payNow(event) {
-        event.preventDefault();
+      event.preventDefault();
         
         const form = event.target;
          const formData = new FormData(form); 
@@ -426,7 +419,7 @@
           name: 'Hospital OneLife',
           description: 'Test Transaction',
           order_id: order.id, 
-          callback_url: 'http://localhost:8000/payment-success', 
+          callback_url: 'http://localhost:8000/payment-success',
           prefill: {
             name: appointmentDetails.fullname,
             email: appointmentDetails.email,
@@ -449,7 +442,8 @@
             }).then(res => res.json())
               .then(data => {
                 if (data.status === 'ok') {
-                  window.location.href = '/payment-success';
+                  
+                  form.submit();
                 } else {
                   alert('Payment verification failed');
                 }

@@ -39,6 +39,11 @@ const {
 const { register } = require("../controller/patient");
 const multer = require("multer");
 const { restrictTo, checkforauthentication } = require("../middlewares/auth");
+const {
+  appointmentcreated,
+  verifypayment,
+  payemntsuccessfull,
+} = require("../controller/razorpay");
 
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
 
@@ -118,5 +123,11 @@ router.get("/countries", getallcountries);
 router.get("/states/:countryCode", getallstates);
 
 router.get("/cities/:countryCode/:stateCode", getallcities);
+
+router.post("/create-order", appointmentcreated);
+
+router.post("/verify-payment", verifypayment);
+
+router.get("/payment-success", payemntsuccessfull);
 
 module.exports = router;

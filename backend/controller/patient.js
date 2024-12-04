@@ -85,7 +85,7 @@ async function bookappointment(req, res) {
     };
     mailsender(patientmail);
     mailsender(doctormail);
-    return res.redirect("/appointment");
+    return res.redirect("/payment-success");
   } catch (error) {
     console.log(error);
     return res.redirect("/appointment");
