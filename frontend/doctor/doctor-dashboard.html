@@ -189,7 +189,7 @@
                           <th scope="col">Email</th>
                           <th scope="col">P. No.</th>
                           <th scope="col">Address</th>
-                          
+                          <th scope="col">Date</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -269,7 +269,8 @@
               appointment.fullname, 
               appointment.email, 
               appointment.number, 
-              appointment.country + ', ' + appointment.state + ', ' + appointment.city 
+              appointment.country + ', ' + appointment.state + ', ' + appointment.city,
+              appointment.date
             ]).draw(false); 
 
           }); 

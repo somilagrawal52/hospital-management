@@ -53,66 +53,7 @@
 
      <!--v-->
 
-      <nav class="header-nav ms-auto">
-        <ul class="d-flex align-items-center">
-          <li class="nav-item d-block d-lg-none">
-            <a class="nav-link nav-icon search-bar-toggle" href="#">
-              <i class="bi bi-search"></i>
-            </a>
-          </li>
-          <!-- End Search Icon-->
-
-          <li class="nav-item dropdown pe-3">
-            <a
-              class="nav-link nav-profile d-flex align-items-center pe-0"
-              href="#"
-              data-bs-toggle="dropdown"
-            >
-              <img
-                src="assets/img/profile-img.jpg"
-                alt="profile-img"
-                class="rounded-circle"
-              />
-              <span class="d-none d-md-block dropdown-toggle ps-2"
-                >S. Agrawal</span> </a>
-
-            <ul
-              class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile"
-            >
-              <li class="dropdown-header">
-                <h6>Somil Agrawal</h6>
-                <span>Web Designer</span>
-              </li>
-              <li>
-                <hr class="dropdown-divider" />
-              </li>
-
-              <li>
-                <a
-                  class="dropdown-item d-flex align-items-center"
-                  href="/services"
-                >
-                  <i class="bi bi-person"></i>
-                  <span>My Services</span>
-                </a>
-              </li>
-              <li>
-                <hr class="dropdown-divider" />
-              </li>
-<!--v-->
-              <li>
-                <a class="dropdown-item d-flex align-items-center" href="/logout">
-                  <i class="bi bi-box-arrow-right"></i>
-                  <span>Sign Out</span>
-                </a>
-              </li>
-            </ul>
-            <!-- End Services Dropdown Items -->
-          </li>
-          <!-- End Services Nav -->
-        </ul>
-      </nav>
-      <!-- End Icons Navigation -->
+      
     </header>
     <!-- End Header -->
 
@@ -183,7 +124,7 @@
               <div class="card-body">
                 <h5 class="card-title">Book Appointment Form</h5>
 
-                <!-- Vertical Form -->
+               
                 <form id="appointmentForm" onsubmit="payNow(event)">
                   <!-- Patient Details -->
                   <div class="mb-3">
@@ -198,25 +139,7 @@
                     <label for="number" class="form-label">Phone Number</label>
                     <input type="text" class="form-control" id="number" name="number" required />
                   </div>
-                  <!-- Country, State, City -->
-                  <div class="mb-3">
-                    <label for="country" class="form-label">Country</label>
-                    <select id="country" class="form-select" name="country" onchange="fetchStates()" required>
-                      <option value="">Select Country</option>
-                    </select>
-                  </div>
-                  <div class="mb-3">
-                    <label for="state" class="form-label">State</label>
-                    <select id="state" class="form-select" name="state" onchange="fetchCities()" required>
-                      <option value="">Select State</option>
-                    </select>
-                  </div>
-                  <div class="mb-3">
-                    <label for="city" class="form-label">City</label>
-                    <select id="city" class="form-select" name="city" required>
-                      <option value="">Select City</option>
-                    </select>
-                  </div>
+                 
                   <!-- Appointment Details -->
                   <div class="mb-3">
                     <label for="doctor" class="form-label">Select Doctor</label>
@@ -224,10 +147,30 @@
                       <option value="">Select Doctor</option>
                     </select>
                   </div>
-                  <div class="mb-3">
+                  <div class="col-2">
                     <label for="date" class="form-label">Date</label>
-                    <input type="date" class="form-control" id="date" name="date" required />
+                    <input type="date" class="form-control" id="date" name="date" required/>
                   </div>
+                  <div class="row col-12">
+                    <label for="address" class="form-label">Address</label>
+                    <div class="col-4">
+                     <select id="country" class="form-select" name="country" onchange="fetchStates()" required>
+                        <option value="">Select Country</option>
+                      </select>
+                    </div>
+                    <div class="col-4">
+                       <select id="state" class="form-select" name="state" onchange="fetchCities()" required>
+                        <option value="">Select State</option>
+                      </select>
+                    </div>
+                    <div class="col-4">
+                      
+                      <select id="city" class="form-select" name="city" required>
+                        <option value="">Select City</option>
+                      </select>
+                    </div>
+                   </div>
+                 
                   <div class="mb-3">
                     <label for="amount" class="form-label">Payment Amount</label>
                     <input type="text" class="form-control" id="amount" name="amount" value="100" readonly />

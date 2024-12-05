@@ -124,7 +124,12 @@
                 <h5 class="card-title">Send Message</h5>
 
                 <!-- Floating Labels Form -->
-                <form class="row g-3" action="/messages" method="post">
+                <form
+                  class="row g-3"
+                  action="/messages"
+                  method="post"
+                  id="messageform"
+                >
                   <div class="col-md-12">
                     <div class="form-floating">
                       <input
@@ -166,7 +171,11 @@
                   </div>
 
                   <div class="text-center">
-                    <button type="submit" class="btn btn-primary">
+                    <button
+                      type="submit"
+                      class="btn btn-primary"
+                      id="submitbtn"
+                    >
                       Submit
                     </button>
                     <button type="reset" class="btn btn-secondary">
@@ -211,5 +220,13 @@
 
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
+    <script>
+      document.getElementById("messageform").addEventListener("input", () => {
+        const isFormValid = document
+          .getElementById("messageform")
+          .checkValidity();
+        document.getElementById("submitbtn").disabled = !isFormValid;
+      });
+    </script>
   </body>
 </html>
