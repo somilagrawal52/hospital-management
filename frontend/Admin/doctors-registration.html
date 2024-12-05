@@ -212,16 +212,16 @@
                 <h5 class="card-title">Doctors Registration Form</h5>
 
                 <!-- Vertical Form -->
-                <form class="row g-3" action="/doctors-registration" method="post" enctype="multipart/form-data">
+                <form class="row g-3" action="/doctors-registration" method="post" enctype="multipart/form-data" id="doctorsregistrationform">
                   <div class="col-12">
                     <label for="inputNanme4" class="form-label"
                       >Your Name</label
                     >
-                    <input type="text" class="form-control" id="inputNanme4" name="fullname" />
+                    <input type="text" class="form-control" id="inputNanme4" name="fullname" required/>
                   </div>
                   <div class="col-12">
                     <label for="inputEmail4" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="inputEmail4" name="email" />
+                    <input type="email" class="form-control" id="inputEmail4" name="email" required/>
                   </div>
                   <fieldset class="row mb-3">
                     <legend class="col-form-label col-sm-2 pt-0">Gender</legend>
@@ -233,7 +233,7 @@
                           name="gender"
                           id="gridRadios1"
                           value="Male"
-                          checked
+                          checked required
                         />
                         <label class="form-check-label" for="gridRadios1">
                           Male
@@ -274,7 +274,7 @@
                       type="password"
                       class="form-control"
                       id="inputPassword4"
-                      name="password"
+                      name="password" required
                     />
                   </div>
                   <div class="col-12">
@@ -282,7 +282,7 @@
                       >Number</label
                     >
                     
-                      <input type="number" class="form-control" name="number"/>
+                      <input type="number" class="form-control" name="number" required/>
                     
                   </div>
                   <div class="col-12">
@@ -290,7 +290,7 @@
                       >File Upload</label
                     >
                     
-                      <input class="form-control" type="file" id="formFile" name="image"/>
+                      <input class="form-control" type="file" id="formFile" name="image" required/>
                    
                   </div>
                   <label for="Department">Enter Your Department</label>
@@ -300,9 +300,9 @@
                         class="form-select"
                         id="floatingdepartment"
                         aria-label="Country"
-                        name="department"
+                        name="department" required
                       >
-                        <option selected>Select Your Department</option>
+                        <option>Select Your Department</option>
                         <option value="Neurologist">Neurologist</option>
                         <option value="Cardiologist">Cardiologist</option>
                         <option value="Psychiatrist">Psychiatrist</option>
@@ -323,9 +323,9 @@
                         id="floatingcountry"
                         aria-label="Country"
                         name="country"
-                        onchange="fetchState()"
+                        onchange="fetchState()" required
                       >
-                        <option selected>Select Country</option>
+                        <option>Select Country</option>
                         
                       </select>
                       <label for="floatingSelect">Country</label>
@@ -338,9 +338,9 @@
                         id="floatingstate"
                         aria-label="State"
                         name="state"
-                        onchange="fetchCity()"
+                        onchange="fetchCity()" required
                       >
-                        <option selected>Select State</option>
+                        <option>Select State</option>
                       </select>
                       <label for="floatingSelect">State</label>
                     </div>
@@ -351,16 +351,16 @@
                         class="form-select"
                         id="floatingcity"
                         aria-label="State"
-                        name="city"
+                        name="city" required
                       >
-                        <option selected>Select City</option>
+                        <option>Select City</option>
                        </select>
                       <label for="floatingSelect">City</label>
                     </div>
                   </div>
                   
                   <div class="text-center">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" id="submitbtn" disabled>
                       Submit
                     </button>
                     <button type="reset" class="btn btn-secondary">
@@ -449,6 +449,10 @@
           CitySelect.appendChild(option)
         });
       }
+      document.getElementById('doctorsregistrationform').addEventListener('input', () => {
+        const isFormValid = document.getElementById('doctorsregistrationform').checkValidity();
+        document.getElementById('submitbtn').disabled = !isFormValid;
+      });
       window.onload=fetchCountry()
     </script>
   </body>

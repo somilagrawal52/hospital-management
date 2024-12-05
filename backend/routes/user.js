@@ -35,6 +35,7 @@ const {
   appointmentdetailtable,
   sendmsg,
   messagesdetailtable,
+  savePayments,
 } = require("../controller/patient");
 const { register } = require("../controller/patient");
 const multer = require("multer");
@@ -129,5 +130,7 @@ router.post("/create-order", appointmentcreated);
 router.post("/verify-payment", verifypayment);
 
 router.get("/payment-success", payemntsuccessfull);
+
+router.post("/save-payment", savePayments);
 
 module.exports = router;

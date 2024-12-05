@@ -6,6 +6,13 @@ const { mailsender } = require("./mail");
 const User = require("../models/user");
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "patient");
 
+const Razorpay = require("razorpay");
+
+const instance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
 async function getservices(req, res) {
   return res.sendFile(path.join(frontendPath, "services.html"));
 }
@@ -31,45 +38,45 @@ async function doctors(req, res) {
 }
 
 async function bookappointment(req, res) {
-  const {
-    fullname,
-    email,
-    number,
-    country,
-    city,
-    state,
-    doctor,
-    date,
-    // amount,
-  } = req.body;
-  const [doctorName, doctorId] = doctor.split("|");
-  console.log({
-    fullname,
-    email,
-    number,
-    country,
-    state,
-    city,
-    doctorName,
-    doctorId,
-    date,
-    // amount,
-  });
   try {
-    const doctordetail = await User.findOne({ _id: doctorId });
-    console.log("Doctor detail found:", doctordetail);
-    await Appointment.create({
+    const {
       fullname,
       email,
       number,
       country,
-      city,
       state,
+      city,
+      doctor,
+      date,
+      amount,
+    } = req.body;
+    const [doctorName, doctorId] = doctor.split("|");
+
+    const razorpayOrder = await instance.orders.create({
+      amount: amount * 100,
+      currency: "INR",
+    });
+    const doctordetail = await User.findOne({ _id: doctorId });
+    console.log("Doctor detail found:", doctordetail);
+    const appointment = new Appointment({
+      fullname,
+      email,
+      number,
+      country,
+      state,
+      city,
       doctor: doctorName,
       doctorid: doctorId,
       date,
-      // amount: amount * 100,
+      payment: {
+        orderId: razorpayOrder.id,
+        amount,
+        currency: "INR",
+        status: "pending",
+      },
     });
+
+    await appointment.save();
     console.log("Appointment created successfully");
     console.log("Patient Email:", email);
     const patientmail = {
@@ -85,10 +92,15 @@ async function bookappointment(req, res) {
     };
     mailsender(patientmail);
     mailsender(doctormail);
-    return res.redirect("/payment-success");
+
+    res.json({
+      message: "Appointment created successfully.",
+      appointmentId: appointment._id,
+      razorpayOrderId: razorpayOrder.id,
+    });
   } catch (error) {
-    console.log(error);
-    return res.redirect("/appointment");
+    console.error(error);
+    res.status(500).json({ message: "Error booking appointment." });
   }
 }
 
@@ -129,6 +141,28 @@ async function messagesdetailtable(req, res) {
   }
 }
 
+async function savePayments(req, res) {
+  const { appointmentId, paymentId } = req.body;
+
+  try {
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      return res.status(404).json({ message: "Appointment not found." });
+    }
+
+    appointment.payment.paymentId = paymentId;
+    appointment.payment.status = "success";
+
+    await appointment.save();
+
+    res.json({ message: "Payment saved successfully." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error saving payment." });
+  }
+}
+
 module.exports = {
   getservices,
   appointment,
@@ -140,4 +174,5 @@ module.exports = {
   appointmentdetailtable,
   messagesdetailtable,
   sendmsg,
+  savePayments,
 };

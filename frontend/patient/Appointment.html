@@ -184,95 +184,56 @@
                 <h5 class="card-title">Book Appointment Form</h5>
 
                 <!-- Vertical Form -->
-                <form class="row g-3" method="post" action="/appointment" onsubmit="payNow(event)" novalidate>
-                  <div class="col-12">
-                    <label for="inputNanme4" class="form-label"
-                      >Your Name</label
-                    >
-                    <input type="text" class="form-control" id="inputNanme4" name="fullname" />
+                <form id="appointmentForm" onsubmit="payNow(event)">
+                  <!-- Patient Details -->
+                  <div class="mb-3">
+                    <label for="fullname" class="form-label">Full Name</label>
+                    <input type="text" class="form-control" id="fullname" name="fullname" required />
                   </div>
-                  <div class="col-12">
-                    <label for="inputEmail4" class="form-label">Email</label>
-                    <input type="email" class="form-control" id="inputEmail4" name="email" />
+                  <div class="mb-3">
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" name="email" required />
                   </div>
-                  
-                  
-                  <div class="col-12">
-                    <label for="inputNumber" class="form-label"
-                      >Ph. No.</label
-                    >
-                    
-                      <input type="number" class="form-control" name="number"/>
-                    
+                  <div class="mb-3">
+                    <label for="number" class="form-label">Phone Number</label>
+                    <input type="text" class="form-control" id="number" name="number" required />
                   </div>
-                  <div class="col-12">
-                    <label for="floatingSelect" class="form-label">Select Doctor</label>
-                    <select class="form-select" id="floatingSelect" name="doctor">
-                      <option selected>Select Doctor</option>
-                  </select>
-                    
+                  <!-- Country, State, City -->
+                  <div class="mb-3">
+                    <label for="country" class="form-label">Country</label>
+                    <select id="country" class="form-select" name="country" onchange="fetchStates()" required>
+                      <option value="">Select Country</option>
+                    </select>
                   </div>
-                 
-                  <div class="col-12">
-                    <label for="inputDate" class="col-sm-2 col-form-label"
-                      >Date</label
-                    >
-                    <div class="col-sm-2">
-                      <input type="date" class="form-control" name="date"/>
-                    </div>
+                  <div class="mb-3">
+                    <label for="state" class="form-label">State</label>
+                    <select id="state" class="form-select" name="state" onchange="fetchCities()" required>
+                      <option value="">Select State</option>
+                    </select>
                   </div>
-                  <label for="inputDate">Address</label>
-                  <div class="col-md-6">
-                    <div class="form-floating mb-3">
-                      <select
-                        class="form-select"
-                        id="floatingcountry"
-                        aria-label="Country"
-                        name="country"
-                        onchange="fetchState()"
-                      >
-                        <option selected>Select Country</option>
-                        
-                      </select>
-                      <label for="floatingSelect">Country</label>
-                    </div>
+                  <div class="mb-3">
+                    <label for="city" class="form-label">City</label>
+                    <select id="city" class="form-select" name="city" required>
+                      <option value="">Select City</option>
+                    </select>
                   </div>
-                  <div class="col-md-4">
-                    <div class="form-floating mb-3">
-                      <select
-                        class="form-select"
-                        id="floatingstate"
-                        aria-label="State"
-                        name="state"
-                        onchange="fetchCity()"
-                      >
-                        <option selected>Select State</option>
-                      </select>
-                      <label for="floatingSelect">State</label>
-                    </div>
+                  <!-- Appointment Details -->
+                  <div class="mb-3">
+                    <label for="doctor" class="form-label">Select Doctor</label>
+                    <select id="doctor" class="form-select" name="doctor" required>
+                      <option value="">Select Doctor</option>
+                    </select>
                   </div>
-                  <div class="col-md-2">
-                    <div class="form-floating mb-3">
-                      <select
-                        class="form-select"
-                        id="floatingcity"
-                        aria-label="City"
-                        name="city"
-                      >
-                        <option selected>Select City</option>
-                       </select>
-                      <label for="floatingSelect">City</label>
-                    </div>
+                  <div class="mb-3">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date" name="date" required />
                   </div>
-                  
-                  <div class="text-center">
-                    <button type="submit" class="btn btn-primary">
-                      Submit&pay
-                    </button>
-                    <button type="reset" class="btn btn-secondary">
-                      Reset
-                    </button>
+                  <div class="mb-3">
+                    <label for="amount" class="form-label">Payment Amount</label>
+                    <input type="text" class="form-control" id="amount" name="amount" value="100" readonly />
                   </div>
+                  <!-- Buttons -->
+                  <button type="submit" class="btn btn-primary" id="payButton" disabled>Submit & Pay</button>
                 </form>
                 <!-- Vertical Form -->
               </div>
@@ -313,150 +274,120 @@
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
+
     <script>
-      async function fetchDoctorsData() {
-        try {
-          const response=await fetch("/doctors")
-          const doctors=await response.json()
-
-          const selectElement = document.getElementById('floatingSelect');
-          
-          doctors.forEach(doctor => {
-            const option = document.createElement('option');
-            option.value = `${doctor.fullname}|${doctor._id}`;
-            option.textContent = doctor.fullname;
-           
-            selectElement.appendChild(option);
-          });
-          
-        } catch (error) {
-          console.error(error)
-        }
-      }
-      window.onload = fetchDoctorsData();
-      
-      async function fetchCountry() {
-        const response=await fetch("/countries")
-        const countries=await response.json()
-
-        const CountrySelect=document.getElementById("floatingcountry")
-
+      // Initialize dropdowns
+      async function fetchCountries() {
+        const response = await fetch('/countries');
+        const countries = await response.json();
+        const countrySelect = document.getElementById('country');
+        countrySelect.innerHTML = '<option value="">Select Country</option>';
         countries.forEach(country => {
-          const option=document.createElement("option")
-          option.value=country.isoCode;
-          option.textContent=country.name;
-          CountrySelect.appendChild(option)
+          const option = document.createElement('option');
+          option.value = country.isoCode;
+          option.textContent = country.name;
+          countrySelect.appendChild(option);
         });
       }
-      async function fetchState() {
-        const CountrySelect=document.getElementById("floatingcountry").value
-        const response=await fetch(`/states/${CountrySelect}`)
-        const states=await response.json()
-
-        const StateSelect=document.getElementById("floatingstate")
+  
+      async function fetchStates() {
+        const country = document.getElementById('country').value;
+        const response = await fetch(`/states/${country}`);
+        const states = await response.json();
+        const stateSelect = document.getElementById('state');
+        stateSelect.innerHTML = '<option value="">Select State</option>';
         states.forEach(state => {
-          const option=document.createElement("option")
-          option.value=state.isoCode;
-          option.textContent=state.name;
-          StateSelect.appendChild(option)
+          const option = document.createElement('option');
+          option.value = state.isoCode;
+          option.textContent = state.name;
+          stateSelect.appendChild(option);
         });
       }
-      async function fetchCity() {
-        const StateSelect=document.getElementById("floatingstate").value
-        const CountrySelect=document.getElementById("floatingcountry").value
-        const response=await fetch(`/cities/${CountrySelect}/${StateSelect}`)
-        const cities=await response.json()
-
-        const CitySelect=document.getElementById("floatingcity")
-
+  
+      async function fetchCities() {
+        const country = document.getElementById('country').value;
+        const state = document.getElementById('state').value;
+        const response = await fetch(`/cities/${country}/${state}`);
+        const cities = await response.json();
+        const citySelect = document.getElementById('city');
+        citySelect.innerHTML = '<option value="">Select City</option>';
         cities.forEach(city => {
-          const option=document.createElement("option")
-          option.value=city.isoCode;
-          option.textContent=city.name;
-          CitySelect.appendChild(option)
+          const option = document.createElement('option');
+          option.value = city.name;
+          option.textContent = city.name;
+          citySelect.appendChild(option);
         });
       }
-      window.onload=fetchCountry()
+  
+      async function fetchDoctors() {
+        const response = await fetch('/doctors');
+        const doctors = await response.json();
+        const doctorSelect = document.getElementById('doctor');
+        doctorSelect.innerHTML = '<option value="">Select Doctor</option>';
+        doctors.forEach(doctor => {
+          const option = document.createElement('option');
+          option.value = `${doctor.fullname}|${doctor._id}`;
+          option.textContent = doctor.fullname;
+          doctorSelect.appendChild(option);
+        });
+      }
+  
+      // Razorpay integration
       async function payNow(event) {
-      event.preventDefault();
-        
-        const form = event.target;
-         const formData = new FormData(form); 
-         const appointmentDetails = {
-           fullname: formData.get("fullname"),
-            email: formData.get("email"), 
-            number: formData.get("number"),
-            doctor: formData.get("doctor"),
-            date: formData.get("date"),
-            country: formData.get("country"),
-            state: formData.get("state"), 
-            city: formData.get("city"),
-            amount: 100 
-          };
-       
-       
-        const response = await fetch('/create-order', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+  event.preventDefault();
+
+  const form = document.getElementById("appointmentForm");
+  const formData = new FormData(form);
+  const payload = Object.fromEntries(formData.entries());
+
+  try {
+    const response = await fetch("/appointment", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const { appointmentId, razorpayOrderId } = await response.json();
+
+    const options = {
+      key: "rzp_test_8Tg095AU86SIcj",
+      amount: payload.amount * 100,
+      currency: "INR",
+      name: "Your App Name",
+      description: "Appointment Payment",
+      order_id: razorpayOrderId,
+      handler: async function (response) {
+        // Save payment info
+        await fetch("/save-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-             amount:appointmentDetails.amount, 
-             currency: 'INR',
-             
-             receipt: 'receipt#1', 
-             notes: appointmentDetails
-             })
+            appointmentId,
+            paymentId: response.razorpay_payment_id,
+          }),
         });
-        if (!response.ok) { throw new Error('Network response was not ok'); }
-        const order = await response.json();
+
+        window.location.href = "/payment-success";
+      },
+    };
+
+    const razorpay = new Razorpay(options);
+    razorpay.open();
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+     // Enable submit button
+      document.getElementById('appointmentForm').addEventListener('input', () => {
+        const isFormValid = document.getElementById('appointmentForm').checkValidity();
+        document.getElementById('payButton').disabled = !isFormValid;
+      });
   
-        
-        const options = {
-          key: 'rzp_test_8Tg095AU86SIcj', 
-          amount: order.amount,
-          currency: order.currency,
-          name: 'Hospital OneLife',
-          description: 'Test Transaction',
-          order_id: order.id, 
-          callback_url: 'http://localhost:8000/payment-success',
-          prefill: {
-            name: appointmentDetails.fullname,
-            email: appointmentDetails.email,
-            contact: appointmentDetails.number
-          },
-          theme: {
-            color: '#F37254'
-          },
-          handler: function (response) {
-            fetch('/verify-payment', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature
-              })
-            }).then(res => res.json())
-              .then(data => {
-                if (data.status === 'ok') {
-                  
-                  form.submit();
-                } else {
-                  alert('Payment verification failed');
-                }
-              }).catch(error => {
-                console.error('Error:', error);
-                alert('Error verifying payment');
-              });
-          }
-        };
-  
-        const rzp = new Razorpay(options);
-        rzp.open();
-      }
+      // Onload setup
+      window.onload = () => {
+        fetchCountries();
+        fetchDoctors();
+      };
     </script>
   </body>
 </html>

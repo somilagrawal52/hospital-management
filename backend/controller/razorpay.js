@@ -24,27 +24,11 @@ const writeData = (data) => {
 
 async function appointmentcreated(req, res) {
   try {
-    const { amount, currency, receipt, notes } = req.body;
-
-    const options = {
-      amount: amount * 100,
-      currency,
-      receipt,
-      notes,
-    };
-
-    const order = await instance.orders.create(options);
-
-    const orders = readData();
-    orders.push({
-      order_id: order.id,
-      amount: order.amount,
-      currency: order.currency,
-      receipt: order.receipt,
-      status: "created",
+    const { amount } = req.body;
+    const order = await instance.orders.create({
+      amount: amount * 100, // Amount in paisa
+      currency: "INR",
     });
-    writeData(orders);
-
     res.json(order);
   } catch (error) {
     console.error(error);

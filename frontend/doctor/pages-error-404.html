@@ -77,9 +77,18 @@
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
     <script>
-      const response=await fetch("/create-order");
-      const order=document.querySelector(".order-details");
-      order.innerHTML=`<p>Payment Id:- ${order.id}`
+      document.addEventListener("DOMContentLoaded", async () => {
+        try {
+          const response = await fetch("/create-order");
+          const data = await response.json();
+          console.log(data);
+          const order = document.querySelector(".order-details");
+
+          order.innerHTML = `<p>Payment Id: ${data.id}</p>`;
+        } catch (error) {
+          console.error("Error fetching order details:", error);
+        }
+      });
     </script>
   </body>
 </html>

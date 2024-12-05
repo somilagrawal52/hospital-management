@@ -8,7 +8,6 @@ const appointmentschema = new mongoose.Schema(
     },
     email: {
       type: String,
-      unique: true,
       required: true,
     },
     number: {
@@ -42,6 +41,13 @@ const appointmentschema = new mongoose.Schema(
     date: {
       type: String,
       required: true,
+    },
+    payment: {
+      orderId: { type: String, required: false },
+      paymentId: { type: String, required: false },
+      amount: { type: Number, required: false },
+      currency: { type: String, required: false },
+      status: { type: String, required: false },
     },
   },
   { timestamps: true }
