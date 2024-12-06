@@ -1,15 +1,15 @@
+require("dotenv").config();
 const nodemailer = require("nodemailer");
 const { text } = require("express");
-
 async function mailsender(obj) {
   console.log("we are inside of mailsender");
   let mailtransporter = nodemailer.createTransport({
     service: "gmail",
     secure: true,
-    port: 465,
+    port: process.env.mail_port,
     auth: {
-      user: "somilagrawal2004@gmail.com",
-      pass: "qwem kmgq cwgi ixsv",
+      user: process.env.mail_user,
+      pass: process.env.mail_pass,
     },
   });
   let mail = {

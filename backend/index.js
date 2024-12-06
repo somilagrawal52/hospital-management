@@ -40,6 +40,10 @@ app.use(
 
 app.use("/", userRoute);
 
+app.get("/health", (req, res) => {
+  res.json({ msg: "success" });
+});
+
 app.get(
   "/admin",
   checkforauthentication("token"),
