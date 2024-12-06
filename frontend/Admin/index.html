@@ -213,8 +213,8 @@
                       >
                         <i class="bi bi-people"></i>
                       </div>
-                      <div class="ps-3">
-                        <h6>1244</h6>
+                      <div class="Patients ps-3">
+                        
                         </div>
                     </div>
                   </div>
@@ -235,8 +235,8 @@
                       >
                         <i class="bi bi-people"></i>
                       </div>
-                      <div class="ps-3">
-                        <h6>1244</h6>
+                      <div class="doctors ps-3">
+                        
                         
                       </div>
                     </div>
@@ -319,7 +319,8 @@
         try {
           const response=await fetch("/appointments")
           const appointments=await response.json()
-
+          const response1=await fetch("/doctors");
+          const doctors=await response1.json();
           const tablebody=document.querySelector(".table  tbody")
           tablebody.innerHTML = "";
           appointments.forEach(appointment => {
@@ -332,7 +333,10 @@
               <td>${appointment.country},${appointment.state},${appointment.city}</td> `; 
              tablebody.appendChild(row);
           });  
-            
+          const doctorappointment=document.querySelector(".Patients.ps-3")
+          doctorappointment.innerHTML=`<h6>${appointments.length}</h6>`
+          const fellowdoctors=document.querySelector(".doctors.ps-3")
+          fellowdoctors.innerHTML=`<h6>${doctors.length}</h6>`
         } catch (error) {
           console.error(error)
         }
