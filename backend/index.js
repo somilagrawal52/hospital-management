@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const userRoute = require("./routes/user");
 const { checkforauthentication, restrictTo } = require("./middlewares/auth");
+const User = require("./models/user");
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -60,6 +61,17 @@ app.get(
     return res.sendFile(filePath);
   }
 );
+
+app.get("/clear/:id",async(req,res)=> {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.redirect("/doctors-detail")
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("server error")
+  }
+})
+
 app.use((err, req, res, next) => {
   console.error("Error:", err.message);
   res.status(500).json({ error: err.message });
