@@ -62,6 +62,23 @@ app.get(
   }
 );
 
+app.post("/update", async (req, res) => {
+  try {
+    const { ids, names, prices, descriptions } = req.body;
+    for (let i = 0; i < ids.length; i++) {
+      await Product.findByIdAndUpdate(ids[i], {
+        name: names[i],
+        price: prices[i],
+        description: descriptions[i],
+      });
+    }
+    res.redirect("/");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server error");
+  }
+});
+
 app.get("/clear/:id", async (req, res) => {
   try {
     await User.findByIdAndDelete(req.params.id);
