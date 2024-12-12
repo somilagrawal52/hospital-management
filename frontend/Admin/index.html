@@ -321,24 +321,27 @@
           const response=await fetch("/appointments")
           const appointments=await response.json()
           const response1=await fetch("/doctors");
+          if (!response1.ok) throw new Error('Failed to fetch doctors');
           const doctors=await response1.json();
+          console.log("Doctors:", doctors);
           const tablebody=document.querySelector(".table  tbody")
           tablebody.innerHTML = "";
           appointments.forEach(appointment => {
             const row = document.createElement('tr');
+            const doctorOptions = doctors.map(doctor => `<option value="${doctor.fullname}">${doctor.fullname}</option>`).join('');
+            console.log("doctorOptions",doctorOptions)
           row.innerHTML =
            ` <td>${appointment.fullname}</td> 
            <td>${appointment.email}</td> 
             <td>${appointment.number}</td>
-             <td class="editable">${appointment.doctor}</td>
+             <td class="editable" data-field="doctor">${appointment.doctor}</td>
               <td>${appointment.country},${appointment.state},${appointment.city}</td>
               <button type="button" class="btn btn-warning edit" style="margin:4px">Reassign</button>
               <input type="hidden" name="ids[]" value="${appointment._id}" />
-                <input
-                  type="hidden"
-                  name="doctor"
-                  value="${appointment.doctor}"
-                />
+                <select id="doctor-select-${appointment._id}" class="form-select" name="doctor-${appointment._id}" hidden>
+                      <option value="">Select Doctor</option>
+                      ${doctorOptions}
+                    </select>
                 <button
                   type="submit"
                   class="btn btn-primary save"
@@ -352,26 +355,34 @@
           doctorappointment.innerHTML=`<h6>${appointments.length}</h6>`
           const fellowdoctors=document.querySelector(".doctors.ps-3")
           fellowdoctors.innerHTML=`<h6>${doctors.length}</h6>`
+          
+          document.querySelectorAll(".edit").forEach(button => {
+             button.addEventListener("click", function() {
+               const row = this.closest("tr");
+               const select = row.querySelector("select[name^='doctor-']");
+               select.removeAttribute("hidden");
+               row.querySelector(".save").style.display = "inline-block";
+                this.style.display = "none";
+               });
+              });
+                document.querySelector("#updateform").addEventListener("submit", function() {
+                   document.querySelectorAll("tr").forEach(row => { 
+                    const select = row.querySelector("select[name=^'doctor-']");
+                    const hiddenInput = row.querySelector(`input[name^='doctor-']`);
+                    if (select && !select.hidden) {
+                       hiddenInput.value = select.value;
+                       } else { 
+                        hiddenInput.disabled = true;
+
+                     }
+                    });
+                       console.log(new FormData(this));
+                       });
         } catch (error) {
           console.error(error)
         }
       }
-      // $(document).ready(function () { $(".edit").on("click", function () { 
-      //   var row = $(this).closest("tr"); row.find(".editable").each(function () {  
-      //     $(this).data("original-content", $(this).text().trim());
-
-      //  }).attr("contenteditable", "true").addClass("style"); 
-      //  row.find(".save").show(); $(this).hide(); 
-      // });
-      // $("#updateform").on("submit", function () {
-      //       $("tr").each(function () {
-      //         var row = $(this);
-      //          row
-      //           .find('input[name="doctor"]')
-      //           .val(row.find('[data-field="doctor"]').text().trim());
-      //         });
-      //     });
-      //   });
+     
       window.onload = fetchDoctorsData;
     </script>
   </body>

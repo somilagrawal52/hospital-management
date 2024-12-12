@@ -64,15 +64,24 @@ app.get(
 
 app.post("/update", async (req, res) => {
   try {
-    const { ids, names, prices, descriptions } = req.body;
-    for (let i = 0; i < ids.length; i++) {
-      await Product.findByIdAndUpdate(ids[i], {
-        name: names[i],
-        price: prices[i],
-        description: descriptions[i],
-      });
+    const { ids, ...doctors } = req.body;
+
+    console.log("Received IDs:", ids);
+    console.log("Received Doctors:", doctors);
+
+    if (!ids || !Object.keys(doctors).length) {
+      return res.status(400).send("Invalid input data");
     }
-    res.redirect("/");
+    const updatePromises = ids
+      .map((id) => {
+        const doctorField = `doctor-${id}`;
+        if (doctors[doctorField]) {
+          return User.findByIdAndUpdate(id, { doctor: doctors[doctorField] });
+        }
+      })
+      .filter(Boolean);
+    await Promise.all(updatePromises);
+    res.redirect("/admin");
   } catch (err) {
     console.error(err);
     res.status(500).send("Server error");
