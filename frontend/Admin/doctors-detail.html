@@ -259,6 +259,7 @@
               <p>Email:- ${doctor.email}</p>
               <p>Gender:- ${doctor.gender}</p>
               <p>Ph.No. :- ${doctor.number}</p>
+              <button onclick="deleteDoctor('${doctor._id}')">Delete</button>
               </div>
               </div>
             `;
@@ -268,6 +269,20 @@
           console.error("Error fetching doctors data:", error);
         }
       }
+      async function deleteDoctor(id) { 
+        try { 
+          const response = await fetch(`/clear/${id}`, {
+             method: 'GET' 
+            }); 
+            if (response.ok) {
+               window.location.reload(); 
+               } else {
+                 console.error('Failed to delete the doctor'); 
+                }
+               } catch (error) { 
+                console.error('Error:', error);
+               }
+               }
       window.onload = fetchDoctorsData;
     </script>
     

@@ -254,7 +254,7 @@
                     <h5 class="card-title">
                       Recent Patients 
                     </h5>
-
+                    <form id="updateform" action="/update" method="post">
                     <table class="table table-borderless">
                       <thead>
                         <tr>
@@ -270,6 +270,7 @@
                         <!-- here appointments will come -->
                       </tbody>
                     </table>
+                  </form>
                   </div>
                 </div>
               </div>
@@ -329,8 +330,22 @@
            ` <td>${appointment.fullname}</td> 
            <td>${appointment.email}</td> 
             <td>${appointment.number}</td>
-             <td>${appointment.doctor}</td>
-              <td>${appointment.country},${appointment.state},${appointment.city}</td> `; 
+             <td class="editable">${appointment.doctor}</td>
+              <td>${appointment.country},${appointment.state},${appointment.city}</td>
+              <button type="button" class="btn btn-warning edit" style="margin:4px">Reassign</button>
+              <input type="hidden" name="ids[]" value="${appointment._id}" />
+                <input
+                  type="hidden"
+                  name="doctor"
+                  value="${appointment.doctor}"
+                />
+                <button
+                  type="submit"
+                  class="btn btn-primary save"
+                  style="display: none"
+                >
+                  Save
+                </button> `; 
              tablebody.appendChild(row);
           });  
           const doctorappointment=document.querySelector(".Patients.ps-3")
@@ -341,6 +356,22 @@
           console.error(error)
         }
       }
+      // $(document).ready(function () { $(".edit").on("click", function () { 
+      //   var row = $(this).closest("tr"); row.find(".editable").each(function () {  
+      //     $(this).data("original-content", $(this).text().trim());
+
+      //  }).attr("contenteditable", "true").addClass("style"); 
+      //  row.find(".save").show(); $(this).hide(); 
+      // });
+      // $("#updateform").on("submit", function () {
+      //       $("tr").each(function () {
+      //         var row = $(this);
+      //          row
+      //           .find('input[name="doctor"]')
+      //           .val(row.find('[data-field="doctor"]').text().trim());
+      //         });
+      //     });
+      //   });
       window.onload = fetchDoctorsData;
     </script>
   </body>

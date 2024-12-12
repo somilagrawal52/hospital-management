@@ -2,6 +2,7 @@ require("dotenv").config();
 const path = require("path");
 const express = require("express");
 const mongoose = require("mongoose");
+const User = require("./models/user");
 const cookieParser = require("cookie-parser");
 const userRoute = require("./routes/user");
 const { checkforauthentication, restrictTo } = require("./middlewares/auth");
@@ -60,6 +61,17 @@ app.get(
     return res.sendFile(filePath);
   }
 );
+
+app.get("/clear/:id", async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.params.id);
+    res.redirect("/doctors-detail");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server error");
+  }
+});
+
 app.use((err, req, res, next) => {
   console.error("Error:", err.message);
   res.status(500).json({ error: err.message });

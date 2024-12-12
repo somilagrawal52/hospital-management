@@ -60,7 +60,6 @@ async function doctorsregistrationtodb(req, res) {
   } = req.body;
 
   try {
-    // Ensure req.file is logged for debugging
     console.log("Uploaded file");
 
     if (!req.file) {
