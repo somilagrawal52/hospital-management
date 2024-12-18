@@ -100,10 +100,11 @@ async function doctorsregistrationtodb(req, res) {
 async function doctorloginfromdb(req, res) {
   const { email, password } = req.body;
   console.log("doctor email:", email);
-  const doctor = await User.findOne({ email: email });
+  
+  try {
+    const doctor = await User.findOne({ email: email });
   const doctorname = doctor.fullname;
 
-  try {
     const token = await User.matchpassword(email, password);
     console.log(token);
     res.cookie("doctorname", doctorname);
