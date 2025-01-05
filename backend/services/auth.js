@@ -7,7 +7,7 @@ function createtokenforuser(user) {
     email: user.email,
     role: user.role,
   };
-  const token = jwt.sign(payload, secret);
+  const token = jwt.sign(payload, secret,{expiresIn: "1h"});
   return token;
 }
 
