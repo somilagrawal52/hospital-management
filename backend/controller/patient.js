@@ -2,11 +2,13 @@ const express = require("express");
 const path = require("path");
 const Appointment = require("../models/appointment");
 const Message = require("../models/messages");
-const { mailsender } = require("./mail");
+const { mailsender,sendWhatsAppMessage } = require("./mail");
 const User = require("../models/user");
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "patient");
-
+// const otpgeneration = require("otp-generator");
 const Razorpay = require("razorpay");
+
+
 
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -90,9 +92,24 @@ async function bookappointment(req, res) {
       subject: "Appointment Booked",
       text: `${doctordetail.fullname} you have been booked for ${date} by ${fullname}`,
     };
-    mailsender(patientmail);
-    mailsender(doctormail);
+    // const otp=otpgeneration.generate(6, { upperCase: false, specialChars: false, alphabets: false });
+    // client.verify.v2.services("VA21717580ad58c1563ac93080599d155c")
+    //   .verifications
+    //   .create({to: `+91${number}`, code: otp,channel: 'sms'})
+    //   .then(verification_check => console.log(verification_check.status))
+    //   .catch(error => {
+    //     console.error("Error sending verification code:", error);
+    //     console.error("Error details:", error.details);
+    //     console.error("Error more info:", error.moreInfo);
+    //   });
+    const patientWhatsAppMessage = `${fullname}, your appointment is confirmed for ${date} with Dr. ${doctorName}.`;
+    const doctorWhatsAppMessage = `${doctorName}, an appointment has been scheduled for ${date} with patient ${fullname}.`;
 
+    await mailsender(patientmail);
+    await mailsender(doctormail);
+
+    await sendWhatsAppMessage(`+91${doctordetail.number}`, doctorWhatsAppMessage);
+    await sendWhatsAppMessage(`+91${number}`, patientWhatsAppMessage);
     res.json({
       message: "Appointment created successfully.",
       appointmentId: appointment._id,

@@ -1,6 +1,6 @@
 const User = require("../models/user");
 const path = require("path");
-const { mailsender } = require("./mail");
+const { mailsender, sendWhatsAppMessage } = require("./mail");
 
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
 const frontendDoctor = path.resolve(
@@ -88,8 +88,9 @@ async function doctorsregistrationtodb(req, res) {
       subject: "Welcome Message!",
       text: `Welcome to OneLife, ${fullname}!`,
     };
+    const doctorWhatsAppMessage = `Welcome to OneLife, ${fullname}!`;
     await mailsender(obj);
-
+    await sendWhatsAppMessage(number, doctorWhatsAppMessage);
     res.redirect("/doctors-registration");
   } catch (error) {
     console.error("Error during doctor registration:", error);
