@@ -1,7 +1,7 @@
 const User = require("../models/user");
 const path = require("path");
 const { mailsender, sendWhatsAppMessage } = require("./mail");
-
+const {validatetoken}=require("../services/auth");
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
 const frontendDoctor = path.resolve(
   __dirname,
@@ -34,8 +34,21 @@ async function doctorsloginpage(req, res) {
 
 async function doctorsdetailtable(req, res) {
   try {
-    const doctors = await User.find({ role: "DOCTOR" });
-    res.json(doctors);
+    const token=req.cookies.token;
+    let patientdata = null;
+    if (token) {
+      const decodedtoken = validatetoken(token);
+      patientdata = await User.findById({ _id: decodedtoken._id });
+    }
+    const { speciality } = req.params;
+    const doctors = await User.find({ role: "DOCTOR" }).select('-password');
+    const filterDoc = speciality
+    ? doctors.filter((doc) => doc.speciality === speciality)
+    : doctors;
+
+    res.render('doctor', { speciality, filterDoc,user:req.user,patientdata });
+    
+    // res.json({success:true,doctors});
   } catch (error) {
     console.error("Error fetching doctors:", error);
     res.status(500).send("Server error");
@@ -50,51 +63,56 @@ async function doctorsregistrationtodb(req, res) {
   const {
     fullname,
     email,
-    password,
-    number,
-    country,
-    state,
-    city,
     gender,
-    department,
+    number,
+    password,
+    degree,
+    experience,
+    about,
+    fees,
+    line1,
+    line2,
+    speciality,
   } = req.body;
-
   try {
     // Ensure req.file is logged for debugging
-    console.log("Uploaded file");
-
     if (!req.file) {
       console.error("No file uploaded");
       return res.status(400).send("Image file is required");
     }
-
+    const address = {
+      line1: line1,
+      line2: line2,
+  };
     const newDoctor = await User.create({
       fullname,
       email,
       password,
-      number,
       gender,
-      country,
-      state,
-      city,
-      department,
-      image: `/img/${req.file.filename}`,
+      number,
+      degree,
+      experience,
+      about,
+      fees,
+      date:Date.now(),
+      address,
+      speciality,
+      image: `/assets/${req.file.filename}`,
       role: "DOCTOR",
     });
     console.log("Doctor created successfully");
-
+    const doctorWhatsAppMessage = `Welcome to OneLife, ${fullname}!`;
     const obj = {
       to: email,
       subject: "Welcome Message!",
       text: `Welcome to OneLife, ${fullname}!`,
     };
-    const doctorWhatsAppMessage = `Welcome to OneLife, ${fullname}!`;
     await mailsender(obj);
     await sendWhatsAppMessage(number, doctorWhatsAppMessage);
     res.redirect("/doctors-registration");
   } catch (error) {
     console.error("Error during doctor registration:", error);
-    res.status(500).send("Server error");
+    res.status(500).json({ success: false, message: "Server error" });
   }
 }
 
@@ -121,7 +139,21 @@ async function doctorsdetailpage(req, res) {
 }
 
 async function doctorlogout(req, res) {
+  
   res.clearCookie("token").redirect("/doctorlogin");
+}
+async function changeAvailability(req,res) {
+  try {
+    const{doctorId}=req.body
+    const docData=await User.findById(doctorId)
+    if (!docData) {
+      return res.json({ success: false, message: "Doctor not found" });
+    }
+    await User.findByIdAndUpdate(doctorId,{available:!docData.available})
+    res.json({success:true,message:'availability changed'})
+  } catch (error) {
+    res.json({success:false,message:error.message})
+  }
 }
 
 module.exports = {
@@ -133,4 +165,5 @@ module.exports = {
   doctorsloginpage,
   doctorloginfromdb,
   doctorlogout,
+  changeAvailability,
 };

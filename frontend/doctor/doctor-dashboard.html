@@ -174,7 +174,7 @@
 
               <!-- Recent Sales -->
               <div class="col-12">
-                <div class="card recent-sales overflow-auto">
+                <div class="overflow-auto card recent-sales">
                  
                   
                   <div class="card-body">
@@ -254,28 +254,38 @@
               if (parts.length === 2) return parts.pop().split(';').shift(); 
           }
           const doctorName = getCookie("doctorname");
-          const response=await fetch("/appointments");
-          const response1=await fetch("/doctors");
+          console.log("Doctor Name:", doctorName); // Debugging statement
+
+          const response=await fetch("/doctor/appointments");
+          if (!response.ok) {
+            const errorText = await response.text(); // Log the HTML or error response
+    console.error(`Error fetching appointments: ${response.statusText}`, errorText);
+        throw new Error(`Error fetching appointments: ${response.statusText}`);
+        }
+          const response1=await fetch("/admin/doctors-detail");
+          if (!response1.ok) {
+        throw new Error(`Error fetching doctors: ${response1.statusText}`);
+      }
           const doctors=await response1.json();
-          const appointments=await response.json();
-          
-      
-          const filteredAppointments = appointments.filter(appointment => appointment.doctor === doctorName);
-          
+          const appointmentsdata=await response.json();
+          const appointments=appointmentsdata.doctordata;
+          console.log("Appointments:", appointmentsdata);
+          console.log("Doctors:", doctors);
+
           table.clear();
           
-          filteredAppointments.forEach(appointment => { 
+          appointments.forEach(appointment => { 
             table.row.add([ 
               appointment.fullname, 
               appointment.email, 
               appointment.number, 
-              appointment.country + ', ' + appointment.state + ', ' + appointment.city,
-              appointment.date
+              appointment.address.line1 + ', ' + appointment.address.line2,
+              appointment.date.split("T")[0],
             ]).draw(false); 
 
           }); 
           const doctorappointment=document.querySelector(".ps-3.Patients")
-          doctorappointment.innerHTML=`<h6>${filteredAppointments.length}</h6>`
+          doctorappointment.innerHTML=`<h6>${appointments.length}</h6>`
           const fellowdoctors=document.querySelector(".ps-3.doctors")
           fellowdoctors.innerHTML=`<h6>${doctors.length-1}</h6>`
         } catch (error) {

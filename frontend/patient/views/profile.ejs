@@ -1,0 +1,150 @@
+<%- include('head') %>
+<div class="mx-4 sm:mx-[10%]">
+  <%- include('Navbar') %>
+  <div id="profile-container" class="flex flex-col max-w-lg gap-2 text-sm">
+    <% if (locals.user) { %>
+      <div>
+       
+          <input id="image-label" type="file" id="image"style="display: none;" hidden/>
+        <img id="profile-image" 
+             class="rounded w-36" 
+             src="<%= patientdata.image ? `${patientdata.image}` : "/assets/upload_area.png" %>" 
+             alt="patientdata-image" />
+      </div>
+
+      <input id="fullname-input" class="mt-4 text-3xl font-medium bg-gray-50 max-w-60" type="text" value="<%= patientdata.fullname %>" style="display: none;" />
+      <p id="fullname-text" class="mt-4 text-3xl font-medium text-neutral-800"><%= patientdata.fullname %></p>
+
+      <hr class="bg-zinc-400 h-[1px] border-none" />
+
+      <div>
+        <p class="mt-3 underline text-neutral-500">CONTACT INFORMATION</p>
+        <div class="grid grid-cols-[1fr_3fr] gap-y-2.5 mt-3 text-neutral-700">
+          <p class="font-medium">Email id:</p>
+          <input id="email-input" class="bg-gray-100 max-w-52" type="email" value="<%= patientdata.email %>" style="display: none;" />
+          <p id="email-text" class="text-blue-500"><%= patientdata.email %></p>
+
+          <p class="font-medium">Phone:</p>
+          <input id="phone-input" class="bg-gray-100 max-w-52" type="number" value="<%= patientdata.number %>" style="display: none;" />
+          <p id="phone-text" class="text-blue-400"><%= patientdata.number %></p>
+
+          <p class="font-medium">Address:</p>
+          <div id="address-input" style="display: none;">
+            <input id="address-input-1" class="w-full mb-1 bg-gray-50" type="text" value="<%= patientdata.address.line1 %>" placeholder="Address Line 1" />
+            <input id="address-input-2" class="w-full bg-gray-50" type="text" value="<%= patientdata.address.line2 %>" placeholder="Address Line 2" />
+          </div>
+          <p id="address-text" class="text-gray-500">
+            <%= patientdata.address.line1 %><br />
+            <%= patientdata.address.line2 %>
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <p class="mt-3 underline text-neutral-500">BASIC INFORMATION</p>
+        <div class="grid grid-cols-[1fr_3fr] gap-y-2.5 mt-3 text-neutral-700">
+          <p class="font-medium">Gender:</p>
+          <select id="gender-input" class="bg-gray-200 max-w-20" style="display: none;">
+            <option value="Male" <%= patientdata.gender === "Male" ? "selected" : "" %>>Male</option>
+            <option value="Female" <%= patientdata.gender === "Female" ? "selected" : "" %>>Female</option>
+          </select>
+          <p id="gender-text" class="text-gray-400"><%= patientdata.gender %></p>
+
+          <p class="font-medium">Birthday:</p>
+          <input id="dob-input" class="bg-gray-200 max-w-20" type="date" value="<%= patientdata.dob %>" style="display: none;" />
+          <p id="dob-text" class="text-gray-400"><%= patientdata.dob %></p>
+        </div>
+      </div>
+
+      <div class="mt-10">
+        <button id="edit-button" class="px-8 py-2 transition-all border rounded-full border-primary hover:bg-primary hover:text-white">Edit</button>
+        <button id="save-button" class="px-8 py-2 transition-all border rounded-full border-primary hover:bg-primary hover:text-white" style="display: none;">Save</button>
+      </div>
+    <% } %>
+  </div>
+  <%- include('footer') %>
+</div>
+
+<script>
+  let isEdit = false;
+
+  const toggleEditMode = () => {
+    isEdit = !isEdit;
+
+    document.getElementById('image-label').style.display = isEdit ? 'block' : 'none';
+    document.getElementById('profile-image').style.display = isEdit ? 'none' : 'block';
+
+    document.getElementById('fullname-input').style.display = isEdit ? 'block' : 'none';
+    document.getElementById('fullname-text').style.display = isEdit ? 'none' : 'block';
+
+    document.getElementById('email-input').style.display = isEdit ? 'block' : 'none';
+    document.getElementById('email-text').style.display = isEdit ? 'none' : 'block';
+
+    document.getElementById('phone-input').style.display = isEdit ? 'block' : 'none';
+    document.getElementById('phone-text').style.display = isEdit ? 'none' : 'block';
+
+    document.getElementById('address-input').style.display = isEdit ? 'block' : 'none';
+    document.getElementById('address-text').style.display = isEdit ? 'none' : 'block';
+
+    document.getElementById('gender-input').style.display = isEdit ? 'block' : 'none';
+    document.getElementById('gender-text').style.display = isEdit ? 'none' : 'block';
+
+    document.getElementById('dob-input').style.display = isEdit ? 'block' : 'none';
+    document.getElementById('dob-text').style.display = isEdit ? 'none' : 'block';
+
+    document.getElementById('edit-button').style.display = isEdit ? 'none' : 'inline-block';
+    document.getElementById('save-button').style.display = isEdit ? 'inline-block' : 'none';
+  };
+
+  document.getElementById('edit-button').addEventListener('click', toggleEditMode);
+  document.getElementById('save-button').addEventListener('click', () => {
+    
+      const formData=new FormData()
+      formData.append('fullname',document.getElementById('fullname-input').value);
+      formData.append('email',document.getElementById('email-input').value);
+      formData.append('number',document.getElementById('phone-input').value);
+      formData.append('address', JSON.stringify({
+      line1: document.getElementById('address-input-1').value,
+      line2: document.getElementById('address-input-2').value
+    }));
+      formData.append('dob',document.getElementById('dob-input').value);
+      formData.append('gender',document.getElementById('gender-input').value);
+      
+      const imageFile = document.getElementById('image-label').files[0];
+        if (imageFile) {
+        formData.append('image', imageFile);
+        }
+        
+    fetch('/update-profile', {
+    method: 'POST',
+    body: formData,
+  })
+  .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // Update the front-end profile data
+        document.getElementById('fullname-text').textContent = document.getElementById('fullname-input').value;
+        document.getElementById('email-text').textContent = document.getElementById('email-input').value;
+        document.getElementById('phone-text').textContent = document.getElementById('phone-input').value;
+        document.getElementById('address-text').innerHTML = `${document.querySelector('#address-input input:nth-child(1)').value}<br />${document.querySelector('#address-input input:nth-child(2)').value}`;
+        document.getElementById('gender-text').textContent = document.getElementById('gender-input').value;
+        document.getElementById('dob-text').textContent = document.getElementById('dob-input').value;
+
+        // If the image was updated, update the profile image
+        if (imageFile) {
+          document.getElementById('image-label').src = URL.createObjectURL(imageFile);
+        }
+        location.reload();
+        toggleEditMode();
+    }else {
+        
+        alert('Failed to update profile');
+      }
+    }).catch(error => {
+      console.error('Error:', error);
+      alert('An error occurred while updating the profile');
+    });
+    
+  });
+</script>
+<%- include('bottom') %>

@@ -1,0 +1,59 @@
+<div class="flex items-center justify-between py-4 mb-5 text-sm font-bold border-b border-b-gray-400">
+  <!-- Logo Section -->
+  <img onclick="window.location.href='/'" class="cursor-pointer w-44 " src="/assets/logo.png" alt="logo" />
+  
+  <!-- Navigation Links -->
+  <ul class="flex items-start gap-5">
+    <li>
+      <a href="/" class="py-1">HOME</a>
+      <hr class="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
+    </li>
+    <li>
+      <a href="/doctors" class="py-1">ALL DOCTORS</a>
+      <hr class="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
+    </li>
+    <li>
+      <a href="/about" class="py-1">ABOUT</a>
+      <hr class="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
+    </li>
+    <li>
+      <a href="/contact" class="py-1">CONTACT</a>
+      <hr class="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
+    </li>
+  </ul>
+  <p class='border px-2.5 py-0.5 rounded-full border-gray-500 text-gray-600 cursor-pointer' onclick="window.location.href='/admin'">Admin</p>
+  <!-- User Section -->
+  <div class="flex items-center gap-4">
+   
+    <% if (locals.user) { %>
+      <div class="relative flex items-center gap-2 cursor-pointer group">
+        <img class="w-10 rounded-full" src="<%= patientdata.image ? `${patientdata.image}` : '/assets/upload_area.png' %>" alt="profile_pic" />
+        <img class="w-2.5" src="/assets/dropdown_icon.svg" alt="dropdown_icon" />
+        <div class="absolute top-0 right-0 z-20 hidden text-base font-medium text-gray-600 pt-14 group-hover:block">
+          <div class="flex flex-col gap-4 p-4 rounded min-w-48 bg-stone-100">
+            <p onclick="window.location.href='/my-profile'" class="cursor-pointer hover:text-black">My Profile</p>
+            <p onclick="window.location.href='/my-appointment'" class="cursor-pointer hover:text-black">My Appointments</p>
+            <p onclick="logout()" class="cursor-pointer hover:text-black">Logout</p>
+          </div>
+        </div>
+      </div>
+    <% } else { %>
+      <button onclick="window.location.href='/login'" class="px-8 py-3 font-light text-white rounded-full bg-primary">Create Account</button>
+    <% } %>
+  </div>
+</div>
+
+<script>
+  function logout() {
+    try {
+      // Clear the authentication token from cookies
+      document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; Secure; SameSite=Strict';
+
+      // Redirect the user to the login page or home page
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error during logout:', error);
+      alert('An error occurred while logging out. Please try again.');
+    }
+  }
+</script>

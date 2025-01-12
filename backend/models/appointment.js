@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 
 const appointmentschema = new mongoose.Schema(
   {
+    userid:{
+      type: String,
+      required: true,
+    },
     fullname: {
       type: String,
       required: true,
@@ -11,22 +15,20 @@ const appointmentschema = new mongoose.Schema(
       required: true,
     },
     number: {
-      type: Number,
-      required: true,
-    },
-    // amount: {
-    //   type: Number,
-    //   required: true,
-    // },
-    country: {
       type: String,
       required: true,
     },
-    state: {
-      type: String,
-      required: true,
+    address: {
+      line1: {
+        type: String,
+        required: true,
+      },
+      line2: {
+        type: String,
+        required: true,
+      },
     },
-    city: {
+    docId: {
       type: String,
       required: true,
     },
@@ -34,23 +36,49 @@ const appointmentschema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    doctorid: {
-      type: String,
-      required: true,
+    payment: {
+      orderId: {
+        type: String,
+        required: true,
+      },
+      amount: {
+        type: Number,
+        required: true,
+      },
+      currency: {
+        type: String,
+        required: true,
+      },
+      status: {
+        type: String,
+        required: true,
+      },
     },
     date: {
-      type: String,
+      type: Date,
       required: true,
     },
-    payment: {
-      orderId: { type: String, required: false },
-      paymentId: { type: String, required: false },
-      amount: { type: Number, required: false },
-      currency: { type: String, required: false },
-      status: { type: String, required: false },
+    amount: {
+      type: Number,
+      required: true,
+    },
+    userdata: {
+      type: Object,
+      required: true,
+    },
+    doctordata: {
+      type: Object,
+      required: true,
+    },
+    cancelled: {
+      type: Boolean,
+      default: false,
+    },
+    iscompleted: {
+      type: Boolean,
+      default: false,
     },
   },
-  { timestamps: true }
 );
 
 const Appointment = mongoose.model("appointment", appointmentschema);

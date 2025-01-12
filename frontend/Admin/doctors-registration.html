@@ -223,8 +223,8 @@
                     <label for="inputEmail4" class="form-label">Email</label>
                     <input type="email" class="form-control" id="inputEmail4" name="email" required/>
                   </div>
-                  <fieldset class="row mb-3">
-                    <legend class="col-form-label col-sm-2 pt-0">Gender</legend>
+                  <fieldset class="mb-3 row">
+                    <legend class="pt-0 col-form-label col-sm-2">Gender</legend>
                     <div class="col-sm-10">
                       <div class="form-check">
                         <input
@@ -277,12 +277,34 @@
                       name="password" required
                     />
                   </div>
+                  <div class="col-4">
+                    <label for="inputNanme4" class="form-label"
+                      >Degree</label
+                    >
+                    <input type="text" class="form-control" name="degree" required/>
+                  </div>
                   <div class="col-12">
                     <label for="inputNumber" class="form-label"
                       >Number</label
                     >
                     
                       <input type="number" class="form-control" name="number" required/>
+                    
+                  </div>
+                  <div class="col-2">
+                    <label for="inputNumber" class="form-label"
+                      >Experience</label
+                    >
+                    
+                      <input type="number" class="form-control" name="experience" required/>
+                    
+                  </div>
+                  <div class="col-2">
+                    <label for="inputNumber" class="form-label"
+                      >Fees</label
+                    >
+                    
+                      <input type="number" class="form-control" name="fees" required/>
                     
                   </div>
                   <div class="col-12">
@@ -295,12 +317,12 @@
                   </div>
                   <label for="Department">Enter Your Department</label>
                   <div class="col-md-5">
-                    <div class="form-floating mb-3">
+                    <div class="mb-3 form-floating">
                       <select
                         class="form-select"
                         id="floatingdepartment"
                         aria-label="Country"
-                        name="department" required
+                        name="speciality" required
                       >
                         <option>Select Your Department</option>
                         <option value="Neurologist">Neurologist</option>
@@ -315,48 +337,38 @@
                       <label for="floatingSelect">Department</label>
                     </div>
                   </div>
-                  <label for="inputDate">Address</label>
-                  <div class="col-md-6">
-                    <div class="form-floating mb-3">
-                      <select
-                        class="form-select"
-                        id="floatingcountry"
-                        aria-label="Country"
-                        name="country"
-                        onchange="fetchState()" required
-                      >
-                        <option>Select Country</option>
-                        
-                      </select>
-                      <label for="floatingSelect">Country</label>
-                    </div>
+                  <label for="inputNanme4" class="form-label"
+                      >About yourself</label
+                    >
+                  <div class="col-12">
+                    
+                    <textarea name="about" id="" placeholder="tell us about you" cols="64" rows="4"></textarea>
                   </div>
-                  <div class="col-md-4">
-                    <div class="form-floating mb-3">
-                      <select
-                        class="form-select"
-                        id="floatingstate"
-                        aria-label="State"
-                        name="state"
-                        onchange="fetchCity()" required
-                      >
-                        <option>Select State</option>
-                      </select>
-                      <label for="floatingSelect">State</label>
-                    </div>
-                  </div>
-                  <div class="col-md-2">
-                    <div class="form-floating mb-3">
-                      <select
-                        class="form-select"
-                        id="floatingcity"
-                        aria-label="State"
-                        name="city" required
-                      >
-                        <option>Select City</option>
-                       </select>
-                      <label for="floatingSelect">City</label>
-                    </div>
+                  <div class="col-12">
+                    <label for="address">Address</label>
+                      <div class="w-full">
+                        <label for="line1" class="text-sm text-gray-600">Line 1</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="line1"
+                          name="line1"
+                          placeholder="Street address"
+                          required
+                        />
+                      </div>
+                      <div class="w-full">
+                        <label for="line2" class="text-sm text-gray-600">Line 2</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="line2"
+                          name="line2"
+                          placeholder="City, State"
+                          required
+                        />
+                      </div>
+                     
                   </div>
                   
                   <div class="text-center">
@@ -407,53 +419,11 @@
 
     <!-- Template Main JS File -->
     <script src="assets/js/main.js"></script>
-    <script>
-        async function fetchCountry() {
-        const response=await fetch("/countries")
-        const countries=await response.json()
-
-        const CountrySelect=document.getElementById("floatingcountry")
-
-        countries.forEach(country => {
-          const option=document.createElement("option")
-          option.value=country.isoCode;
-          option.textContent=country.name;
-          CountrySelect.appendChild(option)
-        });
-      }
-      async function fetchState() {
-        const CountrySelect=document.getElementById("floatingcountry").value
-        const response=await fetch(`/states/${CountrySelect}`)
-        const states=await response.json()
-
-        const StateSelect=document.getElementById("floatingstate")
-        states.forEach(state => {
-          const option=document.createElement("option")
-          option.value=state.isoCode;
-          option.textContent=state.name;
-          StateSelect.appendChild(option)
-        });
-      }
-      async function fetchCity() {
-        const StateSelect=document.getElementById("floatingstate").value
-        const CountrySelect=document.getElementById("floatingcountry").value
-        const response=await fetch(`/cities/${CountrySelect}/${StateSelect}`)
-        const cities=await response.json()
-
-        const CitySelect=document.getElementById("floatingcity")
-
-        cities.forEach(city => {
-          const option=document.createElement("option")
-          option.value=city.isoCode;
-          option.textContent=city.name;
-          CitySelect.appendChild(option)
-        });
-      }
+    <script> 
       document.getElementById('doctorsregistrationform').addEventListener('input', () => {
         const isFormValid = document.getElementById('doctorsregistrationform').checkValidity();
         document.getElementById('submitbtn').disabled = !isFormValid;
       });
-      window.onload=fetchCountry()
     </script>
   </body>
 </html>

@@ -1,31 +1,26 @@
 const { validatetoken } = require("../services/auth");
 const path = require("path");
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
-function checkforauthentication() {
+
+function checkforauthentication(cookieName) {
   return (req, res, next) => {
-    console.log(req.cookies);
-    const tokencookievalue = req.cookies.token;
-    console.log("Token cookie value:", tokencookievalue);
+    const tokencookievalue = req.cookies[cookieName];
     if (!tokencookievalue) {
-      console.log("No token found, redirecting to login");
-      if (req.originalUrl.startsWith("/doctor")) {
-        return res.redirect("/doctorlogin");
-      }
-      return res.redirect("/admin/login");
+      return next();
     }
 
     try {
       const userpayload = validatetoken(tokencookievalue);
-      req.user = userpayload;
-      console.log("Token validated, user payload:", userpayload);
-      next();
+      req.user = userpayload;  // Set user object in request
     } catch (error) {
       console.error("Token validation Error:", error);
-      res.clearCookie(_cookieName);
-      return res.redirect("/admin/login");
+      res.clearCookie(cookieName);
+      return res.redirect("/login");  
     }
+    next();
   };
 }
+
 
 function restrictTo(roles = []) {
   return function (req, res, next) {

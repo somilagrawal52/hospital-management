@@ -247,7 +247,7 @@
 
               <!-- Recent Sales -->
               <div class="col-12">
-                <div class="card recent-sales overflow-auto">
+                <div class="overflow-auto card recent-sales">
                  
 
                   <div class="card-body">
@@ -317,10 +317,19 @@
     <script>
       async function fetchDoctorsData() {
         try {
-          const response=await fetch("/appointments")
-          const appointments=await response.json()
-          const response1=await fetch("/doctors");
+          const response=await fetch("/admin/appointments")
+          if (!response.ok) {
+        throw new Error(`Error fetching appointments: ${response.statusText}`);
+      }
+          const data=await response.json()
+          console.log("Appointments:", data);
+          const response1=await fetch("/admin/doctors-detail");
           const doctors=await response1.json();
+          
+          const appointments = data.appointments;
+          if (!Array.isArray(appointments)) {
+        throw new Error("Appointments is not an array");
+      }
           const tablebody=document.querySelector(".table  tbody")
           tablebody.innerHTML = "";
           appointments.forEach(appointment => {
@@ -330,7 +339,7 @@
            <td>${appointment.email}</td> 
             <td>${appointment.number}</td>
              <td>${appointment.doctor}</td>
-              <td>${appointment.country},${appointment.state},${appointment.city}</td> `; 
+              <td>${appointment.address.line1},${appointment.address.line2}</td> `; 
              tablebody.appendChild(row);
           });  
           const doctorappointment=document.querySelector(".Patients.ps-3")

@@ -15,9 +15,14 @@ mongoose
   .then(() => console.log("Database connected"))
   .catch((err) => console.error("Database connection error:", err));
 
+  app.set("view engine", "ejs");
+  app.set("views", path.join(__dirname, "../frontend/patient/views"));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(checkforauthentication("token"));
+
 app.use(
   "/assets",
   express.static(path.join(__dirname, "..", "frontend", "Admin", "assets"))
@@ -32,11 +37,7 @@ app.use(
 );
 app.use(
   "/assets",
-  express.static(path.join(__dirname, "..", "frontend", "patient", "assets"))
-);
-app.use(
-  "/user",
-  express.static(path.join(__dirname, "..", "frontend", "patient"))
+  express.static(path.join(__dirname, "../frontend/patient/views/assets"))
 );
 
 app.use("/", userRoute);

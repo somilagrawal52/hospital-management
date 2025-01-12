@@ -1,0 +1,121 @@
+<%- include('head') %>
+<div class="mx-4 sm:mx-[10%]">
+  <%- include('Navbar') %>
+
+  <div>
+    <p class="text-gray-600">Browse through the doctors specialist.</p>
+    <div class="flex flex-col items-start gap-5 mt-5 sm:flex-row">
+      <!-- Specialization Buttons -->
+      <div class="flex flex-col gap-4 text-sm text-gray-600">
+        
+            <p
+            onclick="window.location.href = '<%= speciality === 'Gastroenterologist' ? '/doctors' : '/doctors/Gastroenterologist' %>'"
+            class="w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer <%= speciality === "Gastroenterologist" ? 'bg-indigo-100 text-black' : '' %>"
+          >
+          Gastroenterologist
+          </p>
+            <p
+            onclick="window.location.href = '<%= speciality === 'Neurologist' ? '/doctors' : '/doctors/Neurologist' %>'"
+            class="w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer <%= speciality === "Neurologist" ? 'bg-indigo-100 text-black' : '' %>"
+          >
+          Neurologist
+          </p>
+            <p
+            onclick="window.location.href = '<%= speciality === 'Pediatricians' ? '/doctors' : '/doctors/Pediatricians' %>'"
+            class="w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer <%= speciality === "Pediatricians" ? 'bg-indigo-100 text-black' : '' %>"
+          >
+          Pediatricians
+          </p>
+            <p
+            onclick="window.location.href = '<%= speciality === 'Dermatologist' ? '/doctors' : '/doctors/Dermatologist' %>'"
+            class="w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer <%= speciality === "Dermatologist" ? 'bg-indigo-100 text-black' : '' %>"
+          >
+          Dermatologist
+          </p>
+          <p
+            onclick="window.location.href = '<%= speciality === 'General physician' ? '/doctors' : '/doctors/General physician' %>'"
+            class="w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer <%= speciality === "General physician" ? 'bg-indigo-100 text-black' : '' %>"
+          >
+          General physician
+          </p>
+          <p
+            onclick="window.location.href = '<%= speciality === 'Gynecologist' ? '/doctors' : '/doctors/Gynecologist' %>'"
+            class="w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer <%= speciality === "Gynecologist" ? 'bg-indigo-100 text-black' : '' %>"
+          >
+          Gynecologist
+          </p>
+        
+      </div>
+
+      <!-- Doctors Cards -->
+      <div id="doctors-container" class="grid w-full gap-4 grid-cols-auto gap-y-6">
+        <% filterDoc.forEach((item) => { %>
+          <div
+            class="border border-blue-200 rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500"
+            onclick="window.location.href = '/appointment/<%= item._id %>'"
+          >
+            <img
+              class="bg-blue-50 hover:bg-primary"
+              src="<%= item.image.startsWith('/img/') ? item.image.replace('/img/', '/images/') : item.image %>"
+              alt="<%= item.fullname %>"
+            />
+            <div class="p-4">
+              <div class="flex items-center gap-2 text-sm text-center text-green-500">
+                <p class="w-2 h-2 bg-green-500 rounded-full"></p>
+                <p>Available</p>
+              </div>
+              <p class="text-lg font-medium text-gray-900"><%= item.fullname %></p>
+              <p class="text-sm text-gray-600"><%= item.speciality %></p>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+
+  <%- include('footer') %>
+</div>
+
+<script>
+  // Function to dynamically fetch doctors based on specialization
+  function fetchDoctors(speciality) {
+    fetch(`/doctors/${speciality}`)
+      .then((response) => response.json())
+      .then((data) => {
+        const doctorsContainer = document.getElementById('doctors-container');
+        doctorsContainer.innerHTML = '';
+
+        data.forEach((item) => {
+          const doctorDiv = document.createElement('div');
+          doctorDiv.classList.add(
+            'border',
+            'border-blue-200',
+            'rounded-xl',
+            'overflow-hidden',
+            'cursor-pointer',
+            'hover:translate-y-[-10px]',
+            'transition-all',
+            'duration-500'
+          );
+          doctorDiv.onclick = () => (window.location.href = `/appointment/${item._id}`);
+          doctorDiv.innerHTML = `
+            <img class="bg-blue-50 hover:bg-primary" src="${
+              item.image.startsWith('/img/') ? item.image.replace('/img/', '/images/') : item.image
+            }" alt="${item.fullname}" />
+            <div class="p-4">
+              <div class="flex items-center gap-2 text-sm text-center text-green-500">
+                <p class="w-2 h-2 bg-green-500 rounded-full"></p>
+                <p>Available</p>
+              </div>
+              <p class="text-lg font-medium text-gray-900">${item.fullname}</p>
+              <p class="text-sm text-gray-600">${item.speciality}</p>
+            </div>
+          `;
+          doctorsContainer.appendChild(doctorDiv);
+        });
+      })
+      .catch((error) => console.error('Error fetching doctors:', error));
+  }
+</script>
+
+<%- include('bottom') %>

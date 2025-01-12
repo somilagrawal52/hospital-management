@@ -7,6 +7,7 @@ const User = require("../models/user");
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "patient");
 // const otpgeneration = require("otp-generator");
 const Razorpay = require("razorpay");
+const { validatetoken } = require("../services/auth");
 
 
 
@@ -15,9 +16,7 @@ const instance = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-async function getservices(req, res) {
-  return res.sendFile(path.join(frontendPath, "services.html"));
-}
+
 
 async function appointment(req, res) {
   return res.sendFile(path.join(frontendPath, "Appointment.html"));
@@ -41,90 +40,97 @@ async function doctors(req, res) {
 
 async function bookappointment(req, res) {
   try {
-    const {
-      fullname,
-      email,
-      number,
-      country,
-      state,
-      city,
-      doctor,
-      date,
-      amount,
-    } = req.body;
-    const [doctorName, doctorId] = doctor.split("|");
-
+    const token = req.cookies.token;
+    const decoded = validatetoken(token);
+    const { docId, fullname, email, number, date, line1, line2, amount } = req.body;
+    const userid = decoded._id;
+    console.log("body",req.body);
     const razorpayOrder = await instance.orders.create({
       amount: amount * 100,
       currency: "INR",
     });
-    const doctordetail = await User.findOne({ _id: doctorId });
-    console.log("Doctor detail found:", doctordetail);
+    const doctordata = await User.findById(docId).select("-password");
+    console.log("data",doctordata)
+    if(!doctordata.available){
+      return res.status(400).json({success:false,message:"Doctor is not available"})
+    }
+    
+    await doctordata.save();
+    const userdata=await User.findById(userid).select("-password");
+    const doctordataCopy = { ...doctordata._doc };
     const appointment = new Appointment({
       fullname,
       email,
       number,
-      country,
-      state,
-      city,
-      doctor: doctorName,
-      doctorid: doctorId,
-      date,
+      address:{line1,line2},
+      userid,
+      docId,
+      doctor:doctordata.fullname,
       payment: {
         orderId: razorpayOrder.id,
-        amount,
+        amount:doctordata.fees,
         currency: "INR",
         status: "pending",
       },
+      date:new Date(date),
+      amount: doctordata.fees,
+      userdata,
+      doctordata: doctordataCopy,
     });
-
+    
     await appointment.save();
     console.log("Appointment created successfully");
     console.log("Patient Email:", email);
+
     const patientmail = {
       to: email,
       subject: "Appointment Booked",
       text: `${fullname} your Appointment is booked`,
     };
-    console.log("Doctor Email:", doctordetail.email);
+    console.log("Doctor Email:", doctordata.email);
     const doctormail = {
-      to: doctordetail.email,
+      to: doctordata.email,
       subject: "Appointment Booked",
-      text: `${doctordetail.fullname} you have been booked for ${date} by ${fullname}`,
-    };
-    // const otp=otpgeneration.generate(6, { upperCase: false, specialChars: false, alphabets: false });
-    // client.verify.v2.services("VA21717580ad58c1563ac93080599d155c")
-    //   .verifications
-    //   .create({to: `+91${number}`, code: otp,channel: 'sms'})
-    //   .then(verification_check => console.log(verification_check.status))
-    //   .catch(error => {
-    //     console.error("Error sending verification code:", error);
-    //     console.error("Error details:", error.details);
-    //     console.error("Error more info:", error.moreInfo);
-    //   });
-    const patientWhatsAppMessage = `${fullname}, your appointment is confirmed for ${date} with Dr. ${doctorName}.`;
-    const doctorWhatsAppMessage = `${doctorName}, an appointment has been scheduled for ${date} with patient ${fullname}.`;
+      text: `${doctordata.fullname} you have been booked for ${date} by ${fullname}`,
+    };  
+    const patientWhatsAppMessage = `${fullname}, your appointment is confirmed for ${date} with Dr. ${doctordata.fullname}.`;
+    const doctorWhatsAppMessage = `${doctordata.fullname}, an appointment has been scheduled for ${date} with patient ${fullname}.`;
 
     await mailsender(patientmail);
     await mailsender(doctormail);
 
-    await sendWhatsAppMessage(`+91${doctordetail.number}`, doctorWhatsAppMessage);
+    await sendWhatsAppMessage(`+91${doctordata.number}`, doctorWhatsAppMessage);
     await sendWhatsAppMessage(`+91${number}`, patientWhatsAppMessage);
+
     res.json({
       message: "Appointment created successfully.",
       appointmentId: appointment._id,
       razorpayOrderId: razorpayOrder.id,
     });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error booking appointment." });
   }
 }
 
+async function aboutpage(req, res) {
+  const token=req.cookies.token;
+  let patientdata = null;
+  if (token) {
+    const decodedtoken = validatetoken(token);
+    patientdata = await User.findById({ _id: decodedtoken._id });
+  }
+  
+  return res.render('about',{user:req.user,patientdata});
+}
+
 async function appointmentdetailtable(req, res) {
   try {
-    const appointments = await Appointment.find({});
-    res.json(appointments);
+    const{userid}=req.body;
+    const appointments = await Appointment.find({userid});
+    console.log(appointments)
+    res.json({success:true,appointments});
   } catch (error) {
     console.error("Error fetching doctors:", error);
     res.status(500).send("Server error");
@@ -180,16 +186,140 @@ async function savePayments(req, res) {
   }
 }
 
+async function patientregistrationtodb(req, res) {
+  const { fullname, email, password } = req.body;
+
+  try {
+    const newPatient = await User.create({
+      fullname,
+      email,
+      password,
+    });
+    console.log("Patient created successfully");
+
+    const obj = {
+      to: email,
+      subject: "Welcome Message!",
+      text: `Welcome to OneLife, ${fullname}!`,
+    };
+    await mailsender(obj);
+    return res.status(200).redirect("/login");
+  } catch (error) {
+    console.error("Error during patient registration:", error);
+    res.status(500).send("Server error");
+  }
+}
+
+async function patientloginfromdb(req, res) {
+  const { email, password } = req.body;
+
+  try {
+    const token = await User.matchpassword(email, password); 
+    res.cookie("token", token );
+    return res.redirect('/');
+  } catch (error) {
+    console.error("Error during login:", error.message);
+    return res.status(401).json({ success: false, message: error.message });
+  }
+}
+
+async function PatientProfile(req, res) {
+  try {
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    const decoded = validatetoken(token);
+    if (!decoded) {
+      return res.status(401).json({ success: false, message: "Invalid token" });
+    }
+    const patientdata = await User.findById(decoded._id).select("-password");
+    res.render('profile',{user:req.user,patientdata});
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: "Error fetching patient data" });
+  }
+}
+
+async function UpdateProfile(req, res) {
+  try {
+    const token = req.cookies.token;
+    const decoded = validatetoken(token);
+    const { fullname, email, number, address, dob, gender } = req.body;
+    console.log("Address value:", address);
+    let parsedAddress;
+    if (address) {
+      try {
+        parsedAddress = JSON.parse(address);
+      } catch (parseError) {
+        console.error("Error parsing address:", parseError);
+        return res.status(400).json({ success: false, message: "Invalid address format" });
+      }
+    }
+    const updateData = {
+      fullname,
+      number,
+      address: parsedAddress,
+      email,
+      image: req.file ? `/assets/${req.file.filename}` : undefined,
+      dob,
+      gender
+    };
+    console.log("Update data:", updateData);
+
+    const result = await User.findByIdAndUpdate(
+      { _id: decoded._id },
+      updateData,
+      { new: true } 
+    );
+
+    // Log the result of the update operation
+    console.log("Update result:", result);
+
+    if (!result) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    res.json({success:true,message:"Profile updated successfully",token})
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: "Error updating" });
+  }
+}
+
+async function patientsloginpage(req, res){
+  return res.render("login", { state: 'Login', fullname: '', email: '', password: '' });
+
+}
+async function patientsregisterpage(req, res){
+  return res.render("login", { state: 'register', fullname: '', email: '', password: '' });
+
+}
+async function contactpage(req, res){
+  const token=req.cookies.token;
+  let patientdata = null;
+  if (token) {
+    const decodedtoken = validatetoken(token);
+    patientdata = await User.findById({ _id: decodedtoken._id });
+  }
+  return res.render("contact",{user:req.user,patientdata});
+
+}
+
 module.exports = {
-  getservices,
-  appointment,
-  register,
   messages,
+  PatientProfile,
+  patientsloginpage,
   home,
+  patientsregisterpage,
   doctors,
   bookappointment,
   appointmentdetailtable,
   messagesdetailtable,
   sendmsg,
   savePayments,
+  patientregistrationtodb,
+  patientloginfromdb,
+  UpdateProfile,
+  aboutpage,
+  contactpage,
 };

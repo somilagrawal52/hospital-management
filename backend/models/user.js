@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const { createHmac, randomBytes } = require("crypto");
 const { createtokenforuser } = require("../services/auth");
+const { type } = require("os");
 
 const userschema = new mongoose.Schema(
   {
@@ -10,7 +11,6 @@ const userschema = new mongoose.Schema(
     },
     email: {
       type: String,
-      unique: true,
       required: true,
     },
     gender: {
@@ -28,11 +28,37 @@ const userschema = new mongoose.Schema(
     city: {
       type: String,
     },
+    dob:{
+      type:String,
+    },
+    address:{
+      type:Object,
+      default:{line1:'',line2:''}
+    },
     image: {
       type: String,
     },
-    department: {
+    speciality: {
       type: String,
+    },
+    degree:{
+      type:String,
+    },
+    experience:{
+      type:String,
+    },
+    about:{
+      type:String,
+    },
+    available:{
+      type:Boolean,
+      default:true
+    },
+    fees:{
+      type:Number,
+    },
+    date:{
+      type:Number,
     },
     salt: {
       type: String,
@@ -47,7 +73,7 @@ const userschema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  {minimize:false}
 );
 
 userschema.pre("save", function (next) {
@@ -65,7 +91,7 @@ userschema.pre("save", function (next) {
   next();
 });
 
-userschema.static("matchpassword", async function (email, password) {
+userschema.statics.matchpassword= async function (email, password) {
   const user = await this.findOne({ email });
   if (!user) throw new Error("user not found");
 
@@ -81,6 +107,6 @@ userschema.static("matchpassword", async function (email, password) {
   const token = createtokenforuser(user);
   console.log("Created Token:", token);
   return token;
-});
+};
 const User = mongoose.model("user", userschema);
 module.exports = User;

@@ -1,0 +1,122 @@
+<%- include('head') %>
+<div class="mx-4 sm:mx-[10%]">
+<%- include('Navbar') %>
+
+<form style="min-height: 80vh; display: flex; align-items: center;" method="POST" action="<%= state === 'register' ? '/register' : '/login' %>">
+  <div
+    style="
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin: auto;
+      align-items: flex-start;
+      padding: 20px;
+      min-width: 340px;
+      max-width: 400px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      background-color: #fff;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      color: #4a4a4a;
+      font-size: 14px;
+    "
+  >
+    <p style="font-size: 24px; font-weight: bold; margin-bottom: 5px;">
+      <%= state === 'register' ? 'Create Account' : 'Login' %>
+    </p>
+    <p style="margin-bottom: 10px;">
+      Please <%= state === 'register' ? 'register' : 'Login' %> to book an appointment.
+    </p>
+
+    <% if (state === 'register') { %>
+      <div style="width: 100%;">
+        <p style="margin-bottom: 5px;">Full Name</p>
+        <input
+          type="text"
+          name="fullname"
+          value="<%= fullname || '' %>"
+          required
+          style="
+            width: 100%;
+            padding: 10px;
+            margin-top: 4px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+          "
+        />
+      </div>
+    <% } %>
+
+    <div style="width: 100%;">
+      <p style="margin-bottom: 5px;">Email</p>
+      <input
+        type="email"
+        name="email"
+        value="<%= email || '' %>"
+        required
+        style="
+          width: 100%;
+          padding: 10px;
+          margin-top: 4px;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+          box-sizing: border-box;
+        "
+      />
+    </div>
+
+    <div style="width: 100%;">
+      <p style="margin-bottom: 5px;">Password</p>
+      <input
+        type="password"
+        name="password"
+        value="<%= password || '' %>"
+        required
+        style="
+          width: 100%;
+          padding: 10px;
+          margin-top: 4px;
+          border: 1px solid #ccc;
+          border-radius: 5px;
+          box-sizing: border-box;
+        "
+      />
+    </div>
+
+    <button
+      type="submit"
+      style="
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        font-weight: bold;
+        color: #fff;
+        background-color: #4f46e5;
+        border: none;
+        border-radius: 5px;
+        margin-top: 10px;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      "
+    >
+      <%= state === 'register' ? 'Create Account' : 'Login' %>
+    </button>
+
+    <% if (state === 'register') { %>
+      <p style="font-size: 14px;">
+        Already have an account? 
+        <a href="/login" style="color: #4f46e5; text-decoration: underline; cursor: pointer;">Login here</a>
+      </p>
+    <% } else { %>
+      <p style="font-size: 14px;">
+        Create a new account? 
+        <a href="/register" style="color: #4f46e5; text-decoration: underline; cursor: pointer;">Click here</a>
+      </p>
+    <% } %>
+  </div>
+</form>
+
+<%- include('footer') %>
+</div>
+<%- include('bottom') %>

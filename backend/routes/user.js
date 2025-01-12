@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
+const User = require("../models/user");
 const path = require("path");
+const Appointment=require("../models/appointment")
+const {validatetoken}=require('../services/auth')
+const {specialityData} = require('../../frontend/patient/views/assets/assets');
 const {
   getallcities,
   getallcountries,
@@ -24,9 +28,10 @@ const {
   doctorsloginpage,
   doctorloginfromdb,
   doctorlogout,
+  changeAvailability,
 } = require("../controller/doctor");
 const {
-  getservices,
+  
   doctors,
   messages,
   appointment,
@@ -36,6 +41,14 @@ const {
   sendmsg,
   messagesdetailtable,
   savePayments,
+  patientregistrationtodb,
+  patientloginfromdb,
+  PatientProfile,
+  UpdateProfile,
+  patientsloginpage,
+  patientsregisterpage,
+  aboutpage,
+  contactpage,
 } = require("../controller/patient");
 const { register } = require("../controller/patient");
 const multer = require("multer");
@@ -46,11 +59,11 @@ const {
   payemntsuccessfull,
 } = require("../controller/razorpay");
 
-const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
+const frontendPath = path.resolve(__dirname, "..", "..", "frontend","patient" ,"views","assets");
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    return cb(null, path.resolve(frontendPath, `./assets/img/`));
+    return cb(null, path.resolve(frontendPath));
   },
   filename: function (req, file, cb) {
     return cb(null, `${Date.now()}-${file.originalname}`);
@@ -63,9 +76,26 @@ router.get("/admin/login", adminlogin);
 
 router.post("/admin/login", adminloginfromdb);
 
+router.get('/appointment/:id',async (req, res) => {
+  const token=req.cookies.token;
+  let patientdata = null;
+  if (token) {
+    const decodedtoken = validatetoken(token);
+    patientdata = await User.findById({ _id: decodedtoken._id });
+  }
+  const { id } = req.params;
+  const docInfo = await User.findById(id).select('-password');
+  if (!docInfo) {
+    return res.status(404).send("Doctor not found");
+  }
+  res.render('appointment', { docInfo,currencySymbol: "$",user:req.user,patientdata});
+});
+
 router.get("/logout", adminlogout);
 
 router.get("/doctorlogout", doctorlogout);
+
+router.get('/contact', contactpage);
 
 router.get(
   "/doctors-registration",
@@ -74,43 +104,99 @@ router.get(
   doctorsregistration
 );
 
-router.get("/doctors", doctorsdetailtable);
+router.get('/about', aboutpage);
+
+router.get('/doctors/:speciality?',doctorsdetailtable);
+
+router.get("/", async (req, res) => {
+  const token=req.cookies.token;
+  let patientdata = null;
+  if (token) {
+    const decodedtoken = validatetoken(token);
+    patientdata = await User.findById({ _id: decodedtoken._id });
+  }
+    res.render("index", {
+    user: req.user, 
+    specialityData,
+    patientdata,
+  });
+});
 
 router.post(
   "/doctors-registration",
   upload.single("image"),
   doctorsregistrationtodb
 );
-
 router.post("/doctorlogin", doctorloginfromdb);
+
+router.post('/login',patientloginfromdb);
+
+router.get("/register", patientsregisterpage);
+
+router.get("/login", patientsloginpage);
 
 router.get("/doctorlogin", doctorsloginpage);
 
 router.get("/profile", adminprofile);
 
-router.get("/doctors-detail", doctorsdetailpage);
+router.get("/my-profile",PatientProfile);
 
-router.get("/services", getservices);
+router.get('/admin/doctors-detail', async (req, res) => {
+  try {
+    const doctors = await User.find({role:"DOCTOR"});
+    res.json(doctors);
+  } catch (error) {
+    console.error("Error fetching doctors:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+router.get("/doctors-detail", doctorsdetailpage);
 
 router.get("/registereddoctors", doctors);
 
 router.get("/messages", messages);
 
-router.get("/appointment", appointment);
-
 router.get("/appointments", appointmentdetailtable);
+
+router.get("/doctor/appointments",async(req,res)=>{
+  const token = req.cookies.token;
+    if (!token) {
+        return res.status(401).json({ error: "No token provided" });
+    }
+    try {
+        const decodedtoken = validatetoken(token);
+        const doctordata = await Appointment.find({ docId: decodedtoken._id })
+            .select("-userdata")
+            .select("-doctordata")
+            .select("-payment");
+        
+        return res.json({ doctordata });
+    } catch (error) {
+        console.error("Error fetching appointments:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+})
+
+router.get("/admin/appointments",async(req,res)=>{
+  try {
+    const appointments = await Appointment.find();
+    res.json({appointments});
+  } catch (error) {
+    console.log(error);
+  }
+})
 
 router.post("/appointment", bookappointment);
 
-router.get("/register", register);
-
-router.get("/", appointment);
+router.post('/register',patientregistrationtodb);
 
 router.get("/showmsg", showallmsg);
 
+router.post('/update-profile',upload.single('image'),UpdateProfile);
+
 router.get(
   "/doctor",
-  checkforauthentication(),
   restrictTo(["DOCTOR"]),
   doctorsdashboard
 );
@@ -132,5 +218,11 @@ router.post("/verify-payment", verifypayment);
 router.get("/payment-success", payemntsuccessfull);
 
 router.post("/save-payment", savePayments);
+
+router.post('/change-availability',(req, res, next) => {
+  const doctorId = req.body.doctorId;
+  req.doctorId = doctorId;
+  next();
+}, changeAvailability);
 
 module.exports = router;
