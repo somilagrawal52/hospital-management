@@ -4,5 +4,5 @@
   },
   "scripts": {
     "build:css": "tailwindcss -i ./index.css -o ./views/assets/tailwind.css --watch"
-}
+  }
 }

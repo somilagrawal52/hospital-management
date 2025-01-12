@@ -1,9 +1,9 @@
 <div class="flex items-center justify-between py-4 mb-5 text-sm font-bold border-b border-b-gray-400">
   <!-- Logo Section -->
-  <img onclick="window.location.href='/'" class="cursor-pointer w-44 " src="/assets/logo.png" alt="logo" />
-  
-  <!-- Navigation Links -->
-  <ul class="flex items-start gap-5">
+  <img onclick="window.location.href='/'" class="cursor-pointer w-44" src="/assets/logo.png" alt="logo" />
+
+  <!-- Desktop Navigation Links -->
+  <ul class="items-start hidden gap-5 md:flex">
     <li>
       <a href="/" class="py-1">HOME</a>
       <hr class="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
@@ -21,10 +21,22 @@
       <hr class="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
     </li>
   </ul>
-  <p class='border px-2.5 py-0.5 rounded-full border-gray-500 text-gray-600 cursor-pointer' onclick="window.location.href='/admin'">Admin</p>
+
+  <!-- Mobile Menu Button -->
+  <img
+    onclick="toggleMobileMenu()"
+    class="w-6 md:hidden"
+    src="/assets/menu_icon.svg"
+    alt="menu-icon"
+  />
+
+  <!-- Admin Section -->
+  <p class="hidden md:block border px-2.5 py-0.5 rounded-full border-gray-500 text-gray-600 cursor-pointer" onclick="window.location.href='/admin'">
+    Admin
+  </p>
+
   <!-- User Section -->
   <div class="flex items-center gap-4">
-   
     <% if (locals.user) { %>
       <div class="relative flex items-center gap-2 cursor-pointer group">
         <img class="w-10 rounded-full" src="<%= patientdata.image ? `${patientdata.image}` : '/assets/upload_area.png' %>" alt="profile_pic" />
@@ -43,7 +55,55 @@
   </div>
 </div>
 
+<!-- Mobile Menu -->
+<div id="mobileMenu" class="fixed top-0 right-0 z-40 hidden w-full h-full transition-all bg-white md:hidden">
+  <div class="flex items-center justify-between px-5 py-6 border-b border-gray-300">
+    <img class="w-36" src="/assets/logo.png" alt="logo" />
+    <img
+      class="w-6"
+      onclick="toggleMobileMenu()"
+      src="/assets/cross_icon.png"
+      alt="close-icon"
+    />
+  </div>
+  <ul class="flex flex-col items-center gap-4 px-5 mt-5 text-lg font-medium">
+    <li><a onclick="toggleMobileMenu()" href="/">Home</a></li>
+    <li><a onclick="toggleMobileMenu()" href="/doctors">All Doctors</a></li>
+    <li><a onclick="toggleMobileMenu()" href="/about">About</a></li>
+    <li><a onclick="toggleMobileMenu()" href="/contact">Contact</a></li>
+  </ul>
+  <div class="flex items-center justify-center mt-6">
+    <% if (locals.user) { %>
+      <div class="relative flex items-center gap-2 cursor-pointer group">
+        <img
+          class="w-10 rounded-full"
+          src="<%= patientdata.image ? `${patientdata.image}` : '/assets/upload_area.png' %>"
+          alt="profile_pic"
+        />
+        <div class="absolute right-0 hidden top-14 group-hover:block">
+          <div class="p-4 bg-gray-100 rounded shadow-md">
+            <p onclick="window.location.href='/my-profile'" class="hover:text-black">My Profile</p>
+            <p onclick="window.location.href='/my-appointment'" class="hover:text-black">My Appointments</p>
+            <p onclick="logout()" class="hover:text-black">Logout</p>
+          </div>
+        </div>
+      </div>
+    <% } else { %>
+      <button
+        onclick="window.location.href='/login'"
+        class="px-6 py-2 font-medium text-white bg-blue-600 rounded-full"
+      >
+        Create Account
+      </button>
+    <% } %>
+  </div>
+</div>
+
 <script>
+  function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    menu.classList.toggle('hidden');
+  }
   function logout() {
     try {
       // Clear the authentication token from cookies
