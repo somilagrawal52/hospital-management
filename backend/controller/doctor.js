@@ -1,5 +1,6 @@
 const User = require("../models/user");
 const path = require("path");
+const fs=require('fs');
 const { mailsender, sendWhatsAppMessage } = require("./mail");
 const {validatetoken}=require("../services/auth");
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
@@ -45,7 +46,13 @@ async function doctorsdetailtable(req, res) {
     const filterDoc = speciality
     ? doctors.filter((doc) => doc.speciality === speciality)
     : doctors;
-
+    doctors.forEach(doctor => {
+      const imagePath = path.join(__dirname, '..', '..','frontend', 'patient','views','assets',doctor.image.replace('/assets/', ''));
+      if (!fs.existsSync(imagePath)) {
+        const randomIndex = Math.floor(Math.random() * 14) + 1; 
+        doctor.image = `/assets/doc${randomIndex}.png`;
+      }
+    });
     res.render('doctor', { speciality, filterDoc,user:req.user,patientdata });
     
     // res.json({success:true,doctors});
