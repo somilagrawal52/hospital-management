@@ -150,6 +150,14 @@ router.get("/my-profile",PatientProfile);
 router.get('/admin/doctors-detail', async (req, res) => {
   try {
     const doctors = await User.find({role:"DOCTOR"});
+    doctors.forEach(doctor => {
+      const imagePath = path.join(__dirname, '..', '..', 'frontend', 'patient', 'views', 'assets', doctor.image.replace('/assets/', ''));
+      console.log("Checking image path:", imagePath); // Debugging statement
+      if (!fs.existsSync(imagePath)) {
+        const randomIndex = Math.floor(Math.random() * 14) + 1; // Generate a random number between 1 and 14
+        doctor.image = `/assets/doc${randomIndex}.png`; // Set default image path with random number
+      }
+    });
     res.json(doctors);
   } catch (error) {
     console.error("Error fetching doctors:", error);
