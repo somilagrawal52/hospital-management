@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
+const fs=require('fs');
 const path = require("path");
 const Appointment=require("../models/appointment")
 const {validatetoken}=require('../services/auth')
@@ -85,6 +86,11 @@ router.get('/appointment/:id',async (req, res) => {
   }
   const { id } = req.params;
   const docInfo = await User.findById(id).select('-password');
+    const imagePath = path.join(__dirname, '..', '..', 'frontend', 'patient', 'views', 'assets', docInfo.image.replace('/assets/', ''));
+    if (!fs.existsSync(imagePath)) {
+      const randomIndex = Math.floor(Math.random() * 14) + 1;
+      docInfo.image = `/assets/doc${randomIndex}.png`;
+    }
   if (!docInfo) {
     return res.status(404).send("Doctor not found");
   }
