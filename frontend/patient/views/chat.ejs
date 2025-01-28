@@ -1,0 +1,102 @@
+<%- include('head') %>
+<div class="flex items-center justify-center min-h-screen bg-gray-200">
+    <div id="chat-container" class="flex flex-col w-full sm:w-3/4 lg:w-1/2 max-h-[80vh] bg-white shadow-xl rounded-lg">
+        <!-- Header -->
+        <div class="px-6 py-4 text-lg font-bold text-center text-white bg-blue-600 rounded-t-lg">
+            Chat Room
+        </div>
+
+        <!-- Messages Area -->
+        <div id="messages" class="flex flex-col flex-grow p-4 space-y-4 overflow-y-auto bg-gray-50">
+            <!-- Chat messages will appear here -->
+        </div>
+
+        <!-- Message Input -->
+        <form action="#" id="send-msg" class="flex items-center w-full p-4 bg-white border-t border-gray-300">
+            <input 
+                type="text" 
+                id="message-input" 
+                placeholder="Type a message..." 
+                class="flex-grow p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button 
+                type="submit" 
+                id="send-btn" 
+                class="p-3 ml-1 text-white transition-colors bg-blue-600 rounded-r-lg hover:bg-blue-700"
+            >
+                Send
+            </button>
+        </form>
+    </div>
+</div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const sendMessage = async (message) => {
+  try {
+    const response = await fetch("/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.message || "Oops, I couldn't process your request.";
+  } catch (error) {
+    console.error("Error fetching AI response:", error);
+    return "Sorry, something went wrong.";
+  }
+};
+
+// Handling chat form submission
+const form = document.getElementById("send-msg");
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const message = document.getElementById("message-input").value.trim();
+
+  if (!message) return; // Skip sending if the input is empty
+
+  // Append user's message to chat
+  appendMessage(`You: ${message}`, 'right');
+
+  // Get response from AI
+  const chatbotResponse = await sendMessage(message);
+
+  // Append chatbot's response
+  appendMessage(`Chatbot: ${chatbotResponse}`, 'left');
+
+  // Clear the input
+  document.getElementById("message-input").value = '';
+});
+
+const appendMessage = (message, position) => {
+  const messages = document.getElementById("messages");
+  const messageElement = document.createElement("div");
+
+  // Create message text element
+  const textElement = document.createElement("span");
+  textElement.innerText = message;
+
+  // Apply classes based on the position (user's message or chatbot response)
+  const baseClasses = 'inline-block px-4 py-2 max-w-[75%] break-words rounded-lg shadow-md';
+  const leftClasses = 'bg-gray-300 text-gray-800'; // Other user's messages
+  const rightClasses = 'bg-blue-500 text-white'; // User's messages
+  textElement.className = `${baseClasses} ${position === 'right' ? rightClasses : leftClasses}`;
+
+  messageElement.className = `flex ${position === 'right' ? 'justify-end' : 'justify-start'} mb-2`;
+  messageElement.appendChild(textElement);
+
+  // Append message to the chat
+  messages.append(messageElement);
+
+  // Auto-scroll to the bottom
+  messages.scrollTop = messages.scrollHeight;
+};
+
+</script>
+<%- include('bottom') %>

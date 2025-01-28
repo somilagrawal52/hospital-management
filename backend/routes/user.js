@@ -1,7 +1,9 @@
+require("dotenv").config();
 const express = require("express");
 const router = express.Router();
 const User = require("../models/user");
 const fs=require('fs');
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 const path = require("path");
 const Appointment=require("../models/appointment")
 const {validatetoken}=require('../services/auth')
@@ -77,6 +79,21 @@ router.get("/admin/login", adminlogin);
 
 router.post("/admin/login", adminloginfromdb);
 
+const genAI = new GoogleGenerativeAI(process.env.OPENAI_API_KEY);
+router.post('/chat', async (req, res) => {
+  const userMessage = req.body.message;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const prompt = userMessage;
+    const result = await model.generateContent(prompt);
+    res.json({ message: result.response.text() });
+  } catch (error) {
+    console.error("Error with AI Studio API:", error);
+    res.status(500).json({ error: "Error processing your request." });
+  }
+});
+
 router.get('/appointment/:id',async (req, res) => {
   const token=req.cookies.token;
   let patientdata = null;
@@ -96,6 +113,10 @@ router.get('/appointment/:id',async (req, res) => {
   }
   res.render('appointment', { docInfo,currencySymbol: "$",user:req.user,patientdata});
 });
+
+router.get('/chats',async(req,res)=>{
+  res.render("chat");
+})
 
 router.get("/logout", adminlogout);
 
