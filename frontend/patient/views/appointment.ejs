@@ -198,7 +198,8 @@
             signature: response.razorpay_signature,
           }),
         });
-
+        // const { invoiceUrl } = response.data;
+        // window.location.href = invoiceUrl;
         window.location.href = "/payment-success";
       },
     };

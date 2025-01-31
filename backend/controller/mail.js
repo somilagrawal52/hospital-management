@@ -1,12 +1,13 @@
 require("dotenv").config();
 const nodemailer = require("nodemailer");
+const fs = require("fs");
 const { text } = require("express");
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = require('twilio')(accountSid, authToken);
 
-async function mailsender(obj) {
+async function mailsender(obj,filePath) {
   console.log("we are inside of mailsender");
   let mailtransporter = nodemailer.createTransport({
     service: "gmail",
@@ -17,11 +18,19 @@ async function mailsender(obj) {
       pass: process.env.mail_pass,
     },
   });
+  
   let mail = {
     from: "somilagrawal2004@gmail.com",
     to: obj.to,
     subject: obj.subject,
     text: obj.text,
+    attachments: [
+      {
+        filename: "invoice", 
+        path: filePath,     
+        contentType: 'application/pdf',
+      },
+    ],
   };
 
   mailtransporter.sendMail(mail, function (err, info) {

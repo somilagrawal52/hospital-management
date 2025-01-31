@@ -1,8 +1,8 @@
 require("dotenv").config();
 const express = require("express");
 const router = express.Router();
+const fs = require('fs');
 const User = require("../models/user");
-const fs=require('fs');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const path = require("path");
 const Appointment=require("../models/appointment")
@@ -91,6 +91,23 @@ router.post('/chat', async (req, res) => {
   } catch (error) {
     console.error("Error with AI Studio API:", error);
     res.status(500).json({ error: "Error processing your request." });
+  }
+});
+
+router.get('/download-pdf', (req, res) => {
+  const { file } = req.query;  // Get the filename from the query string
+  const filePath = path.join(__dirname, 'invoices', file);  // Construct the full file path
+
+  // Check if the file exists
+  if (fs.existsSync(filePath)) {
+    // Set the response headers for file download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename=${file}`);
+
+    // Create a readable stream of the file and pipe it to the response
+    fs.createReadStream(filePath).pipe(res);
+  } else {
+    res.status(404).json({ message: 'File not found' });
   }
 });
 
@@ -235,6 +252,8 @@ router.get(
   restrictTo(["DOCTOR"]),
   doctorsdashboard
 );
+
+
 
 router.post("/messages", sendmsg);
 

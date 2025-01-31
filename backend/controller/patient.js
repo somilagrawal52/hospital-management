@@ -1,5 +1,7 @@
 const express = require("express");
 const path = require("path");
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
 const Appointment = require("../models/appointment");
 const Message = require("../models/messages");
 const { mailsender,sendWhatsAppMessage } = require("./mail");
@@ -44,70 +46,93 @@ async function bookappointment(req, res) {
     const decoded = validatetoken(token);
     const { docId, fullname, email, number, date, line1, line2, amount } = req.body;
     const userid = decoded._id;
-    console.log("body",req.body);
+    
     const razorpayOrder = await instance.orders.create({
       amount: amount * 100,
       currency: "INR",
     });
-    const doctordata = await User.findById(docId).select("-password");
-    console.log("data",doctordata)
-    if(!doctordata.available){
-      return res.status(400).json({success:false,message:"Doctor is not available"})
-    }
     
+    const invoiceDir = path.join(__dirname, 'invoices');
+    if (!fs.existsSync(invoiceDir)) {
+      fs.mkdirSync(invoiceDir, { recursive: true });
+    }
+
+    const fileName = `invoice-${Date.now()}.pdf`;
+    const filePath = path.join(invoiceDir, fileName);
+    const doc = new PDFDocument();
+    const doctordata = await User.findById(docId).select("-password");
+
+    doc.pipe(fs.createWriteStream(filePath));
+
+    doc.fontSize(20).text('Payment Successful! Thank you for using OneLife.');
+    doc.text(`Invoice ID: ${razorpayOrder.id}`);
+    doc.text(`Patient Name: ${fullname}`);
+    doc.text(`Doctor Name: Dr. ${doctordata.fullname}`); 
+    doc.text(`Date of Appointment: ${date}`);
+    doc.text(`Amount Paid: ₹${amount}`);
+    doc.end();
+
+    if(!doctordata.available){
+      return res.status(400).json({success:false,message:"Doctor is not available"});
+    }
+
     await doctordata.save();
-    const userdata=await User.findById(userid).select("-password");
-    const doctordataCopy = { ...doctordata._doc };
+    const userdata = await User.findById(userid).select("-password");
     const appointment = new Appointment({
       fullname,
       email,
       number,
-      address:{line1,line2},
+      address: { line1, line2 },
       userid,
       docId,
-      doctor:doctordata.fullname,
+      doctor: doctordata.fullname,
       payment: {
         orderId: razorpayOrder.id,
-        amount:doctordata.fees,
+        amount: doctordata.fees,
         currency: "INR",
         status: "pending",
       },
-      date:new Date(date),
+      date: new Date(date),
       amount: doctordata.fees,
       userdata,
-      doctordata: doctordataCopy,
+      doctordata,
     });
-    
+
     await appointment.save();
-    console.log("Appointment created successfully");
-    console.log("Patient Email:", email);
 
     const patientmail = {
       to: email,
       subject: "Appointment Booked",
       text: `${fullname} your Appointment is booked`,
+      attachments: [
+        {
+          path: filePath,
+          contentType: 'application/pdf',
+        }
+      ],
     };
-    console.log("Doctor Email:", doctordata.email);
     const doctormail = {
       to: doctordata.email,
       subject: "Appointment Booked",
       text: `${doctordata.fullname} you have been booked for ${date} by ${fullname}`,
-    };  
-    const patientWhatsAppMessage = `${fullname}, your appointment is confirmed for ${date} with Dr. ${doctordata.fullname}.`;
-    const doctorWhatsAppMessage = `${doctordata.fullname}, an appointment has been scheduled for ${date} with patient ${fullname}.`;
+      attachments: [
+        {
+          path: filePath,
+          contentType: 'application/pdf',
+        }
+      ],
+    };
+    await mailsender(patientmail,filePath);
+    await mailsender(doctormail,filePath);
 
-    await mailsender(patientmail);
-    await mailsender(doctormail);
-
-    await sendWhatsAppMessage(`+91${doctordata.number}`, doctorWhatsAppMessage);
-    await sendWhatsAppMessage(`+91${number}`, patientWhatsAppMessage);
+    await sendWhatsAppMessage(`+91${doctordata.number}`, `Dr. ${doctordata.fullname}, an appointment has been scheduled for ${date} with patient ${fullname}.`);
+    await sendWhatsAppMessage(`+91${number}`, `${fullname}, your appointment is confirmed for ${date} with Dr. ${doctordata.fullname}.`);
 
     res.json({
       message: "Appointment created successfully.",
       appointmentId: appointment._id,
       razorpayOrderId: razorpayOrder.id,
-    });
-
+      });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error booking appointment." });
