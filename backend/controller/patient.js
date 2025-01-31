@@ -69,7 +69,7 @@ async function bookappointment(req, res) {
     doc.text(`Patient Name: ${fullname}`);
     doc.text(`Doctor Name: Dr. ${doctordata.fullname}`); 
     doc.text(`Date of Appointment: ${date}`);
-    doc.text(`Amount Paid: ₹${amount}`);
+    doc.text(`Amount Paid: ${amount}`);
     doc.end();
 
     if(!doctordata.available){
