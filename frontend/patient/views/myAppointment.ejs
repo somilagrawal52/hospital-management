@@ -1,0 +1,50 @@
+<%- include('head') %>
+<div class="mx-4 sm:mx-[10%]">
+    <%- include('Navbar') %>
+    <div>
+        <p class="pb-3 mt-12 text-lg font-medium text-gray-600 border-b">My appointments</p>
+        <div>
+          <% if (patientdata && patientdata.appointments && patientdata.appointments.length > 0) { %>
+            <% patientdata.appointments.forEach((item, index) => { %>
+              <div class="grid grid-cols-[1fr_2fr] gap-4 sm:flex sm:gap-6 py-4 border-b">
+                <div>
+                  <img class="w-36 bg-[#EAEFFF]" src="<%= item.doctordata.image.startsWith('/img/') ? item.doctordata.image.replace('/img/', '/assets/') : item.doctordata.image %>" alt="Doctor Image">
+                </div>
+                <div class="flex-1 text-sm text-[#5E5E5E]">
+                  <p class="text-[#262626] text-base font-semibold">Dr. <%= item.doctordata.fullname %></p>
+                  <p><%= item.doctordata.speciality %></p>
+                  <p class="text-[#464646] font-medium mt-1">Address:</p>
+                  <p><%= item.address.line1 %></p>
+                  <p><%= item.address.line2 %></p>
+                  <p class="mt-1 "><span class="text-sm text-[#faadad] font-medium">Date & Time: </span>25, July, 2024 | 8:30 PM</p>
+                </div>
+                <div></div>
+                <div class="flex flex-col justify-end gap-2 text-sm text-center">
+                  <button class="text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300" onclick="deleteAppointment('<%= item._id %>')">Cancel Appointment</button>
+                </div>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <p>No appointments available.</p>
+          <% } %>
+        </div>
+      </div>    
+    <%- include('footer') %>
+    <script>
+      async function deleteAppointment(id) {
+        try {
+          const response=await fetch(`/clearapp/${id}`,{
+            method:'GET'
+          });
+          if(response.ok){
+            window.location.reload();
+          }else{
+            console.error('failed to delete the doctor');
+          }
+        } catch (error) {
+          console.error(error)
+        }
+      }
+    </script>
+    <%- include('bottom')  %>
+</div>

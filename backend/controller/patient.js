@@ -98,7 +98,9 @@ async function bookappointment(req, res) {
       doctordata,
     });
 
+    console.log("Attempting to save appointment:", appointment);
     await appointment.save();
+    console.log("Appointment saved successfully");
 
     const patientmail = {
       to: email,
@@ -186,6 +188,29 @@ async function messagesdetailtable(req, res) {
   } catch (error) {
     console.error("Error fetching doctors:", error);
     res.status(500).send("Server error");
+  }
+}
+
+async function myappointments(req,res) {
+  try {
+    const token = req.cookies.token;
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    const decoded = validatetoken(token);
+    if (!decoded) {
+      return res.status(401).json({ success: false, message: "Invalid token" });
+    }
+    const patientdata = await User.findById(decoded._id).select("-password");
+    const appointments = await Appointment.find({ userid: decoded._id });
+
+    patientdata.appointments = appointments;
+    console.log("Patient appointments data:", patientdata.appointments);
+
+    res.render('myAppointment',{user:req.user,patientdata});
+  } catch (error) {
+    console.error(error);
+    res.json({ success: false, message: "Error fetching patient data" });
   }
 }
 
@@ -341,6 +366,7 @@ module.exports = {
   appointmentdetailtable,
   messagesdetailtable,
   sendmsg,
+  myappointments,
   savePayments,
   patientregistrationtodb,
   patientloginfromdb,

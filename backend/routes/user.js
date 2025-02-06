@@ -34,7 +34,7 @@ const {
   changeAvailability,
 } = require("../controller/doctor");
 const {
-  
+  myappointments,
   doctors,
   messages,
   appointment,
@@ -78,6 +78,8 @@ const upload = multer({ storage: storage });
 router.get("/admin/login", adminlogin);
 
 router.post("/admin/login", adminloginfromdb);
+
+router.get("/my-appointment",myappointments);
 
 const genAI = new GoogleGenerativeAI(process.env.OPENAI_API_KEY);
 router.post('/chat', async (req, res) => {

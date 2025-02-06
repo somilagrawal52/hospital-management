@@ -4,10 +4,12 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const mongoose = require("mongoose");
+const { validatetoken } = require("./services/auth");
 const cookieParser = require("cookie-parser");
 const userRoute = require("./routes/user");
 const { checkforauthentication, restrictTo } = require("./middlewares/auth");
 const User = require("./models/user");
+const Appointment=require("./models/appointment");
 
 const app = express();
 const server = http.createServer(app);
@@ -83,6 +85,21 @@ app.get("/clear/:id", async (req, res) => {
   }
 });
 
+app.get("/clearapp/:id",async (req,res) => {
+  try {
+    await Appointment.findByIdAndDelete(req.params.id);
+    const token = req.cookies.token;
+    const decoded = validatetoken(token);
+    const patientdata = await User.findById(decoded._id).select("-password");
+    const appointments = await Appointment.find({ userid: decoded._id });
+
+    patientdata.appointments = appointments;
+    res.render('myAppointment', { user: req.user, patientdata });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send("server error");
+  }
+})
 app.use((err, req, res, next) => {
   console.error("Error:", err.message);
   res.status(500).json({ error: err.message });
