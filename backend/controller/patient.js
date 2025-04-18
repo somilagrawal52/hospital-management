@@ -39,6 +39,21 @@ async function home(req, res) {
 async function doctors(req, res) {
   return res.sendFile(path.join(frontendPath, "doctors-registered.html"));
 }
+// Get all online appointment requests with status "pending"
+async function getOnlineAppointmentRequests(req, res) {
+  try {
+    const onlineAppointments = await Appointment.find({
+      isOnline: true,
+      cancelled: false,
+      iscompleted: false,
+    }).sort({ date: -1 });
+
+    res.json({ success: true, appointments: onlineAppointments });
+  } catch (error) {
+    console.error("Error fetching online appointments:", error);
+    res.status(500).json({ success: false, message: "Error fetching online appointments" });
+  }
+}
 
 async function bookappointment(req, res) {
   try {
@@ -344,6 +359,32 @@ async function patientsregisterpage(req, res){
   return res.render("login", { state: 'register', fullname: '', email: '', password: '' });
 
 }
+
+async function updateAppointmentStatus(req, res) {
+  const { appointmentId, status } = req.body;
+
+  if (!["accepted", "declined"].includes(status)) {
+    return res.status(400).json({ success: false, message: "Invalid status" });
+  }
+
+  try {
+    const appointment = await Appointment.findByIdAndUpdate(
+      appointmentId,
+      { status },
+      { new: true }
+    );
+
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: "Appointment not found" });
+    }
+
+    res.json({ success: true, message: `Appointment ${status}` });
+  } catch (error) {
+    console.error("Error updating appointment:", error);
+    res.status(500).json({ success: false, message: "Error updating appointment status" });
+  }
+}
+
 async function contactpage(req, res){
   const token=req.cookies.token;
   let patientdata = null;
@@ -355,19 +396,45 @@ async function contactpage(req, res){
 
 }
 
+// API: Mark an appointment as online request
+async function markAppointmentOnline(req, res) {
+  try {
+    const { id } = req.params;
+
+    const appointment = await Appointment.findById(id);
+    if (!appointment) {
+      return res.status(404).json({ success: false, message: "Appointment not found" });
+    }
+
+    appointment.isOnline = true;
+    await appointment.save();
+
+    // Optionally notify doctor or patient
+    await sendWhatsAppMessage(`+91${appointment.doctordata.number}`, `You have a new request for an *online* appointment from ${appointment.fullname}.`);
+    
+    res.json({ success: true, message: "Appointment marked as online" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Something went wrong" });
+  }
+}
+
 module.exports = {
   messages,
   PatientProfile,
   patientsloginpage,
   home,
+  updateAppointmentStatus,
   patientsregisterpage,
   doctors,
+  markAppointmentOnline,
   bookappointment,
   appointmentdetailtable,
   messagesdetailtable,
   sendmsg,
   myappointments,
   savePayments,
+  getOnlineAppointmentRequests,
   patientregistrationtodb,
   patientloginfromdb,
   UpdateProfile,

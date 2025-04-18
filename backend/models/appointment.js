@@ -54,6 +54,10 @@ const appointmentschema = new mongoose.Schema(
         required: true,
       },
     },
+    isOnline: {
+      type: Boolean,
+      default: false,
+    },
     date: {
       type: Date,
       required: true,

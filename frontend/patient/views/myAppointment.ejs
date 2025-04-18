@@ -21,8 +21,12 @@
                 <div></div>
                 <div class="flex flex-col justify-end gap-2 text-sm text-center">
                   <button class="text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300" onclick="deleteAppointment('<%= item._id %>')">Cancel Appointment</button>
+                  <% if (!item.isOnline) { %>
+                  <button class="text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300" onclick="makeOnlineAppointment('<%= item._id %>')">Book An Online Video Conference Instead</button>
+                  <% } %>
                 </div>
               </div>
+              
             <% }) %>
           <% } else { %>
             <p>No appointments available.</p>
@@ -45,6 +49,24 @@
           console.error(error)
         }
       }
+      
+      async function makeOnlineAppointment(id) {
+    try {
+      const response = await fetch(`/make-online/${id}`, {
+        method: 'GET'
+      });
+      const result = await response.json();
+      if (result.success) {
+        alert("Online appointment request sent successfully!");
+        window.location.reload();
+      } else {
+        alert("Failed to request online appointment.");
+      }
+    } catch (err) {
+      console.error("Error making appointment online", err);
+    }
+  }
+
     </script>
     <%- include('bottom')  %>
 </div>

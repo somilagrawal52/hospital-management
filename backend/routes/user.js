@@ -1,13 +1,16 @@
 require("dotenv").config();
 const express = require("express");
 const router = express.Router();
-const fs = require('fs');
+const fs = require("fs");
 const User = require("../models/user");
+const { mailsender } = require('../controller/mail');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const path = require("path");
-const Appointment=require("../models/appointment")
-const {validatetoken}=require('../services/auth')
-const {specialityData} = require('../../frontend/patient/views/assets/assets');
+const Appointment = require("../models/appointment");
+const { validatetoken } = require("../services/auth");
+const {
+  specialityData,
+} = require("../../frontend/patient/views/assets/assets");
 const {
   getallcities,
   getallcountries,
@@ -31,6 +34,7 @@ const {
   doctorsloginpage,
   doctorloginfromdb,
   doctorlogout,
+  showalldocmsg,
   changeAvailability,
 } = require("../controller/doctor");
 const {
@@ -48,9 +52,12 @@ const {
   patientloginfromdb,
   PatientProfile,
   UpdateProfile,
+  getOnlineAppointmentRequests,
   patientsloginpage,
   patientsregisterpage,
+  markAppointmentOnline,
   aboutpage,
+  updateAppointmentStatus,
   contactpage,
 } = require("../controller/patient");
 const { register } = require("../controller/patient");
@@ -62,7 +69,15 @@ const {
   payemntsuccessfull,
 } = require("../controller/razorpay");
 
-const frontendPath = path.resolve(__dirname, "..", "..", "frontend","patient" ,"views","assets");
+const frontendPath = path.resolve(
+  __dirname,
+  "..",
+  "..",
+  "frontend",
+  "patient",
+  "views",
+  "assets"
+);
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -79,10 +94,85 @@ router.get("/admin/login", adminlogin);
 
 router.post("/admin/login", adminloginfromdb);
 
-router.get("/my-appointment",myappointments);
+router.get("/my-appointment", myappointments);
+
+router.get("/appointments/online", getOnlineAppointmentRequests);
+
+router.post("/appointments/status", updateAppointmentStatus);
+
+router.get("/video-requests", async (req, res) => {
+  try {
+    const appointments = await Appointment.find({
+      isOnline: true,
+      iscompleted: false,
+      cancelled: false,
+    });
+
+    const filtered = appointments.map((appt) => ({
+      id: appt._id,
+      fullname: appt.fullname,
+      reason: appt.payment?.reason || "N/A",
+      requestTime: appt.date,
+    }));
+
+    res.json(filtered);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+router.post("/video-requests/accept/:id", async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.id); // Fetch the appointment details
+    if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    await Appointment.findByIdAndUpdate(req.params.id, {
+      iscompleted: true,
+      isOnline: true,
+    });
+
+    const patient = await User.findById(appointment.userid);
+    if (patient?.email) {
+      const filePath = `./invoices/${appointment._id}.pdf`;
+      const patientmail = {
+        to: patient.email,
+        subject: "Your Online Appointment Request is Accepted",
+        text: `
+          Hello ${patient.fullname || "Patient"},
+          Your online appointment request for ${appointment.date} has been accepted.
+          Doctor: ${appointment.doctorname || "Assigned Doctor"}
+          Reason: ${appointment.payment?.reason || "N/A"}
+          
+          Thank you for using OneLife.
+        `,
+      };
+      await mailsender(patientmail, fs.existsSync(filePath) ? filePath : null);
+    }
+
+    res.status(200).json({ message: "Request accepted" });
+  } catch (err) {
+    console.error("Error accepting request:", err);
+    res.status(500).json({ error: "Failed to accept request" });
+  }
+});
+
+router.post("/video-requests/decline/:id", async (req, res) => {
+  try {
+    await Appointment.findByIdAndUpdate(req.params.id, {
+      cancelled: true,
+      isOnline: false,
+    });
+    res.status(200).json({ message: "Request declined" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to decline request" });
+  }
+});
 
 const genAI = new GoogleGenerativeAI(process.env.OPENAI_API_KEY);
-router.post('/chat', async (req, res) => {
+router.post("/chat", async (req, res) => {
   const userMessage = req.body.message;
 
   try {
@@ -96,52 +186,68 @@ router.post('/chat', async (req, res) => {
   }
 });
 
-router.get('/download-pdf', (req, res) => {
-  const { file } = req.query;  // Get the filename from the query string
-  const filePath = path.join(__dirname, 'invoices', file);  // Construct the full file path
+router.get("/make-online/:id", markAppointmentOnline);
+
+router.get("/download-pdf", (req, res) => {
+  const { file } = req.query; // Get the filename from the query string
+  const filePath = path.join(__dirname, "invoices", file); // Construct the full file path
 
   // Check if the file exists
   if (fs.existsSync(filePath)) {
     // Set the response headers for file download
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=${file}`);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename=${file}`);
 
     // Create a readable stream of the file and pipe it to the response
     fs.createReadStream(filePath).pipe(res);
   } else {
-    res.status(404).json({ message: 'File not found' });
+    res.status(404).json({ message: "File not found" });
   }
 });
 
-router.get('/appointment/:id',async (req, res) => {
-  const token=req.cookies.token;
+router.get("/appointment/:id", async (req, res) => {
+  const token = req.cookies.token;
   let patientdata = null;
   if (token) {
     const decodedtoken = validatetoken(token);
     patientdata = await User.findById({ _id: decodedtoken._id });
   }
   const { id } = req.params;
-  const docInfo = await User.findById(id).select('-password');
-    const imagePath = path.join(__dirname, '..', '..', 'frontend', 'patient', 'views', 'assets', docInfo.image.replace('/assets/', ''));
-    if (!fs.existsSync(imagePath)) {
-      const randomIndex = Math.floor(Math.random() * 14) + 1;
-      docInfo.image = `/assets/doc${randomIndex}.png`;
-    }
+  const docInfo = await User.findById(id).select("-password");
+  const imagePath = path.join(
+    __dirname,
+    "..",
+    "..",
+    "frontend",
+    "patient",
+    "views",
+    "assets",
+    docInfo.image.replace("/assets/", "")
+  );
+  if (!fs.existsSync(imagePath)) {
+    const randomIndex = Math.floor(Math.random() * 14) + 1;
+    docInfo.image = `/assets/doc${randomIndex}.png`;
+  }
   if (!docInfo) {
     return res.status(404).send("Doctor not found");
   }
-  res.render('appointment', { docInfo,currencySymbol: "$",user:req.user,patientdata});
+  res.render("appointment", {
+    docInfo,
+    currencySymbol: "$",
+    user: req.user,
+    patientdata,
+  });
 });
 
-router.get('/chats',async(req,res)=>{
+router.get("/chats", async (req, res) => {
   res.render("chat");
-})
+});
 
 router.get("/logout", adminlogout);
 
 router.get("/doctorlogout", doctorlogout);
 
-router.get('/contact', contactpage);
+router.get("/contact", contactpage);
 
 router.get(
   "/doctors-registration",
@@ -150,19 +256,19 @@ router.get(
   doctorsregistration
 );
 
-router.get('/about', aboutpage);
+router.get("/about", aboutpage);
 
-router.get('/doctors/:speciality?',doctorsdetailtable);
+router.get("/doctors/:speciality?", doctorsdetailtable);
 
 router.get("/", async (req, res) => {
-  const token=req.cookies.token;
+  const token = req.cookies.token;
   let patientdata = null;
   if (token) {
     const decodedtoken = validatetoken(token);
     patientdata = await User.findById({ _id: decodedtoken._id });
   }
-    res.render("index", {
-    user: req.user, 
+  res.render("index", {
+    user: req.user,
     specialityData,
     patientdata,
   });
@@ -175,7 +281,7 @@ router.post(
 );
 router.post("/doctorlogin", doctorloginfromdb);
 
-router.post('/login',patientloginfromdb);
+router.post("/login", patientloginfromdb);
 
 router.get("/register", patientsregisterpage);
 
@@ -185,13 +291,22 @@ router.get("/doctorlogin", doctorsloginpage);
 
 router.get("/profile", adminprofile);
 
-router.get("/my-profile",PatientProfile);
+router.get("/my-profile", PatientProfile);
 
-router.get('/admin/doctors-detail', async (req, res) => {
+router.get("/admin/doctors-detail", async (req, res) => {
   try {
-    const doctors = await User.find({role:"DOCTOR"});
-    doctors.forEach(doctor => {
-      const imagePath = path.join(__dirname, '..', '..', 'frontend', 'patient', 'views', 'assets', doctor.image.replace('/assets/', ''));
+    const doctors = await User.find({ role: "DOCTOR" });
+    doctors.forEach((doctor) => {
+      const imagePath = path.join(
+        __dirname,
+        "..",
+        "..",
+        "frontend",
+        "patient",
+        "views",
+        "assets",
+        doctor.image.replace("/assets/", "")
+      );
       console.log("Checking image path:", imagePath); // Debugging statement
       if (!fs.existsSync(imagePath)) {
         const randomIndex = Math.floor(Math.random() * 14) + 1; // Generate a random number between 1 and 14
@@ -213,49 +328,45 @@ router.get("/messages", messages);
 
 router.get("/appointments", appointmentdetailtable);
 
-router.get("/doctor/appointments",async(req,res)=>{
+router.get("/doctor/appointments", async (req, res) => {
   const token = req.cookies.token;
-    if (!token) {
-        return res.status(401).json({ error: "No token provided" });
-    }
-    try {
-        const decodedtoken = validatetoken(token);
-        const doctordata = await Appointment.find({ docId: decodedtoken._id })
-            .select("-userdata")
-            .select("-doctordata")
-            .select("-payment");
-        
-        return res.json({ doctordata });
-    } catch (error) {
-        console.error("Error fetching appointments:", error);
-        return res.status(500).json({ error: "Internal server error" });
-    }
-})
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" });
+  }
+  try {
+    const decodedtoken = validatetoken(token);
+    const doctordata = await Appointment.find({ docId: decodedtoken._id })
+      .select("-userdata")
+      .select("-doctordata")
+      .select("-payment");
 
-router.get("/admin/appointments",async(req,res)=>{
+    return res.json({ doctordata });
+  } catch (error) {
+    console.error("Error fetching appointments:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/admin/appointments", async (req, res) => {
   try {
     const appointments = await Appointment.find();
-    res.json({appointments});
+    res.json({ appointments });
   } catch (error) {
     console.log(error);
   }
-})
+});
 
 router.post("/appointment", bookappointment);
 
-router.post('/register',patientregistrationtodb);
+router.post("/register", patientregistrationtodb);
 
 router.get("/showmsg", showallmsg);
 
-router.post('/update-profile',upload.single('image'),UpdateProfile);
+router.get("/showdocmsg", showalldocmsg);
 
-router.get(
-  "/doctor",
-  restrictTo(["DOCTOR"]),
-  doctorsdashboard
-);
+router.post("/update-profile", upload.single("image"), UpdateProfile);
 
-
+router.get("/doctor", restrictTo(["DOCTOR"]), doctorsdashboard);
 
 router.post("/messages", sendmsg);
 
@@ -275,10 +386,14 @@ router.get("/payment-success", payemntsuccessfull);
 
 router.post("/save-payment", savePayments);
 
-router.post('/change-availability',(req, res, next) => {
-  const doctorId = req.body.doctorId;
-  req.doctorId = doctorId;
-  next();
-}, changeAvailability);
+router.post(
+  "/change-availability",
+  (req, res, next) => {
+    const doctorId = req.body.doctorId;
+    req.doctorId = doctorId;
+    next();
+  },
+  changeAvailability
+);
 
 module.exports = router;

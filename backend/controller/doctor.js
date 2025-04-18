@@ -66,6 +66,10 @@ async function doctorsdashboard(req, res) {
   return res.sendFile(path.join(frontendDoctor, "doctor-dashboard.html"));
 }
 
+async function showalldocmsg(req, res) {
+  return res.sendFile(path.join(frontendDoctor, "messages.html"));
+}
+
 async function doctorsregistrationtodb(req, res) {
   const {
     fullname,
@@ -172,5 +176,6 @@ module.exports = {
   doctorsloginpage,
   doctorloginfromdb,
   doctorlogout,
+  showalldocmsg,
   changeAvailability,
 };
