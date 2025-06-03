@@ -284,7 +284,12 @@ async function patientloginfromdb(req, res) {
     return res.redirect('/');
   } catch (error) {
     console.error("Error during login:", error.message);
-    return res.status(401).json({ success: false, message: error.message });
+    return res.render('login', {
+      state: 'login',
+      email,
+      password: '',
+      error: "Incorrect email or password. Please try again."
+    });
   }
 }
 
