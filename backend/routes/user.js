@@ -2,6 +2,8 @@ require("dotenv").config();
 const express = require("express");
 const router = express.Router();
 const fs = require("fs");
+const axios = require("axios");
+const cheerio = require("cheerio");
 const User = require("../models/user");
 const { mailsender } = require('../controller/mail');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
@@ -99,6 +101,227 @@ router.get("/my-appointment", myappointments);
 router.get("/appointments/online", getOnlineAppointmentRequests);
 
 router.post("/appointments/status", updateAppointmentStatus);
+
+router.get("/disease", (req, res) => {
+  res.render("diseaseSearch");
+});
+
+router.get("/disease/:name", async (req, res) => {
+  const diseaseName = req.params.name;
+  const url = `https://www.who.int/health-topics/${encodeURIComponent(diseaseName)}`;
+  
+  try {
+    const { data } = await axios.get(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      },
+      timeout: 10000 // 10 second timeout
+    });
+    
+    const $ = cheerio.load(data);
+    
+    // Get page title for verification
+    const pageTitle = $('h1').first().text().trim();
+    
+    // Get the main content text from WHO pages
+    let fullText = "";
+    
+    // WHO pages typically have content in main content areas
+    const contentSelectors = [
+      'main .sf-content',
+      '.page-content',
+      '.content-area', 
+      'main',
+      '.article-content'
+    ];
+    
+    for (let selector of contentSelectors) {
+      const content = $(selector).first().text();
+      if (content && content.length > 500) {
+        fullText = content.trim();
+        break;
+      }
+    }
+    
+    // If no structured content found, get all paragraphs
+    if (!fullText) {
+      let allText = [];
+      $('p').each((i, el) => {
+        const text = $(el).text().trim();
+        if (text && text.length > 50) {
+          allText.push(text);
+        }
+      });
+      fullText = allText.join(' ');
+    }
+    
+    // Parse the full text to extract different sections
+    function extractSection(text, keywords, nextSectionKeywords = []) {
+      const lowerText = text.toLowerCase();
+      let startIndex = -1;
+      
+      // Find start of section
+      for (let keyword of keywords) {
+        const index = lowerText.indexOf(keyword.toLowerCase());
+        if (index !== -1) {
+          startIndex = index;
+          break;
+        }
+      }
+      
+      if (startIndex === -1) return [];
+      
+      // Find end of section
+      let endIndex = text.length;
+      for (let nextKeyword of nextSectionKeywords) {
+        const index = lowerText.indexOf(nextKeyword.toLowerCase(), startIndex + 50);
+        if (index !== -1 && index < endIndex) {
+          endIndex = index;
+        }
+      }
+      
+      const sectionText = text.substring(startIndex, endIndex);
+      
+      // Split into sentences and clean up
+      return sectionText.split(/[.!?]+/)
+        .map(s => s.trim())
+        .filter(s => s.length > 20)
+        .slice(0, 5); // Limit to 5 key points
+    }
+    
+    // Extract introduction (first substantial paragraph)
+    const sentences = fullText.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 50);
+    const intro = sentences[0] || "No introduction found";
+    
+    // Extract symptoms
+    const symptoms = extractSection(fullText, 
+      ['symptoms', 'signs', 'fever, headache', 'clinical manifestations', 'illness'],
+      ['treatment', 'diagnosis', 'prevention', 'transmission']
+    );
+    
+    // Extract treatment info
+    const treatment = extractSection(fullText,
+      ['treatment', 'therapy', 'artemisinin', 'antimalarial', 'medicines', 'drugs'],
+      ['prevention', 'diagnosis', 'transmission', 'vector control']
+    );
+    
+    // Extract prevention info  
+    const prevention = extractSection(fullText,
+      ['prevention', 'prevent', 'control', 'vector control', 'chemoprophylaxis', 'protective'],
+      ['transmission', 'symptoms', 'treatment', 'diagnosis']
+    );
+    
+    // Extract key statistics and facts
+    let keyFacts = [];
+    const factPatterns = [
+      /(\d+(?:,\d+)*)\s*(?:million|thousand)?\s*(?:cases|deaths)/gi,
+      /children under \d+[^.]*[.]/gi,
+      /\d+%[^.]*[.]/gi
+    ];
+    
+    factPatterns.forEach(pattern => {
+      const matches = fullText.match(pattern);
+      if (matches) {
+        keyFacts.push(...matches.slice(0, 3));
+      }
+    });
+    
+    
+    // Debug logging
+    console.log(`Scraping: ${url}`);
+    console.log(`Full text length: ${fullText.length}`);
+    console.log(`Intro: ${intro.substring(0, 100)}...`);
+    console.log(`Symptoms found: ${symptoms.length}`);
+    console.log(`Treatment found: ${treatment.length}`);
+    console.log(`Prevention found: ${prevention.length}`);
+    
+    res.json({
+      disease: diseaseName,
+      pageTitle: pageTitle || diseaseName,
+      intro: intro || "No introduction found",
+      keyFacts: keyFacts.length ? keyFacts.slice(0, 5) : ["No key facts found"],
+      symptoms: symptoms.length ? symptoms : ["No symptoms section found"],
+      treatment: treatment.length ? treatment : ["No treatment info found"], 
+      prevention: prevention.length ? prevention : ["No prevention info found"],
+      url: url,
+      scrapedAt: new Date().toISOString(),
+      debug: process.env.NODE_ENV === 'development' ? {
+        fullTextLength: fullText.length,
+        foundSections: {
+          symptoms: symptoms.length,
+          treatment: treatment.length,
+          prevention: prevention.length
+        }
+      } : undefined
+    });
+    
+  } catch (error) {
+    console.error('Scraping error:', error.message);
+    
+    if (error.response) {
+      if (error.response.status === 404) {
+        res.status(404).json({
+          error: "Disease page not found. Please check the spelling.",
+          suggestion: "Try searching for common diseases like 'diabetes', 'malaria', 'covid-19'"
+        });
+      } else if (error.response.status === 403) {
+        res.status(403).json({
+          error: "Access denied. The website may be blocking automated requests."
+        });
+      } else {
+        res.status(error.response.status).json({
+          error: `HTTP ${error.response.status}: ${error.response.statusText}`
+        });
+      }
+    } else if (error.code === 'ECONNABORTED') {
+      res.status(408).json({
+        error: "Request timeout. The website took too long to respond."
+      });
+    } else {
+      res.status(500).json({
+        error: "Failed to fetch disease info. Please try again.",
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
+});
+
+function extractContent($, baseSelector) {
+  let content = '';
+  
+  // Try multiple content selectors
+  const selectors = [
+    `${baseSelector} article`,
+    `${baseSelector} .content`,
+    `${baseSelector} p`,
+    'article',
+    '.content',
+    'p'
+  ];
+
+  for (const selector of selectors) {
+    const elements = $(selector);
+    if (elements.length) {
+      content = elements.map((_, el) => $(el).text()).get().join(' ');
+      if (content.length > 200) break;
+    }
+  }
+
+  return content.replace(/\s+/g, ' ').trim();
+}
+
+function extractSection(content, keywords) {
+  const sentences = content.split(/[.!?]+/);
+  return sentences
+    .filter(sentence => 
+      keywords.some(keyword => 
+        sentence.toLowerCase().includes(keyword.toLowerCase())
+      )
+    )
+    .map(s => s.trim())
+    .filter(s => s.length > 30)
+    .slice(0, 5);
+}
 
 router.get("/video-requests", async (req, res) => {
   try {
