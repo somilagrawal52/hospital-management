@@ -1,12 +1,9 @@
-const express = require("express");
-const path = require("path");
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const Appointment = require("../models/appointment");
 const Message = require("../models/messages");
 const { mailsender,sendWhatsAppMessage } = require("./mail");
 const User = require("../models/user");
-const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "patient");
 // const otpgeneration = require("otp-generator");
 const Razorpay = require("razorpay");
 const { validatetoken } = require("../services/auth");
@@ -18,34 +15,53 @@ const instance = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+function formatAppointmentDate(date) {
+  return new Intl.DateTimeFormat("en-IN", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date(date));
+}
+
 
 
 async function appointment(req, res) {
-  return res.sendFile(path.join(frontendPath, "Appointment.html"));
+  return res.redirect("/");
 }
 
 async function register(req, res) {
-  return res.sendFile(path.join(frontendPath, "pages-register.html"));
+  return res.render("login", { state: 'register', fullname: '', email: '', password: '' });
 }
 
 async function messages(req, res) {
-  return res.sendFile(path.join(frontendPath, "messages.html"));
+  const token = req.cookies.token;
+  let patientdata = null;
+  if (token) {
+    const decodedtoken = validatetoken(token);
+    patientdata = await User.findById({ _id: decodedtoken._id });
+  }
+  return res.render("patient-messages", {
+    user: req.user,
+    patientdata,
+    success: req.query.success === "1",
+  });
 }
 
 async function home(req, res) {
-  return res.sendFile(path.join(frontendPath, "home.html"));
+  return res.redirect("/");
 }
 
 async function doctors(req, res) {
-  return res.sendFile(path.join(frontendPath, "doctors-registered.html"));
+  return res.redirect("/doctors");
 }
 // Get all online appointment requests with status "pending"
 async function getOnlineAppointmentRequests(req, res) {
   try {
     const onlineAppointments = await Appointment.find({
-      isOnline: true,
-      cancelled: false,
-      iscompleted: false,
+      status: "online_requested",
     }).sort({ date: -1 });
 
     res.json({ success: true, appointments: onlineAppointments });
@@ -111,6 +127,7 @@ async function bookappointment(req, res) {
       amount: doctordata.fees,
       userdata,
       doctordata,
+      status: "pending",
     });
 
     console.log("Attempting to save appointment:", appointment);
@@ -189,7 +206,7 @@ async function sendmsg(req, res) {
       msgbody,
     });
     console.log("Message Send");
-    return res.redirect("/messages");
+    return res.redirect("/messages?success=1");
   } catch (error) {
     console.log(error);
     return res.redirect("/messages");
@@ -217,9 +234,15 @@ async function myappointments(req,res) {
       return res.status(401).json({ success: false, message: "Invalid token" });
     }
     const patientdata = await User.findById(decoded._id).select("-password");
-    const appointments = await Appointment.find({ userid: decoded._id });
+    const appointments = await Appointment.find({ userid: decoded._id }).sort({
+      date: -1,
+    });
 
-    patientdata.appointments = appointments;
+    patientdata.appointments = appointments.map((appointmentDoc) => {
+      const appointment = appointmentDoc.toObject();
+      appointment.formattedDate = formatAppointmentDate(appointment.date);
+      return appointment;
+    });
     console.log("Patient appointments data:", patientdata.appointments);
 
     res.render('myAppointment',{user:req.user,patientdata});
@@ -367,15 +390,33 @@ async function patientsregisterpage(req, res){
 
 async function updateAppointmentStatus(req, res) {
   const { appointmentId, status } = req.body;
+  const statusUpdates = {
+    confirmed: {
+      status: "confirmed",
+      cancelled: false,
+      iscompleted: false,
+    },
+    completed: {
+      status: "completed",
+      cancelled: false,
+      iscompleted: true,
+    },
+    cancelled: {
+      status: "cancelled",
+      cancelled: true,
+      iscompleted: false,
+      isOnline: false,
+    },
+  };
 
-  if (!["accepted", "declined"].includes(status)) {
+  if (!statusUpdates[status]) {
     return res.status(400).json({ success: false, message: "Invalid status" });
   }
 
   try {
     const appointment = await Appointment.findByIdAndUpdate(
       appointmentId,
-      { status },
+      statusUpdates[status],
       { new: true }
     );
 
@@ -412,6 +453,8 @@ async function markAppointmentOnline(req, res) {
     }
 
     appointment.isOnline = true;
+    appointment.status = "online_requested";
+    appointment.cancelled = false;
     await appointment.save();
 
     // Optionally notify doctor or patient

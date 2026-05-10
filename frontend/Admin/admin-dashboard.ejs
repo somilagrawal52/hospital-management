@@ -1,0 +1,87 @@
+<%- include('partials/head', { pageTitle: 'Dashboard - OneLife Admin' }) %>
+<%- include('partials/header', { adminName: 'Admin Panel', adminSubtitle: 'Hospital Management' }) %>
+<%- include('partials/sidebar', { activePage: 'dashboard' }) %>
+
+    <main id="main" class="main">
+      <div class="pagetitle">
+        <h1>Dashboard</h1>
+      </div>
+
+      <section class="section dashboard">
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="row">
+              <div class="col-xxl-4 col-xl-12">
+                <div class="card info-card customers-card">
+                  <div class="card-body">
+                    <h5 class="card-title">Patients</h5>
+                    <div class="d-flex align-items-center">
+                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-people"></i>
+                      </div>
+                      <div class="ps-3">
+                        <h6><%= patientsCount %></h6>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-xxl-4 col-xl-12">
+                <div class="card info-card customers-card">
+                  <div class="card-body">
+                    <h5 class="card-title">Doctors</h5>
+                    <div class="d-flex align-items-center">
+                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-people"></i>
+                      </div>
+                      <div class="ps-3">
+                        <h6><%= doctorsCount %></h6>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="overflow-auto card recent-sales">
+                  <div class="card-body">
+                    <h5 class="card-title">Recent Appointments</h5>
+                    <table class="table table-borderless">
+                      <thead>
+                        <tr>
+                          <th scope="col">Patient</th>
+                          <th scope="col">Doctor</th>
+                          <th scope="col">Phone</th>
+                          <th scope="col">Date</th>
+                          <th scope="col">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% appointments.forEach((appointment) => { %>
+                          <tr>
+                            <td><%= appointment.fullname %></td>
+                            <td><%= appointment.doctor %></td>
+                            <td><%= appointment.number %></td>
+                            <td><%= appointment.formattedDate %></td>
+                            <td class="text-capitalize"><%= appointment.status.replace(/_/g, ' ') %></td>
+                          </tr>
+                        <% }) %>
+                        <% if (!appointments.length) { %>
+                          <tr>
+                            <td colspan="5">No appointments found.</td>
+                          </tr>
+                        <% } %>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+<%- include('partials/footer') %>
+<%- include('partials/scripts') %>

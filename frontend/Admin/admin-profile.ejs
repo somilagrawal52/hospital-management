@@ -1,0 +1,59 @@
+<%- include('partials/head', { pageTitle: 'Admin Profile - OneLife' }) %>
+<%- include('partials/header', { adminName: admin?.fullname || 'Admin', adminSubtitle: 'Administrator' }) %>
+<%- include('partials/sidebar', { activePage: 'profile' }) %>
+
+    <main id="main" class="main">
+      <div class="pagetitle">
+        <h1>Profile</h1>
+      </div>
+
+      <section class="section profile">
+        <div class="row">
+          <div class="col-xl-4">
+            <div class="card">
+              <div class="pt-4 card-body profile-card d-flex flex-column align-items-center">
+                <img src="/assets/img/profile-img.jpg" alt="Profile" class="rounded-circle" />
+                <h2><%= admin?.fullname || "Admin" %></h2>
+                <h3>Administrator</h3>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-xl-8">
+            <div class="card">
+              <div class="pt-3 card-body">
+                <h5 class="card-title">About</h5>
+                <p class="small fst-italic">
+                  This page belongs to the admin account for OneLife hospital management.
+                </p>
+
+                <h5 class="card-title">Profile Details</h5>
+                <div class="row">
+                  <div class="col-lg-3 col-md-4 label">Full Name</div>
+                  <div class="col-lg-9 col-md-8"><%= admin?.fullname || "N/A" %></div>
+                </div>
+                <div class="row">
+                  <div class="col-lg-3 col-md-4 label">Role</div>
+                  <div class="col-lg-9 col-md-8"><%= admin?.role || "ADMIN" %></div>
+                </div>
+                <div class="row">
+                  <div class="col-lg-3 col-md-4 label">Country</div>
+                  <div class="col-lg-9 col-md-8"><%= admin?.country || "N/A" %></div>
+                </div>
+                <div class="row">
+                  <div class="col-lg-3 col-md-4 label">Phone</div>
+                  <div class="col-lg-9 col-md-8"><%= admin?.number || "N/A" %></div>
+                </div>
+                <div class="row">
+                  <div class="col-lg-3 col-md-4 label">Email</div>
+                  <div class="col-lg-9 col-md-8"><%= admin?.email || "N/A" %></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+<%- include('partials/footer') %>
+<%- include('partials/scripts') %>

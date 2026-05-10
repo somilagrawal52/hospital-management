@@ -1,0 +1,107 @@
+<%- include('partials/head', { pageTitle: 'Doctor Dashboard - OneLife', includeDataTables: true }) %>
+<%- include('partials/header', { doctor, brandLabel: 'OneLife', showMessagesLink: true }) %>
+
+    <main id="main" class="main" style="margin-left: 0px;">
+      <div class="pagetitle">
+        <h1>Home</h1>
+      </div>
+
+      <section class="section Home">
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="row">
+              <div class="col-xxl-4 col-xl-12">
+                <div class="card info-card customers-card">
+                  <div class="card-body">
+                    <h5 class="card-title">Patients Assigned</h5>
+                    <div class="d-flex align-items-center">
+                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-people"></i>
+                      </div>
+                      <div class="ps-3">
+                        <h6><%= patientsAssignedCount %></h6>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-xxl-4 col-xl-12">
+                <div class="card info-card customers-card">
+                  <div class="card-body">
+                    <h5 class="card-title">Fellow Doctors</h5>
+                    <div class="d-flex align-items-center">
+                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-people"></i>
+                      </div>
+                      <div class="ps-3">
+                        <h6><%= fellowDoctorsCount %></h6>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-xxl-4 col-xl-12">
+                <div class="card info-card customers-card">
+                  <div class="card-body">
+                    <h5 class="card-title">Availability</h5>
+                    <div class="d-flex align-items-center">
+                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
+                        <i class="bi bi-heart-pulse"></i>
+                      </div>
+                      <div class="ps-3">
+                        <h6 class="<%= doctor?.available ? 'text-success' : 'text-danger' %>">
+                          <%= doctor?.available ? 'Available' : 'Unavailable' %>
+                        </h6>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="overflow-auto card recent-sales">
+                  <div class="card-body">
+                    <h5 class="card-title">Recent Patients</h5>
+                    <table class="table table-borderless display" id="dataTable">
+                      <thead>
+                        <tr>
+                          <th scope="col">Name</th>
+                          <th scope="col">Email</th>
+                          <th scope="col">P. No.</th>
+                          <th scope="col">Date</th>
+                          <th scope="col">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% appointments.forEach((appointment) => { %>
+                          <tr>
+                            <td><%= appointment.fullname %></td>
+                            <td><%= appointment.email %></td>
+                            <td><%= appointment.number %></td>
+                            <td><%= appointment.formattedDate %></td>
+                            <td class="text-capitalize"><%= appointment.status.replace(/_/g, ' ') %></td>
+                          </tr>
+                        <% }) %>
+                      </tbody>
+                    </table>
+                    <% if (!appointments.length) { %>
+                      <p class="mb-0">No appointments assigned yet.</p>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+<%- include('partials/footer', { includeJQuery: true, includeDataTables: true }) %>
+    <script>
+      if (document.querySelector("#dataTable tbody tr")) {
+        new DataTable("#dataTable");
+      }
+    </script>
+<%- include('partials/scripts', { includeJQuery: true, includeDataTables: true }) %>

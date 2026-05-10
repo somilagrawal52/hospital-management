@@ -1,0 +1,64 @@
+<%- include('partials/head', { pageTitle: 'Online Requests - Doctor' }) %>
+<%- include('partials/header', { doctor, brandLabel: 'Doctor', showMessagesLink: false }) %>
+
+    <main id="main" class="main">
+      <div class="pagetitle">
+        <h1>Online Appointment Requests</h1>
+      </div>
+
+      <section class="section video-requests">
+        <div class="row" id="video-request-container">
+          <% requests.forEach((request) => { %>
+            <div class="col-lg-6">
+              <div class="card">
+                <div class="card-header">
+                  <h6>Patient: <%= request.fullname %></h6>
+                </div>
+                <div class="card-body">
+                  <h5 class="card-title">Requested At: <%= request.formattedRequestTime %></h5>
+                  <p><strong>Status:</strong> <span class="text-capitalize"><%= request.status.replace(/_/g, ' ') %></span></p>
+                  <p><strong>Reason:</strong> <%= request.payment?.reason || "N/A" %></p>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-success action-btn" data-action="accept" data-id="<%= request._id %>">Accept</button>
+                    <button class="btn btn-danger action-btn" data-action="decline" data-id="<%= request._id %>">Decline</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+          <% if (!requests.length) { %>
+            <div class="col-12">
+              <div class="card">
+                <div class="card-body py-4">
+                  <p class="mb-0">No online appointment requests right now.</p>
+                </div>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </main>
+
+<%- include('partials/footer') %>
+    <script>
+      document.addEventListener("click", async (event) => {
+        const button = event.target.closest(".action-btn");
+        if (!button) return;
+
+        try {
+          const response = await fetch(`/video-requests/${button.dataset.action}/${button.dataset.id}`, {
+            method: "POST",
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to process request");
+          }
+
+          window.location.reload();
+        } catch (error) {
+          console.error(error);
+          alert("Failed to process request.");
+        }
+      });
+    </script>
+<%- include('partials/scripts') %>

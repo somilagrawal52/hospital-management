@@ -1,6 +1,4 @@
-<%- include('head') %>
-<div class="mx-4 sm:mx-[10%]">
-    <%- include('Navbar') %>
+<%- include('partials/page-start', { includeHeroHeader: false, pageTitle: 'My Appointments - OneLife' }) %>
     <div>
         <p class="pb-3 mt-12 text-lg font-medium text-gray-600 border-b">My appointments</p>
         <div>
@@ -16,13 +14,16 @@
                   <p class="text-[#464646] font-medium mt-1">Address:</p>
                   <p><%= item.address.line1 %></p>
                   <p><%= item.address.line2 %></p>
-                  <p class="mt-1 "><span class="text-sm text-[#faadad] font-medium">Date & Time: </span>25, July, 2024 | 8:30 PM</p>
+                  <p class="mt-1"><span class="text-sm text-[#faadad] font-medium">Date & Time: </span><%= item.formattedDate %></p>
+                  <p class="mt-1"><span class="text-sm text-[#faadad] font-medium">Status: </span><%= item.status.replace(/_/g, ' ') %></p>
                 </div>
                 <div></div>
                 <div class="flex flex-col justify-end gap-2 text-sm text-center">
-                  <button class="text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300" onclick="deleteAppointment('<%= item._id %>')">Cancel Appointment</button>
-                  <% if (!item.isOnline) { %>
-                  <button class="text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300" onclick="makeOnlineAppointment('<%= item._id %>')">Book An Online Video Conference Instead</button>
+                  <% if (item.status !== 'cancelled' && item.status !== 'completed') { %>
+                  <button class="appointment-action text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300" data-action="cancel" data-appointment-id="<%= item._id %>">Cancel Appointment</button>
+                  <% } %>
+                  <% if (!item.isOnline && item.status !== 'cancelled' && item.status !== 'completed') { %>
+                  <button class="appointment-action text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300" data-action="online" data-appointment-id="<%= item._id %>">Book An Online Video Conference Instead</button>
                   <% } %>
                 </div>
               </div>
@@ -32,41 +33,6 @@
             <p>No appointments available.</p>
           <% } %>
         </div>
-      </div>    
-    <%- include('footer') %>
-    <script>
-      async function deleteAppointment(id) {
-        try {
-          const response=await fetch(`/clearapp/${id}`,{
-            method:'GET'
-          });
-          if(response.ok){
-            window.location.reload();
-          }else{
-            console.error('failed to delete the doctor');
-          }
-        } catch (error) {
-          console.error(error)
-        }
-      }
-      
-      async function makeOnlineAppointment(id) {
-    try {
-      const response = await fetch(`/make-online/${id}`, {
-        method: 'GET'
-      });
-      const result = await response.json();
-      if (result.success) {
-        alert("Online appointment request sent successfully!");
-        window.location.reload();
-      } else {
-        alert("Failed to request online appointment.");
-      }
-    } catch (err) {
-      console.error("Error making appointment online", err);
-    }
-  }
-
-    </script>
-    <%- include('bottom')  %>
-</div>
+      </div>
+<script src="/assets/my-appointments-page.js"></script>
+<%- include('partials/page-end') %>

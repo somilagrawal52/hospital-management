@@ -1,0 +1,43 @@
+<%- include('partials/head', { pageTitle: 'Doctors Details - OneLife' }) %>
+<%- include('partials/header', { adminName: 'Admin Panel', adminSubtitle: 'Hospital Management' }) %>
+<%- include('partials/sidebar', { activePage: 'details' }) %>
+
+    <main id="main" class="main">
+      <div class="pagetitle">
+        <h1>Doctors Details</h1>
+      </div>
+
+      <section class="section">
+        <div class="row">
+          <% doctors.forEach((doctor) => { %>
+            <div class="col-lg-4">
+              <div class="card">
+                <div class="card-body pt-3">
+                  <div class="text-center mb-3">
+                    <img src="<%= doctor.image %>" alt="Doctor Image" style="width: 200px; max-width: 100%;" />
+                  </div>
+                  <p><strong>Name:</strong> <%= doctor.fullname %></p>
+                  <p><strong>Department:</strong> <%= doctor.speciality || "N/A" %></p>
+                  <p><strong>Email:</strong> <%= doctor.email %></p>
+                  <p><strong>Gender:</strong> <%= doctor.gender || "N/A" %></p>
+                  <p><strong>Phone:</strong> <%= doctor.number || "N/A" %></p>
+                  <a class="btn btn-danger btn-sm" href="/clear/<%= doctor._id %>">Delete</a>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+          <% if (!doctors.length) { %>
+            <div class="col-12">
+              <div class="card">
+                <div class="card-body py-4">
+                  <p class="mb-0">No doctors found.</p>
+                </div>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </main>
+
+<%- include('partials/footer') %>
+<%- include('partials/scripts') %>

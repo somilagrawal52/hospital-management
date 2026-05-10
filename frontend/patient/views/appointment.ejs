@@ -1,6 +1,4 @@
-<%- include('head') %>
-<div class="mx-4 sm:mx-[10%] ">
-  <%- include('Navbar') %>
+<%- include('partials/page-start', { includeHeroHeader: false, pageTitle: 'Book Appointment - OneLife' }) %>
 
   <% if (docInfo) { %>
     <div>
@@ -42,7 +40,7 @@
       <p class="mb-6 text-lg font-semibold text-gray-800">Book An Appointment</p>
       <div class="p-8 text-gray-700 bg-white border rounded-lg shadow-lg">
        
-        <form id="appointmentForm" onsubmit="payNow(event)">
+        <form id="appointmentForm">
           <!-- Patient Details -->
           <div class="mb-5">
             <label for="fullname" class="block mb-2 text-sm font-medium text-gray-800">Full Name</label>
@@ -81,8 +79,8 @@
           <!-- Appointment Details -->
           <div class="mb-5">
             <label for="doctor" class="block mb-2 text-sm font-medium text-gray-800">Doctor</label>
-            <input type="text" value=<%= `${docInfo.fullname}` %> readonly>
-            <input type="text" name="docId" value=<%= `${docInfo._id}` %> hidden>
+            <input type="text" value="<%= docInfo.fullname %>" readonly>
+            <input type="hidden" name="docId" value="<%= docInfo._id %>">
           </div>
           <div class="mb-5">
             <label for="date" class="block w-full mb-2 text-sm font-medium text-gray-800">Date</label>
@@ -131,24 +129,23 @@
               id="amount"
               name="amount"
               value="<%= docInfo.fees %>"
-              placeholder=<%= `${docInfo.fees}` %>
+              placeholder="<%= docInfo.fees %>"
               readonly
             />
           </div>
          <% if (user){ %>
          <button
             id="book-btn"
+            type="submit"
             class="w-full py-3 text-sm font-semibold text-white transition rounded-lg bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-light focus:ring-offset-2"
           >
             Submit & Pay
           </button>
          <% }else{ %>
-          <button
-            id="book-btn"
-            class="w-full py-3 text-sm font-semibold text-white transition rounded-lg bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-light focus:ring-offset-2" onclick="window.location.href='/login'"
-          >
-            Submit & Pay
-          </button>
+          <a
+            href="/login"
+            class="block w-full py-3 text-sm font-semibold text-center text-white transition rounded-lg bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-light focus:ring-offset-2"
+          >Submit & Pay</a>
          <% } %>
           
           
@@ -158,57 +155,7 @@
       </div>
     </div>
   <% } %>
-
-  <%- include('footer') %>
 </div>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script>
-   async function payNow(event) {
-    event.preventDefault();
-
-  const form = document.getElementById("appointmentForm");
-  const formData = new FormData(form);
-  const payload = Object.fromEntries(formData.entries());
-
-  try {
-    const response = await fetch("/appointment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const { appointmentId, razorpayOrderId } = await response.json();
-
-    const options = {
-      key: "rzp_test_8Tg095AU86SIcj",
-      amount: payload.amount * 100,
-      currency: "INR",
-      name: "Your App Name",
-      description: "Appointment Payment",
-      order_id: razorpayOrderId,
-      handler: async function (response) {
-        // Save payment info
-        await fetch("/save-payment", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            appointmentId,
-            paymentId: response.razorpay_payment_id,
-            orderId: response.razorpay_order_id,
-            signature: response.razorpay_signature,
-          }),
-        });
-        // const { invoiceUrl } = response.data;
-        // window.location.href = invoiceUrl;
-        window.location.href = "/payment-success";
-      },
-    };
-
-    const razorpay = new Razorpay(options);
-    razorpay.open();
-  } catch (error) {
-    console.error("Error:", error);
-  }
-}
-</script>
-<%- include('bottom') %>
+<script src="/assets/appointment-page.js"></script>
+<%- include('partials/page-end') %>

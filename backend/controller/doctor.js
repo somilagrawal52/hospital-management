@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const Appointment = require("../models/appointment");
 const path = require("path");
 const fs=require('fs');
 const { mailsender, sendWhatsAppMessage } = require("./mail");
@@ -26,11 +27,11 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 async function doctorsregistration(req, res) {
-  return res.sendFile(path.join(frontendPath, "doctors-registration.html"));
+  return res.render("doctors-registration");
 }
 
 async function doctorsloginpage(req, res) {
-  return res.sendFile(path.join(frontendDoctor, "doctors-login.html"));
+  return res.render("doctor-login", { email: "", error: "" });
 }
 
 async function doctorsdetailtable(req, res) {
@@ -63,11 +64,64 @@ async function doctorsdetailtable(req, res) {
 }
 
 async function doctorsdashboard(req, res) {
-  return res.sendFile(path.join(frontendDoctor, "doctor-dashboard.html"));
+  try {
+    const doctor = await User.findById(req.user._id).select("-password");
+    const appointments = await Appointment.find({ docId: req.user._id })
+      .sort({ date: -1 })
+      .lean();
+    const fellowDoctorsCount = await User.countDocuments({
+      role: "DOCTOR",
+      _id: { $ne: req.user._id },
+    });
+
+    const formattedAppointments = appointments.map((appointment) => ({
+      ...appointment,
+      formattedDate: new Intl.DateTimeFormat("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }).format(new Date(appointment.date)),
+    }));
+
+    return res.render("doctor-dashboard", {
+      doctor,
+      patientsAssignedCount: appointments.length,
+      fellowDoctorsCount,
+      appointments: formattedAppointments,
+    });
+  } catch (error) {
+    console.error("Error loading doctor dashboard:", error);
+    return res.status(500).send("Server error");
+  }
 }
 
 async function showalldocmsg(req, res) {
-  return res.sendFile(path.join(frontendDoctor, "messages.html"));
+  try {
+    const doctor = await User.findById(req.user._id).select("-password");
+    const requests = await Appointment.find({ status: "online_requested" })
+      .sort({ date: -1 })
+      .lean();
+
+    const formattedRequests = requests.map((request) => ({
+      ...request,
+      formattedRequestTime: new Intl.DateTimeFormat("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }).format(new Date(request.date)),
+    }));
+
+    return res.render("doctor-messages", {
+      doctor,
+      requests: formattedRequests,
+    });
+  } catch (error) {
+    console.error("Error loading doctor requests:", error);
+    return res.status(500).send("Server error");
+  }
 }
 
 async function doctorsregistrationtodb(req, res) {
@@ -141,12 +195,38 @@ async function doctorloginfromdb(req, res) {
     return res.cookie("token", token).redirect("/doctor");
   } catch (error) {
     console.error(error);
-    return res.sendFile(path.join(frontendDoctor, "doctors-login.html"));
+    return res.status(401).render("doctor-login", {
+      email,
+      error: "Incorrect email or password. Please try again.",
+    });
   }
 }
 
 async function doctorsdetailpage(req, res) {
-  return res.sendFile(path.join(frontendPath, "doctors-detail.html"));
+  try {
+    const doctors = await User.find({ role: "DOCTOR" }).select("-password").lean();
+    const formattedDoctors = doctors.map((doctor) => {
+      let image = doctor.image;
+      const imagePath = image
+        ? path.join(__dirname, "..", "..", "frontend", "patient", "views", "assets", image.replace("/assets/", ""))
+        : "";
+
+      if (!image || !fs.existsSync(imagePath)) {
+        const randomIndex = Math.floor(Math.random() * 14) + 1;
+        image = `/assets/doc${randomIndex}.png`;
+      }
+
+      return {
+        ...doctor,
+        image,
+      };
+    });
+
+    return res.render("doctors-detail", { doctors: formattedDoctors });
+  } catch (error) {
+    console.error("Error loading doctors detail page:", error);
+    return res.status(500).send("Server error");
+  }
 }
 
 async function doctorlogout(req, res) {

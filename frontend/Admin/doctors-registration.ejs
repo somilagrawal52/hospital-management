@@ -1,0 +1,107 @@
+<%- include('partials/head', { pageTitle: 'Doctor Registration - OneLife' }) %>
+<%- include('partials/header', { adminName: 'Admin Panel', adminSubtitle: 'Hospital Management' }) %>
+<%- include('partials/sidebar', { activePage: 'registration' }) %>
+
+    <main id="main" class="main">
+      <div class="pagetitle">
+        <h1>Doctors Registrations</h1>
+      </div>
+      <section class="section">
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">Doctors Registration Form</h5>
+                <form class="row g-3" action="/doctors-registration" method="post" enctype="multipart/form-data" id="doctorsregistrationform">
+                  <div class="col-12">
+                    <label class="form-label">Your Name</label>
+                    <input type="text" class="form-control" name="fullname" required />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" name="email" required />
+                  </div>
+                  <fieldset class="mb-3 row">
+                    <legend class="pt-0 col-form-label col-sm-2">Gender</legend>
+                    <div class="col-sm-10">
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="gender" value="Male" checked required />
+                        <label class="form-check-label">Male</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="gender" value="Female" />
+                        <label class="form-check-label">Female</label>
+                      </div>
+                      <div class="form-check">
+                        <input class="form-check-input" type="radio" name="gender" value="Others" />
+                        <label class="form-check-label">Others</label>
+                      </div>
+                    </div>
+                  </fieldset>
+                  <div class="col-12">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" name="password" required />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Degree</label>
+                    <input type="text" class="form-control" name="degree" required />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Number</label>
+                    <input type="number" class="form-control" name="number" required />
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Experience</label>
+                    <input type="number" class="form-control" name="experience" required />
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label">Fees</label>
+                    <input type="number" class="form-control" name="fees" required />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">File Upload</label>
+                    <input class="form-control" type="file" name="image" required />
+                  </div>
+                  <div class="col-md-5">
+                    <label class="form-label">Department</label>
+                    <select class="form-select" name="speciality" required>
+                      <option value="">Select Your Department</option>
+                      <option value="Neurologist">Neurologist</option>
+                      <option value="Pediatricians">Pediatricians</option>
+                      <option value="Dermatologist">Dermatologist</option>
+                      <option value="Gastroenterologist">Gastroenterologist</option>
+                      <option value="General physician">General physician</option>
+                      <option value="Gynecologist">Gynecologist</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">About yourself</label>
+                    <textarea class="form-control" name="about" rows="4" placeholder="Tell us about you"></textarea>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Address Line 1</label>
+                    <input type="text" class="form-control" name="line1" placeholder="Street address" required />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Address Line 2</label>
+                    <input type="text" class="form-control" name="line2" placeholder="City, State" required />
+                  </div>
+                  <div class="text-center">
+                    <button type="submit" class="btn btn-primary" id="submitbtn" disabled>Submit</button>
+                    <button type="reset" class="btn btn-secondary">Reset</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+<%- include('partials/footer') %>
+    <script>
+      document.getElementById("doctorsregistrationform").addEventListener("input", () => {
+        document.getElementById("submitbtn").disabled = !document.getElementById("doctorsregistrationform").checkValidity();
+      });
+    </script>
+<%- include('partials/scripts') %>

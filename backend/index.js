@@ -34,7 +34,11 @@ mongoose
   .catch((err) => console.error("Database connection error:", err));
 
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "../frontend/patient/views"));
+app.set("views", [
+  path.join(__dirname, "../frontend/patient/views"),
+  path.join(__dirname, "../frontend/Admin"),
+  path.join(__dirname, "../frontend/doctor"),
+]);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -68,10 +72,32 @@ app.get(
   "/admin",
   checkforauthentication("token"),
   restrictTo(["ADMIN"]),
-  (req, res) => {
-    console.log("root route");
-    const filePath = path.join(__dirname, "..", "frontend", "Admin", "index.html");
-    return res.sendFile(filePath);
+  async (req, res) => {
+    try {
+      const [patientsCount, doctorsCount, appointments] = await Promise.all([
+        User.countDocuments({ role: "NORMAL" }),
+        User.countDocuments({ role: "DOCTOR" }),
+        Appointment.find().sort({ date: -1 }).limit(10).lean(),
+      ]);
+
+      const recentAppointments = appointments.map((appointment) => ({
+        ...appointment,
+        formattedDate: new Intl.DateTimeFormat("en-IN", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }).format(new Date(appointment.date)),
+      }));
+
+      return res.render("admin-dashboard", {
+        patientsCount,
+        doctorsCount,
+        appointments: recentAppointments,
+      });
+    } catch (error) {
+      console.error("Error loading admin dashboard:", error);
+      return res.status(500).send("server error");
+    }
   }
 );
 
@@ -87,13 +113,30 @@ app.get("/clear/:id", async (req, res) => {
 
 app.get("/clearapp/:id",async (req,res) => {
   try {
-    await Appointment.findByIdAndDelete(req.params.id);
+    await Appointment.findByIdAndUpdate(req.params.id, {
+      status: "cancelled",
+      cancelled: true,
+      isOnline: false,
+      iscompleted: false,
+    });
     const token = req.cookies.token;
     const decoded = validatetoken(token);
     const patientdata = await User.findById(decoded._id).select("-password");
-    const appointments = await Appointment.find({ userid: decoded._id });
+    const appointments = await Appointment.find({ userid: decoded._id }).sort({
+      date: -1,
+    });
 
-    patientdata.appointments = appointments;
+    patientdata.appointments = appointments.map((appointment) => ({
+      ...appointment.toObject(),
+      formattedDate: new Intl.DateTimeFormat("en-IN", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }).format(new Date(appointment.date)),
+    }));
     res.render('myAppointment', { user: req.user, patientdata });
   } catch (error) {
     console.error(error);

@@ -326,9 +326,7 @@ function extractSection(content, keywords) {
 router.get("/video-requests", async (req, res) => {
   try {
     const appointments = await Appointment.find({
-      isOnline: true,
-      iscompleted: false,
-      cancelled: false,
+      status: "online_requested",
     });
 
     const filtered = appointments.map((appt) => ({
@@ -353,8 +351,10 @@ router.post("/video-requests/accept/:id", async (req, res) => {
     }
 
     await Appointment.findByIdAndUpdate(req.params.id, {
-      iscompleted: true,
+      status: "confirmed",
+      iscompleted: false,
       isOnline: true,
+      cancelled: false,
     });
 
     const patient = await User.findById(appointment.userid);
@@ -385,8 +385,10 @@ router.post("/video-requests/accept/:id", async (req, res) => {
 router.post("/video-requests/decline/:id", async (req, res) => {
   try {
     await Appointment.findByIdAndUpdate(req.params.id, {
+      status: "cancelled",
       cancelled: true,
       isOnline: false,
+      iscompleted: false,
     });
     res.status(200).json({ message: "Request declined" });
   } catch (err) {

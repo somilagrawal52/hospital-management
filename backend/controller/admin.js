@@ -1,10 +1,11 @@
 const User = require("../models/user");
+const Message = require("../models/messages");
 const path = require("path");
 
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
 
 async function adminlogin(req, res) {
-  return res.sendFile(path.join(frontendPath, "pages-login.html"));
+  return res.render("admin-login", { email: "", error: "" });
 }
 
 async function adminloginfromdb(req, res) {
@@ -15,7 +16,10 @@ async function adminloginfromdb(req, res) {
     return res.cookie("token", token).redirect("/admin");
   } catch (error) {
     console.error(error);
-    return res.sendFile(path.join(frontendPath, "pages-login.html"));
+    return res.status(401).render("admin-login", {
+      email,
+      error: "Incorrect email or password. Please try again.",
+    });
   }
 }
 
@@ -24,11 +28,23 @@ async function adminlogout(req, res) {
 }
 
 async function adminprofile(req, res) {
-  return res.sendFile(path.join(frontendPath, "admin-profile.html"));
+  try {
+    const admin = await User.findById(req.user._id).select("-password").lean();
+    return res.render("admin-profile", { admin });
+  } catch (error) {
+    console.error("Error loading admin profile:", error);
+    return res.status(500).send("Server error");
+  }
 }
 
 async function showallmsg(req, res) {
-  return res.sendFile(path.join(frontendPath, "messages.html"));
+  try {
+    const messages = await Message.find({}).sort({ createdAt: -1 }).lean();
+    return res.render("admin-messages", { messages });
+  } catch (error) {
+    console.error("Error loading admin messages:", error);
+    return res.status(500).send("Server error");
+  }
 }
 
 module.exports = {

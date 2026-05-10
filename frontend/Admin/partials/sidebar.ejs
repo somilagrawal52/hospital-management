@@ -1,0 +1,31 @@
+<aside id="sidebar" class="sidebar">
+  <ul class="sidebar-nav" id="sidebar-nav">
+    <li class="nav-item">
+      <a class="nav-link <%= activePage === 'dashboard' ? '' : 'collapsed' %>" href="/admin">
+        <i class="bi bi-grid"></i>
+        <span>Dashboard</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="/doctors-registration" class="nav-link <%= activePage === 'registration' ? '' : 'collapsed' %>">
+        <i class="bi bi-journal-text"></i><span>Doctors Registrations</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="/showmsg" class="nav-link <%= activePage === 'messages' ? '' : 'collapsed' %>">
+        <i class="bi bi-bell-fill"></i><span>Messages</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a href="/doctors-detail" class="nav-link <%= activePage === 'details' ? '' : 'collapsed' %>">
+        <i class="bi bi-layout-text-window-reverse"></i><span>Doctors Details</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link <%= activePage === 'profile' ? '' : 'collapsed' %>" href="/profile">
+        <i class="bi bi-person"></i>
+        <span>Profile</span>
+      </a>
+    </li>
+  </ul>
+</aside>

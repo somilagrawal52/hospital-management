@@ -1,5 +1,13 @@
 const mongoose = require("mongoose");
 
+const appointmentStatuses = [
+  "pending",
+  "confirmed",
+  "online_requested",
+  "completed",
+  "cancelled",
+];
+
 const appointmentschema = new mongoose.Schema(
   {
     userid:{
@@ -74,6 +82,12 @@ const appointmentschema = new mongoose.Schema(
       type: Object,
       required: true,
     },
+    status: {
+      type: String,
+      enum: appointmentStatuses,
+      default: "pending",
+      required: true,
+    },
     cancelled: {
       type: Boolean,
       default: false,
@@ -86,4 +100,5 @@ const appointmentschema = new mongoose.Schema(
 );
 
 const Appointment = mongoose.model("appointment", appointmentschema);
+Appointment.statuses = appointmentStatuses;
 module.exports = Appointment;

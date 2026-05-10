@@ -72,14 +72,9 @@ async function verifypayment(req, res) {
 }
 
 async function payemntsuccessfull(req, res) {
-  const frontendDoctor = path.resolve(
-    __dirname,
-    "..",
-    "..",
-    "frontend",
-    "doctor"
-  );
-  return res.sendFile(path.join(frontendDoctor, "pages-error-404.html"));
+  return res.render("payment-success", {
+    transactionId: req.query.paymentId || req.query.transactionId || "",
+  });
 }
 
 module.exports = {

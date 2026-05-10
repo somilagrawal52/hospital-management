@@ -1,0 +1,38 @@
+<%- include('partials/head', { pageTitle: 'Messages - OneLife Admin' }) %>
+<%- include('partials/header', { adminName: 'Admin Panel', adminSubtitle: 'Hospital Management' }) %>
+<%- include('partials/sidebar', { activePage: 'messages' }) %>
+
+    <main id="main" class="main">
+      <div class="pagetitle">
+        <h1>Asked Questions</h1>
+      </div>
+      <section class="section faq">
+        <div class="row">
+          <% messages.forEach((message) => { %>
+            <div class="col-lg-6">
+              <div class="card">
+                <div class="card-header">
+                  <h6>Name: <%= message.fullname || "Unknown" %></h6>
+                </div>
+                <div class="card-body">
+                  <h5 class="card-title">Question: <%= message.question || "N/A" %></h5>
+                  <p><%= message.msgbody || message.message || "No message body available." %></p>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+          <% if (!messages.length) { %>
+            <div class="col-12">
+              <div class="card">
+                <div class="card-body py-4">
+                  <p class="mb-0">No messages available.</p>
+                </div>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      </section>
+    </main>
+
+<%- include('partials/footer') %>
+<%- include('partials/scripts') %>

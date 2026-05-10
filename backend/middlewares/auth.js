@@ -1,7 +1,4 @@
 const { validatetoken } = require("../services/auth");
-const path = require("path");
-const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
-
 function checkforauthentication(cookieName) {
   return (req, res, next) => {
     const tokencookievalue = req.cookies[cookieName];
@@ -38,7 +35,10 @@ function restrictTo(roles = []) {
 
     if (!roles.includes(req.user.role)) {
       res.clearCookie("token");
-      return res.sendFile(path.join(frontendPath, "pages-error-404.html"));
+      return res.status(403).render("error-404", {
+        title: "Access Denied",
+        message: "You do not have permission to access this page.",
+      });
     }
 
     next();
