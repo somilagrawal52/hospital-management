@@ -7,6 +7,8 @@ const cheerio = require("cheerio");
 const User = require("../models/user");
 const { mailsender } = require('../controller/mail');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const { isMedicalQuery, MEDICAL_ONLY_FALLBACK } = require("../services/medical-query");
+const { doctorImage } = require("../services/doctor-image");
 const path = require("path");
 const Appointment = require("../models/appointment");
 const { validatetoken } = require("../services/auth");
@@ -64,7 +66,8 @@ const {
 } = require("../controller/patient");
 const { register } = require("../controller/patient");
 const multer = require("multer");
-const { restrictTo, checkforauthentication } = require("../middlewares/auth");
+const rateLimit = require("express-rate-limit");
+const { restrictTo, checkforauthentication, requireAuth } = require("../middlewares/auth");
 const {
   appointmentcreated,
   verifypayment,
@@ -81,26 +84,35 @@ const frontendPath = path.resolve(
   "assets"
 );
 
+const allowedImageTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     return cb(null, path.resolve(frontendPath));
   },
   filename: function (req, file, cb) {
-    return cb(null, `${Date.now()}-${file.originalname}`);
+    return cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(file.originalname).toLowerCase()}`);
   },
 });
 
-const upload = multer({ storage: storage });
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024, files: 1 },
+  fileFilter: (req, file, cb) => {
+    if (!allowedImageTypes.has(file.mimetype)) return cb(new Error("Only JPG, PNG, and WebP image uploads are allowed."));
+    return cb(null, true);
+  },
+});
+const chatLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: "draft-7", legacyHeaders: false });
 
 router.get("/admin/login", adminlogin);
 
 router.post("/admin/login", adminloginfromdb);
 
-router.get("/my-appointment", myappointments);
+router.get("/my-appointment", requireAuth, restrictTo(["NORMAL"]), myappointments);
 
-router.get("/appointments/online", getOnlineAppointmentRequests);
+router.get("/appointments/online", requireAuth, restrictTo(["DOCTOR"]), getOnlineAppointmentRequests);
 
-router.post("/appointments/status", updateAppointmentStatus);
+router.post("/appointments/status", requireAuth, restrictTo(["DOCTOR", "ADMIN"]), updateAppointmentStatus);
 
 router.get("/disease", (req, res) => {
   res.render("diseaseSearch");
@@ -108,6 +120,9 @@ router.get("/disease", (req, res) => {
 
 router.get("/disease/:name", async (req, res) => {
   const diseaseName = req.params.name;
+  if (!/^[a-z0-9 -]{2,80}$/i.test(diseaseName)) {
+    return res.status(400).json({ error: "Enter a valid disease name." });
+  }
   const url = `https://www.who.int/health-topics/${encodeURIComponent(diseaseName)}`;
   
   try {
@@ -323,10 +338,10 @@ function extractSection(content, keywords) {
     .slice(0, 5);
 }
 
-router.get("/video-requests", async (req, res) => {
+router.get("/video-requests", requireAuth, restrictTo(["DOCTOR"]), async (req, res) => {
   try {
     const appointments = await Appointment.find({
-      status: "online_requested",
+      status: "online_requested", docId: req.user._id,
     });
 
     const filtered = appointments.map((appt) => ({
@@ -343,10 +358,10 @@ router.get("/video-requests", async (req, res) => {
   }
 });
 
-router.post("/video-requests/accept/:id", async (req, res) => {
+router.post("/video-requests/accept/:id", requireAuth, restrictTo(["DOCTOR"]), async (req, res) => {
   try {
     const appointment = await Appointment.findById(req.params.id); // Fetch the appointment details
-    if (!appointment) {
+    if (!appointment || appointment.docId !== String(req.user._id)) {
       return res.status(404).json({ error: "Appointment not found" });
     }
 
@@ -382,27 +397,34 @@ router.post("/video-requests/accept/:id", async (req, res) => {
   }
 });
 
-router.post("/video-requests/decline/:id", async (req, res) => {
+router.post("/video-requests/decline/:id", requireAuth, restrictTo(["DOCTOR"]), async (req, res) => {
   try {
-    await Appointment.findByIdAndUpdate(req.params.id, {
+    const appointment = await Appointment.findOneAndUpdate({ _id: req.params.id, docId: req.user._id }, {
       status: "cancelled",
       cancelled: true,
       isOnline: false,
       iscompleted: false,
     });
+    if (!appointment) return res.status(404).json({ error: "Appointment not found" });
     res.status(200).json({ message: "Request declined" });
   } catch (err) {
     res.status(500).json({ error: "Failed to decline request" });
   }
 });
 
-const genAI = new GoogleGenerativeAI(process.env.OPENAI_API_KEY);
-router.post("/chat", async (req, res) => {
-  const userMessage = req.body.message;
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY);
+router.post("/chat", requireAuth, chatLimiter, async (req, res) => {
+  const userMessage = String(req.body.message || "").trim();
+  if (!userMessage || userMessage.length > 1000) {
+    return res.status(400).json({ error: "Enter a message of up to 1,000 characters." });
+  }
+  if (!isMedicalQuery(userMessage)) {
+    return res.json({ message: MEDICAL_ONLY_FALLBACK, fallback: true });
+  }
 
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const prompt = userMessage;
+    const prompt = `You are OneLife's health-information assistant. Give general, cautious information only; do not diagnose, prescribe, or claim certainty. Encourage the user to contact a qualified clinician for personal advice and to seek emergency help for urgent symptoms. User question: ${userMessage}`;
     const result = await model.generateContent(prompt);
     res.json({ message: result.response.text() });
   } catch (error) {
@@ -411,11 +433,15 @@ router.post("/chat", async (req, res) => {
   }
 });
 
-router.get("/make-online/:id", markAppointmentOnline);
+router.post("/make-online/:id", requireAuth, restrictTo(["NORMAL"]), markAppointmentOnline);
 
-router.get("/download-pdf", (req, res) => {
+router.get("/download-pdf", requireAuth, async (req, res) => {
   const { file } = req.query; // Get the filename from the query string
-  const filePath = path.join(__dirname, "invoices", file); // Construct the full file path
+  if (!file || path.basename(file) !== file) return res.status(400).json({ message: "Invalid file" });
+  const appointment = await Appointment.findOne({ invoiceFile: file });
+  const mayDownload = appointment && (req.user.role === "ADMIN" || appointment.userid === String(req.user._id) || appointment.docId === String(req.user._id));
+  if (!mayDownload) return res.status(404).json({ message: "File not found" });
+  const filePath = path.join(__dirname, "..", "invoices", file);
 
   // Check if the file exists
   if (fs.existsSync(filePath)) {
@@ -439,40 +465,42 @@ router.get("/appointment/:id", async (req, res) => {
   }
   const { id } = req.params;
   const docInfo = await User.findById(id).select("-password");
-  const imagePath = path.join(
-    __dirname,
-    "..",
-    "..",
-    "frontend",
-    "patient",
-    "views",
-    "assets",
-    docInfo.image.replace("/assets/", "")
-  );
-  if (!fs.existsSync(imagePath)) {
-    const randomIndex = Math.floor(Math.random() * 14) + 1;
-    docInfo.image = `/assets/doc${randomIndex}.png`;
-  }
   if (!docInfo) {
     return res.status(404).send("Doctor not found");
   }
+  docInfo.image = doctorImage(docInfo.image);
   res.render("appointment", {
     docInfo,
-    currencySymbol: "$",
+    currencySymbol: "₹",
+    razorpayKey: process.env.RAZORPAY_KEY_ID,
     user: req.user,
     patientdata,
   });
 });
 
-router.get("/chats", async (req, res) => {
+router.get("/chats", requireAuth, async (req, res) => {
   res.render("chat");
 });
 
-router.get("/logout", adminlogout);
+router.post("/logout", (req, res) => {
+  res.clearCookie("token");
+  res.clearCookie("doctorname");
+  res.status(204).end();
+});
+router.get("/admin/logout", requireAuth, restrictTo(["ADMIN"]), adminlogout);
 
 router.get("/doctorlogout", doctorlogout);
 
 router.get("/contact", contactpage);
+
+router.get("/privacy-policy", async (req, res, next) => {
+  try {
+    const patientdata = req.user?.role === "NORMAL" ? await User.findById(req.user._id).select("-password") : null;
+    res.render("privacy-policy", { user: req.user, patientdata });
+  } catch (error) {
+    next(error);
+  }
+});
 
 router.get(
   "/doctors-registration",
@@ -483,7 +511,9 @@ router.get(
 
 router.get("/about", aboutpage);
 
-router.get("/doctors/:speciality?", doctorsdetailtable);
+// Express 5 no longer supports the legacy `:param?` route syntax.
+router.get("/doctors", doctorsdetailtable);
+router.get("/doctors/:speciality", doctorsdetailtable);
 
 router.get("/", async (req, res) => {
   const token = req.cookies.token;
@@ -501,6 +531,8 @@ router.get("/", async (req, res) => {
 
 router.post(
   "/doctors-registration",
+  requireAuth,
+  restrictTo(["ADMIN"]),
   upload.single("image"),
   doctorsregistrationtodb
 );
@@ -514,30 +546,14 @@ router.get("/login", patientsloginpage);
 
 router.get("/doctorlogin", doctorsloginpage);
 
-router.get("/profile", adminprofile);
+router.get("/profile", requireAuth, restrictTo(["ADMIN"]), adminprofile);
 
-router.get("/my-profile", PatientProfile);
+router.get("/my-profile", requireAuth, restrictTo(["NORMAL"]), PatientProfile);
 
-router.get("/admin/doctors-detail", async (req, res) => {
+router.get("/admin/doctors-detail", requireAuth, restrictTo(["ADMIN"]), async (req, res) => {
   try {
     const doctors = await User.find({ role: "DOCTOR" });
-    doctors.forEach((doctor) => {
-      const imagePath = path.join(
-        __dirname,
-        "..",
-        "..",
-        "frontend",
-        "patient",
-        "views",
-        "assets",
-        doctor.image.replace("/assets/", "")
-      );
-      console.log("Checking image path:", imagePath); // Debugging statement
-      if (!fs.existsSync(imagePath)) {
-        const randomIndex = Math.floor(Math.random() * 14) + 1; // Generate a random number between 1 and 14
-        doctor.image = `/assets/doc${randomIndex}.png`; // Set default image path with random number
-      }
-    });
+    doctors.forEach((doctor) => { doctor.image = doctorImage(doctor.image); });
     res.json(doctors);
   } catch (error) {
     console.error("Error fetching doctors:", error);
@@ -545,22 +561,17 @@ router.get("/admin/doctors-detail", async (req, res) => {
   }
 });
 
-router.get("/doctors-detail", doctorsdetailpage);
+router.get("/doctors-detail", requireAuth, restrictTo(["ADMIN"]), doctorsdetailpage);
 
 router.get("/registereddoctors", doctors);
 
-router.get("/messages", messages);
+router.get("/messages", requireAuth, restrictTo(["NORMAL"]), messages);
 
-router.get("/appointments", appointmentdetailtable);
+router.get("/appointments", requireAuth, restrictTo(["NORMAL"]), appointmentdetailtable);
 
-router.get("/doctor/appointments", async (req, res) => {
-  const token = req.cookies.token;
-  if (!token) {
-    return res.status(401).json({ error: "No token provided" });
-  }
+router.get("/doctor/appointments", requireAuth, restrictTo(["DOCTOR"]), async (req, res) => {
   try {
-    const decodedtoken = validatetoken(token);
-    const doctordata = await Appointment.find({ docId: decodedtoken._id })
+    const doctordata = await Appointment.find({ docId: req.user._id })
       .select("-userdata")
       .select("-doctordata")
       .select("-payment");
@@ -572,7 +583,7 @@ router.get("/doctor/appointments", async (req, res) => {
   }
 });
 
-router.get("/admin/appointments", async (req, res) => {
+router.get("/admin/appointments", requireAuth, restrictTo(["ADMIN"]), async (req, res) => {
   try {
     const appointments = await Appointment.find();
     res.json({ appointments });
@@ -581,21 +592,21 @@ router.get("/admin/appointments", async (req, res) => {
   }
 });
 
-router.post("/appointment", bookappointment);
+router.post("/appointment", requireAuth, restrictTo(["NORMAL"]), bookappointment);
 
 router.post("/register", patientregistrationtodb);
 
-router.get("/showmsg", showallmsg);
+router.get("/showmsg", requireAuth, restrictTo(["ADMIN"]), showallmsg);
 
-router.get("/showdocmsg", showalldocmsg);
+router.get("/showdocmsg", requireAuth, restrictTo(["DOCTOR"]), showalldocmsg);
 
-router.post("/update-profile", upload.single("image"), UpdateProfile);
+router.post("/update-profile", requireAuth, restrictTo(["NORMAL"]), upload.single("image"), UpdateProfile);
 
 router.get("/doctor", restrictTo(["DOCTOR"]), doctorsdashboard);
 
-router.post("/messages", sendmsg);
+router.post("/messages", requireAuth, restrictTo(["NORMAL"]), sendmsg);
 
-router.get("/message", messagesdetailtable);
+router.get("/message", requireAuth, restrictTo(["ADMIN"]), messagesdetailtable);
 
 router.get("/countries", getallcountries);
 
@@ -603,16 +614,18 @@ router.get("/states/:countryCode", getallstates);
 
 router.get("/cities/:countryCode/:stateCode", getallcities);
 
-router.post("/create-order", appointmentcreated);
+router.post("/create-order", (req, res) => res.status(410).json({ message: "Use the secure appointment payment flow." }));
 
-router.post("/verify-payment", verifypayment);
+router.post("/verify-payment", (req, res) => res.status(410).json({ message: "Payment is verified when the appointment is completed." }));
 
 router.get("/payment-success", payemntsuccessfull);
 
-router.post("/save-payment", savePayments);
+router.post("/save-payment", requireAuth, restrictTo(["NORMAL"]), savePayments);
 
 router.post(
   "/change-availability",
+  requireAuth,
+  restrictTo(["DOCTOR", "ADMIN"]),
   (req, res, next) => {
     const doctorId = req.body.doctorId;
     req.doctorId = doctorId;

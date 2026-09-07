@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const Message = require("../models/messages");
 const path = require("path");
+const { cookieOptions } = require("../services/auth");
 
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
 
@@ -11,9 +12,10 @@ async function adminlogin(req, res) {
 async function adminloginfromdb(req, res) {
   const { email, password } = req.body;
   try {
+    const admin = await User.findOne({ email: email.toLowerCase(), role: "ADMIN" });
+    if (!admin) throw new Error("incorrect credentials");
     const token = await User.matchpassword(email, password);
-    console.log(token);
-    return res.cookie("token", token).redirect("/admin");
+    return res.cookie("token", token, cookieOptions).redirect("/admin");
   } catch (error) {
     console.error(error);
     return res.status(401).render("admin-login", {

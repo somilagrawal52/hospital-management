@@ -2,22 +2,11 @@ const mongoose = require("mongoose");
 
 const messageschema = new mongoose.Schema(
   {
-    chatId: {
-      type: Number,
-      required: true,
-    },
-    senderId: {
-      type: Number,
-      required: true,
-    },
-    receiverId: {
-      type: Number,
-      required: true,
-    },
-    message:{
-      type:String,
-      required:true,
-    }
+    senderId: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true },
+    fullname: { type: String, required: true, trim: true, maxlength: 100 },
+    question: { type: String, required: true, trim: true, maxlength: 160 },
+    message: { type: String, required: true, trim: true, maxlength: 3000 },
+    status: { type: String, enum: ["open", "resolved"], default: "open" },
   },
   { timestamps: true }
 );

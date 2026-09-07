@@ -1,14 +1,12 @@
 require("dotenv").config();
 const nodemailer = require("nodemailer");
 const fs = require("fs");
-const { text } = require("express");
 
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = require('twilio')(accountSid, authToken);
 
 async function mailsender(obj,filePath) {
-  console.log("we are inside of mailsender");
   let mailtransporter = nodemailer.createTransport({
     service: "gmail",
     secure: true,
@@ -20,25 +18,13 @@ async function mailsender(obj,filePath) {
   });
   
   let mail = {
-    from: "somilagrawal2004@gmail.com",
+    from: process.env.MAIL_FROM || process.env.mail_user,
     to: obj.to,
     subject: obj.subject,
     text: obj.text,
-    attachments: [
-      {
-        filename: "invoice", 
-        path: filePath,     
-        contentType: 'application/pdf',
-      },
-    ],
+    attachments: obj.attachments || (filePath ? [{ filename: "invoice.pdf", path: filePath, contentType: "application/pdf" }] : []),
   };
-
-  mailtransporter.sendMail(mail, function (err, info) {
-    if (err) {
-      console.error(err);
-    }
-    console.log("mail send:");
-  });
+  return mailtransporter.sendMail(mail);
   
 }
 
@@ -50,7 +36,7 @@ async function sendWhatsAppMessage(to, body) {
       to: `whatsapp:${to}`,
     });
 
-    console.log("WhatsApp message sent successfully:");
+    return message.sid;
   } catch (error) {
     console.error("Error sending WhatsApp message:", error);
   }

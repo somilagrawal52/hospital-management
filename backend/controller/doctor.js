@@ -2,8 +2,10 @@ const User = require("../models/user");
 const Appointment = require("../models/appointment");
 const path = require("path");
 const fs=require('fs');
+const { doctorImage } = require("../services/doctor-image");
 const { mailsender, sendWhatsAppMessage } = require("./mail");
 const {validatetoken}=require("../services/auth");
+const { cookieOptions } = require("../services/auth");
 const frontendPath = path.resolve(__dirname, "..", "..", "frontend", "Admin");
 const frontendDoctor = path.resolve(
   __dirname,
@@ -47,13 +49,7 @@ async function doctorsdetailtable(req, res) {
     const filterDoc = speciality
     ? doctors.filter((doc) => doc.speciality === speciality)
     : doctors;
-    doctors.forEach(doctor => {
-      const imagePath = path.join(__dirname, '..', '..','frontend', 'patient','views','assets',doctor.image.replace('/assets/', ''));
-      if (!fs.existsSync(imagePath)) {
-        const randomIndex = Math.floor(Math.random() * 14) + 1; 
-        doctor.image = `/assets/doc${randomIndex}.png`;
-      }
-    });
+    doctors.forEach((doctor) => { doctor.image = doctorImage(doctor.image); });
     res.render('doctor', { speciality, filterDoc,user:req.user,patientdata });
     
     // res.json({success:true,doctors});
@@ -73,6 +69,8 @@ async function doctorsdashboard(req, res) {
       role: "DOCTOR",
       _id: { $ne: req.user._id },
     });
+    const onlineRequestsCount = await Appointment.countDocuments({ docId: req.user._id, status: "online_requested" });
+    const upcomingAppointmentsCount = appointments.filter((item) => item.status === "confirmed" && new Date(item.date) >= new Date()).length;
 
     const formattedAppointments = appointments.map((appointment) => ({
       ...appointment,
@@ -87,6 +85,8 @@ async function doctorsdashboard(req, res) {
       doctor,
       patientsAssignedCount: appointments.length,
       fellowDoctorsCount,
+      onlineRequestsCount,
+      upcomingAppointmentsCount,
       appointments: formattedAppointments,
     });
   } catch (error) {
@@ -98,7 +98,7 @@ async function doctorsdashboard(req, res) {
 async function showalldocmsg(req, res) {
   try {
     const doctor = await User.findById(req.user._id).select("-password");
-    const requests = await Appointment.find({ status: "online_requested" })
+    const requests = await Appointment.find({ status: "online_requested", docId: req.user._id })
       .sort({ date: -1 })
       .lean();
 
@@ -183,16 +183,15 @@ async function doctorsregistrationtodb(req, res) {
 
 async function doctorloginfromdb(req, res) {
   const { email, password } = req.body;
-  console.log("doctor email:", email);
   
   try {
-    const doctor = await User.findOne({ email: email });
+    const doctor = await User.findOne({ email: email.toLowerCase(), role: "DOCTOR" });
+    if (!doctor) throw new Error("incorrect credentials");
   const doctorname = doctor.fullname;
 
     const token = await User.matchpassword(email, password);
-    console.log(token);
-    res.cookie("doctorname", doctorname);
-    return res.cookie("token", token).redirect("/doctor");
+    res.cookie("doctorname", doctorname, cookieOptions);
+    return res.cookie("token", token, cookieOptions).redirect("/doctor");
   } catch (error) {
     console.error(error);
     return res.status(401).render("doctor-login", {
@@ -206,15 +205,7 @@ async function doctorsdetailpage(req, res) {
   try {
     const doctors = await User.find({ role: "DOCTOR" }).select("-password").lean();
     const formattedDoctors = doctors.map((doctor) => {
-      let image = doctor.image;
-      const imagePath = image
-        ? path.join(__dirname, "..", "..", "frontend", "patient", "views", "assets", image.replace("/assets/", ""))
-        : "";
-
-      if (!image || !fs.existsSync(imagePath)) {
-        const randomIndex = Math.floor(Math.random() * 14) + 1;
-        image = `/assets/doc${randomIndex}.png`;
-      }
+      const image = doctorImage(doctor.image);
 
       return {
         ...doctor,
@@ -236,6 +227,9 @@ async function doctorlogout(req, res) {
 async function changeAvailability(req,res) {
   try {
     const{doctorId}=req.body
+    if (req.user.role === "DOCTOR" && String(req.user._id) !== String(doctorId)) {
+      return res.status(403).json({ success: false, message: "You can only change your own availability." });
+    }
     const docData=await User.findById(doctorId)
     if (!docData) {
       return res.json({ success: false, message: "Doctor not found" });

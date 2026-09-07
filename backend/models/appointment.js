@@ -61,7 +61,9 @@ const appointmentschema = new mongoose.Schema(
         type: String,
         required: true,
       },
+      paymentId: { type: String },
     },
+    invoiceFile: { type: String },
     isOnline: {
       type: Boolean,
       default: false,
@@ -98,6 +100,9 @@ const appointmentschema = new mongoose.Schema(
     },
   },
 );
+
+appointmentschema.index({ docId: 1, date: 1 });
+appointmentschema.index({ userid: 1, date: -1 });
 
 const Appointment = mongoose.model("appointment", appointmentschema);
 Appointment.statuses = appointmentStatuses;

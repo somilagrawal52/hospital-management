@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const { createHmac, randomBytes } = require("crypto");
+const bcrypt = require("bcryptjs");
+const { createHmac } = require("crypto");
 const { createtokenforuser } = require("../services/auth");
 const { type } = require("os");
 
@@ -12,12 +13,16 @@ const userschema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
     },
     gender: {
       type: String,
     },
     number: {
-      type: Number,
+      type: String,
+      trim: true,
     },
     country: {
       type: String,
@@ -60,9 +65,6 @@ const userschema = new mongoose.Schema(
     date:{
       type:Number,
     },
-    salt: {
-      type: String,
-    },
     role: {
       type: String,
       required: true,
@@ -72,40 +74,40 @@ const userschema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // Retained temporarily so existing SHA-256 accounts can be upgraded on login.
+    salt: { type: String },
   },
   {minimize:false}
 );
 
-userschema.pre("save", function (next) {
+userschema.pre("save", async function (next) {
   const user = this;
   if (!user.isModified("password")) return next();
 
-  const salt = randomBytes(16).toString("hex");
-  const hashedpassword = createHmac("sha256", salt)
-    .update(user.password)
-    .digest("hex");
-
-  this.salt = salt;
-  this.password = hashedpassword;
-
-  next();
+  try {
+    this.password = await bcrypt.hash(user.password, 12);
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 userschema.statics.matchpassword= async function (email, password) {
-  const user = await this.findOne({ email });
+  const user = await this.findOne({ email: String(email).toLowerCase() });
   if (!user) throw new Error("user not found");
 
-  const salt = user.salt;
-  const hashedpassword = user.password;
-
-  const providedhash = createHmac("sha256", salt)
-    .update(password)
-    .digest("hex");
-  console.log("Provided Hash:", providedhash);
-
-  if (hashedpassword !== providedhash) throw new Error("incorrect password");
+  let isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch && user.salt) {
+    const legacyHash = createHmac("sha256", user.salt).update(password).digest("hex");
+    isMatch = legacyHash === user.password;
+    if (isMatch) {
+      user.password = password;
+      user.salt = undefined;
+      await user.save();
+    }
+  }
+  if (!isMatch) throw new Error("incorrect password");
   const token = createtokenforuser(user);
-  console.log("Created Token:", token);
   return token;
 };
 const User = mongoose.model("user", userschema);

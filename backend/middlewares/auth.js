@@ -18,6 +18,13 @@ function checkforauthentication(cookieName) {
   };
 }
 
+function requireAuth(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: "Please sign in to continue." });
+  }
+  return next();
+}
+
 
 function restrictTo(roles = []) {
   return function (req, res, next) {
@@ -47,5 +54,6 @@ function restrictTo(roles = []) {
 
 module.exports = {
   checkforauthentication,
+  requireAuth,
   restrictTo,
 };

@@ -1,8 +1,15 @@
 const jwt = require("jsonwebtoken");
-const secret = process.env.secret;
+const secret = process.env.JWT_SECRET || process.env.secret;
+const cookieOptions = {
+  httpOnly: true,
+  sameSite: "lax",
+  secure: process.env.NODE_ENV === "production",
+  maxAge: 60 * 60 * 1000,
+};
 
 function createtokenforuser(user) {
   try {
+    if (!secret) throw new Error("JWT_SECRET is not configured");
     const payload = {
       _id: user._id,
       email: user.email,
@@ -18,6 +25,7 @@ function createtokenforuser(user) {
 
 function validatetoken(token) {
   try {
+    if (!secret) throw new Error("JWT_SECRET is not configured");
     const payload = jwt.verify(token, secret);
     return payload;
   } catch (error) {
@@ -29,4 +37,5 @@ function validatetoken(token) {
 module.exports = {
   createtokenforuser,
   validatetoken,
+  cookieOptions,
 };

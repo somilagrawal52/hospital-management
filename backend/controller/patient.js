@@ -1,5 +1,6 @@
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
+const path = require('path');
 const Appointment = require("../models/appointment");
 const Message = require("../models/messages");
 const { mailsender,sendWhatsAppMessage } = require("./mail");
@@ -7,6 +8,8 @@ const User = require("../models/user");
 // const otpgeneration = require("otp-generator");
 const Razorpay = require("razorpay");
 const { validatetoken } = require("../services/auth");
+const { cookieOptions } = require("../services/auth");
+const { validatePaymentVerification } = require("razorpay/dist/utils/razorpay-utils");
 
 
 
@@ -62,6 +65,7 @@ async function getOnlineAppointmentRequests(req, res) {
   try {
     const onlineAppointments = await Appointment.find({
       status: "online_requested",
+      docId: req.user._id,
     }).sort({ date: -1 });
 
     res.json({ success: true, appointments: onlineAppointments });
@@ -73,41 +77,27 @@ async function getOnlineAppointmentRequests(req, res) {
 
 async function bookappointment(req, res) {
   try {
-    const token = req.cookies.token;
-    const decoded = validatetoken(token);
-    const { docId, fullname, email, number, date, line1, line2, amount } = req.body;
-    const userid = decoded._id;
+    const { docId, fullname, email, number, date, time, line1, line2 } = req.body;
+    const userid = req.user._id;
+    if (!docId || !fullname?.trim() || !email?.trim() || !number?.trim() || !date || !line1?.trim() || !line2?.trim()) {
+      return res.status(400).json({ success: false, message: "Please complete all appointment details." });
+    }
+    const appointmentDate = new Date(`${date}T${time || "09:00"}:00+05:30`);
+    if (Number.isNaN(appointmentDate.getTime()) || appointmentDate < new Date(new Date().setHours(0, 0, 0, 0))) {
+      return res.status(400).json({ success: false, message: "Choose a future appointment date." });
+    }
+    const doctordata = await User.findOne({ _id: docId, role: "DOCTOR" }).select("-password");
+    if (!doctordata) return res.status(404).json({ success: false, message: "Doctor not found." });
+    if (!doctordata.available) return res.status(400).json({ success: false, message: "This doctor is not currently available." });
+
+    const alreadyBooked = await Appointment.exists({ docId, date: appointmentDate, status: { $nin: ["cancelled"] } });
+    if (alreadyBooked) return res.status(409).json({ success: false, message: "This appointment slot is no longer available." });
     
     const razorpayOrder = await instance.orders.create({
-      amount: amount * 100,
+      // Never trust the fee supplied by the browser.
+      amount: Math.round(Number(doctordata.fees) * 100),
       currency: "INR",
     });
-    
-    const invoiceDir = path.join(__dirname, 'invoices');
-    if (!fs.existsSync(invoiceDir)) {
-      fs.mkdirSync(invoiceDir, { recursive: true });
-    }
-
-    const fileName = `invoice-${Date.now()}.pdf`;
-    const filePath = path.join(invoiceDir, fileName);
-    const doc = new PDFDocument();
-    const doctordata = await User.findById(docId).select("-password");
-
-    doc.pipe(fs.createWriteStream(filePath));
-
-    doc.fontSize(20).text('Payment Successful! Thank you for using OneLife.');
-    doc.text(`Invoice ID: ${razorpayOrder.id}`);
-    doc.text(`Patient Name: ${fullname}`);
-    doc.text(`Doctor Name: Dr. ${doctordata.fullname}`); 
-    doc.text(`Date of Appointment: ${date}`);
-    doc.text(`Amount Paid: ${amount}`);
-    doc.end();
-
-    if(!doctordata.available){
-      return res.status(400).json({success:false,message:"Doctor is not available"});
-    }
-
-    await doctordata.save();
     const userdata = await User.findById(userid).select("-password");
     const appointment = new Appointment({
       fullname,
@@ -123,49 +113,20 @@ async function bookappointment(req, res) {
         currency: "INR",
         status: "pending",
       },
-      date: new Date(date),
+      date: appointmentDate,
       amount: doctordata.fees,
       userdata,
       doctordata,
-      status: "pending",
+        status: "created",
     });
 
-    console.log("Attempting to save appointment:", appointment);
     await appointment.save();
-    console.log("Appointment saved successfully");
-
-    const patientmail = {
-      to: email,
-      subject: "Appointment Booked",
-      text: `${fullname} your Appointment is booked`,
-      attachments: [
-        {
-          path: filePath,
-          contentType: 'application/pdf',
-        }
-      ],
-    };
-    const doctormail = {
-      to: doctordata.email,
-      subject: "Appointment Booked",
-      text: `${doctordata.fullname} you have been booked for ${date} by ${fullname}`,
-      attachments: [
-        {
-          path: filePath,
-          contentType: 'application/pdf',
-        }
-      ],
-    };
-    await mailsender(patientmail,filePath);
-    await mailsender(doctormail,filePath);
-
-    await sendWhatsAppMessage(`+91${doctordata.number}`, `Dr. ${doctordata.fullname}, an appointment has been scheduled for ${date} with patient ${fullname}.`);
-    await sendWhatsAppMessage(`+91${number}`, `${fullname}, your appointment is confirmed for ${date} with Dr. ${doctordata.fullname}.`);
 
     res.json({
       message: "Appointment created successfully.",
       appointmentId: appointment._id,
       razorpayOrderId: razorpayOrder.id,
+      amount: Number(doctordata.fees) * 100,
       });
   } catch (error) {
     console.error(error);
@@ -186,9 +147,7 @@ async function aboutpage(req, res) {
 
 async function appointmentdetailtable(req, res) {
   try {
-    const{userid}=req.body;
-    const appointments = await Appointment.find({userid});
-    console.log(appointments)
+    const appointments = await Appointment.find({ userid: req.user._id }).sort({ date: -1 });
     res.json({success:true,appointments});
   } catch (error) {
     console.error("Error fetching doctors:", error);
@@ -201,9 +160,10 @@ async function sendmsg(req, res) {
   console.log(req.body);
   try {
     await Message.create({
+      senderId: req.user._id,
       fullname,
       question,
-      msgbody,
+      message: msgbody,
     });
     console.log("Message Send");
     return res.redirect("/messages?success=1");
@@ -243,6 +203,9 @@ async function myappointments(req,res) {
       appointment.formattedDate = formatAppointmentDate(appointment.date);
       return appointment;
     });
+    patientdata.upcomingAppointmentsCount = patientdata.appointments.filter(
+      (item) => item.status === "confirmed" && new Date(item.date) >= new Date(),
+    ).length;
     console.log("Patient appointments data:", patientdata.appointments);
 
     res.render('myAppointment',{user:req.user,patientdata});
@@ -253,19 +216,57 @@ async function myappointments(req,res) {
 }
 
 async function savePayments(req, res) {
-  const { appointmentId, paymentId } = req.body;
+  const { appointmentId, paymentId, orderId, signature } = req.body;
 
   try {
     const appointment = await Appointment.findById(appointmentId);
 
-    if (!appointment) {
+    if (!appointment || appointment.userid !== String(req.user._id)) {
       return res.status(404).json({ message: "Appointment not found." });
     }
 
+    if (appointment.payment.status === "success") return res.json({ message: "Payment already verified." });
+    if (!paymentId || !signature || orderId !== appointment.payment.orderId) {
+      return res.status(400).json({ message: "Invalid payment details." });
+    }
+    const isValid = validatePaymentVerification(
+      { order_id: orderId, payment_id: paymentId },
+      signature,
+      process.env.RAZORPAY_KEY_SECRET
+    );
+    if (!isValid) return res.status(400).json({ message: "Payment verification failed." });
+
     appointment.payment.paymentId = paymentId;
     appointment.payment.status = "success";
+    appointment.status = "confirmed";
+
+    const invoiceDir = path.join(__dirname, "..", "invoices");
+    fs.mkdirSync(invoiceDir, { recursive: true });
+    const invoiceName = `invoice-${appointment._id}.pdf`;
+    const filePath = path.join(invoiceDir, invoiceName);
+    await new Promise((resolve, reject) => {
+      const document = new PDFDocument();
+      const stream = fs.createWriteStream(filePath);
+      stream.on("finish", resolve).on("error", reject);
+      document.pipe(stream);
+      document.fontSize(20).text("OneLife appointment invoice");
+      document.moveDown().fontSize(12);
+      document.text(`Invoice ID: ${appointment.payment.orderId}`);
+      document.text(`Patient: ${appointment.fullname}`);
+      document.text(`Doctor: Dr. ${appointment.doctor}`);
+      document.text(`Appointment: ${formatAppointmentDate(appointment.date)}`);
+      document.text(`Amount paid: Rs. ${appointment.amount}`);
+      document.end();
+    });
+    appointment.invoiceFile = invoiceName;
 
     await appointment.save();
+
+    const doctor = await User.findById(appointment.docId).select("email fullname number");
+    await Promise.allSettled([
+      mailsender({ to: appointment.email, subject: "Appointment confirmed", text: `Your appointment with Dr. ${appointment.doctor} is confirmed.`, attachments: [{ path: filePath, contentType: "application/pdf" }] }),
+      doctor && mailsender({ to: doctor.email, subject: "New confirmed appointment", text: `${appointment.fullname} has a confirmed appointment on ${formatAppointmentDate(appointment.date)}.`, attachments: [{ path: filePath, contentType: "application/pdf" }] }),
+    ]);
 
     res.json({ message: "Payment saved successfully." });
   } catch (error) {
@@ -278,6 +279,9 @@ async function patientregistrationtodb(req, res) {
   const { fullname, email, password } = req.body;
 
   try {
+    if (!fullname?.trim() || !/^\S+@\S+\.\S+$/.test(email || "") || !password || password.length < 8) {
+      return res.status(400).render("login", { state: "register", fullname, email, password: "", error: "Enter your name, a valid email, and a password of at least 8 characters." });
+    }
     const newPatient = await User.create({
       fullname,
       email,
@@ -294,7 +298,8 @@ async function patientregistrationtodb(req, res) {
     return res.status(200).redirect("/login");
   } catch (error) {
     console.error("Error during patient registration:", error);
-    res.status(500).send("Server error");
+    const message = error.code === 11000 ? "An account with this email already exists." : "Unable to create your account. Please try again.";
+    res.status(400).render("login", { state: "register", fullname, email, password: "", error: message });
   }
 }
 
@@ -303,7 +308,7 @@ async function patientloginfromdb(req, res) {
 
   try {
     const token = await User.matchpassword(email, password); 
-    res.cookie("token", token );
+    res.cookie("token", token, cookieOptions);
     return res.redirect('/');
   } catch (error) {
     console.error("Error during login:", error.message);
@@ -350,10 +355,10 @@ async function UpdateProfile(req, res) {
       }
     }
     const updateData = {
-      fullname,
-      number,
+      fullname: fullname?.trim(),
+      number: number?.trim(),
       address: parsedAddress,
-      email,
+      email: email?.trim().toLowerCase(),
       image: req.file ? `/assets/${req.file.filename}` : undefined,
       dob,
       gender
@@ -363,7 +368,7 @@ async function UpdateProfile(req, res) {
     const result = await User.findByIdAndUpdate(
       { _id: decoded._id },
       updateData,
-      { new: true } 
+      { new: true, runValidators: true }
     );
 
     // Log the result of the update operation
@@ -414,6 +419,10 @@ async function updateAppointmentStatus(req, res) {
   }
 
   try {
+    const existing = await Appointment.findById(appointmentId);
+    if (!existing || (req.user.role === "DOCTOR" && existing.docId !== String(req.user._id))) {
+      return res.status(404).json({ success: false, message: "Appointment not found" });
+    }
     const appointment = await Appointment.findByIdAndUpdate(
       appointmentId,
       statusUpdates[status],
@@ -448,7 +457,7 @@ async function markAppointmentOnline(req, res) {
     const { id } = req.params;
 
     const appointment = await Appointment.findById(id);
-    if (!appointment) {
+    if (!appointment || appointment.userid !== String(req.user._id)) {
       return res.status(404).json({ success: false, message: "Appointment not found" });
     }
 
