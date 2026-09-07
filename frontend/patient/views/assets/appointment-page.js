@@ -14,21 +14,19 @@ if (appointmentForm) {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to create appointment');
-      }
-
-      const { appointmentId, razorpayOrderId } = await response.json();
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || 'Failed to create appointment');
+      const { appointmentId, razorpayOrderId, amount } = result;
 
       const razorpay = new Razorpay({
-        key: 'rzp_test_8Tg095AU86SIcj',
-        amount: Number(payload.amount) * 100,
+        key: window.RAZORPAY_KEY,
+        amount,
         currency: 'INR',
         name: 'OneLife',
         description: 'Appointment Payment',
         order_id: razorpayOrderId,
         handler: async (paymentResponse) => {
-          await fetch('/save-payment', {
+          const verification = await fetch('/save-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -38,6 +36,10 @@ if (appointmentForm) {
               signature: paymentResponse.razorpay_signature,
             }),
           });
+          if (!verification.ok) {
+            const error = await verification.json();
+            throw new Error(error.message || 'Payment verification failed');
+          }
 
           window.location.href = `/payment-success?paymentId=${paymentResponse.razorpay_payment_id}`;
         },
@@ -46,7 +48,10 @@ if (appointmentForm) {
       razorpay.open();
     } catch (error) {
       console.error('Error creating appointment:', error);
-      alert('Unable to start the payment flow right now.');
+      alert(error.message || 'Unable to start the payment flow right now.');
     }
   });
 }
+
+const dateInput = document.getElementById('date');
+if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];

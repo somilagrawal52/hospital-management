@@ -3,8 +3,9 @@
     <div id="chat-container" class="flex flex-col w-full sm:w-3/4 lg:w-1/2 max-h-[80vh] bg-white shadow-xl rounded-lg">
         <!-- Header -->
         <div class="px-6 py-4 text-lg font-bold text-center text-white bg-blue-600 rounded-t-lg">
-            Chat Room
+            OneLife Health Information
         </div>
+        <p class="px-5 pt-4 text-xs leading-5 text-gray-500">General information only—not diagnosis or emergency care. For urgent symptoms, contact local emergency services.</p>
 
         <!-- Messages Area -->
         <div id="messages" class="flex flex-col flex-grow p-4 space-y-4 overflow-y-auto bg-gray-50">
@@ -29,7 +30,6 @@
         </form>
     </div>
 </div>
-<script src="/socket.io/socket.io.js"></script>
 <script>
     const sendMessage = async (message) => {
   try {

@@ -1,19 +1,20 @@
 <%- include('partials/head', { pageTitle: 'Doctor Dashboard - OneLife', includeDataTables: true }) %>
 <%- include('partials/header', { doctor, brandLabel: 'OneLife', showMessagesLink: true }) %>
 
-    <main id="main" class="main" style="margin-left: 0px;">
+    <main id="main" class="main" style="margin-left: 0;">
       <div class="pagetitle">
-        <h1>Home</h1>
+        <h1>Welcome, Dr. <%= doctor?.fullname || '' %></h1>
+        <p class="text-muted mb-0">Review your schedule and patient requests at a glance.</p>
       </div>
 
       <section class="section Home">
         <div class="row">
           <div class="col-lg-12">
             <div class="row">
-              <div class="col-xxl-4 col-xl-12">
+              <div class="col-md-6 col-xl-3">
                 <div class="card info-card customers-card">
                   <div class="card-body">
-                    <h5 class="card-title">Patients Assigned</h5>
+                    <h5 class="card-title">Patients <span class="text-muted small pt-1">assigned</span></h5>
                     <div class="d-flex align-items-center">
                       <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                         <i class="bi bi-people"></i>
@@ -26,7 +27,7 @@
                 </div>
               </div>
 
-              <div class="col-xxl-4 col-xl-12">
+              <div class="col-md-6 col-xl-3">
                 <div class="card info-card customers-card">
                   <div class="card-body">
                     <h5 class="card-title">Fellow Doctors</h5>
@@ -42,7 +43,7 @@
                 </div>
               </div>
 
-              <div class="col-xxl-4 col-xl-12">
+              <div class="col-md-6 col-xl-3">
                 <div class="card info-card customers-card">
                   <div class="card-body">
                     <h5 class="card-title">Availability</h5>
@@ -60,11 +61,23 @@
                 </div>
               </div>
 
-              <div class="col-12">
-                <div class="overflow-auto card recent-sales">
+              <div class="col-md-6 col-xl-3">
+                <div class="card info-card customers-card h-100">
                   <div class="card-body">
-                    <h5 class="card-title">Recent Patients</h5>
-                    <table class="table table-borderless display" id="dataTable">
+                    <h5 class="card-title">Requests <span class="text-muted small pt-1">online</span></h5>
+                    <div class="d-flex align-items-center">
+                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-camera-video"></i></div>
+                      <div class="ps-3"><h6><%= onlineRequestsCount %></h6></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <div class="card recent-sales">
+                  <div class="card-body">
+                    <h5 class="card-title">Recent Patients <span class="text-muted small pt-1">(<%= upcomingAppointmentsCount %> upcoming)</span></h5>
+                    <div class="table-responsive"><table class="table table-borderless display align-middle" id="dataTable">
                       <thead>
                         <tr>
                           <th scope="col">Name</th>
@@ -72,20 +85,35 @@
                           <th scope="col">P. No.</th>
                           <th scope="col">Date</th>
                           <th scope="col">Status</th>
+                          <th scope="col">Action</th>
                         </tr>
                       </thead>
                       <tbody>
                         <% appointments.forEach((appointment) => { %>
+                          <% const status = appointment.status || 'pending'; %>
                           <tr>
                             <td><%= appointment.fullname %></td>
                             <td><%= appointment.email %></td>
                             <td><%= appointment.number %></td>
                             <td><%= appointment.formattedDate %></td>
-                            <td class="text-capitalize"><%= appointment.status.replace(/_/g, ' ') %></td>
+                            <td><span class="badge rounded-pill text-bg-<%= status === 'cancelled' ? 'danger' : status === 'completed' ? 'success' : 'primary' %> text-capitalize"><%= status.replace(/_/g, ' ') %></span></td>
+                            <td>
+                              <% if (!['completed', 'cancelled'].includes(status)) { %>
+                                <div class="d-flex gap-2 align-items-center">
+                                  <select class="form-select form-select-sm status-select" aria-label="Update appointment status">
+                                    <option value="">Update…</option>
+                                    <% if (status !== 'confirmed') { %><option value="confirmed">Confirm</option><% } %>
+                                    <option value="completed">Complete</option>
+                                    <option value="cancelled">Cancel</option>
+                                  </select>
+                                  <button type="button" class="btn btn-sm btn-primary update-status" data-id="<%= appointment._id %>">Save</button>
+                                </div>
+                              <% } else { %><span class="text-muted small">Final</span><% } %>
+                            </td>
                           </tr>
                         <% }) %>
                       </tbody>
-                    </table>
+                    </table></div>
                     <% if (!appointments.length) { %>
                       <p class="mb-0">No appointments assigned yet.</p>
                     <% } %>
@@ -100,8 +128,28 @@
 
 <%- include('partials/footer', { includeJQuery: true, includeDataTables: true }) %>
     <script>
-      if (document.querySelector("#dataTable tbody tr")) {
-        new DataTable("#dataTable");
-      }
+      window.addEventListener("load", () => {
+        if (document.querySelector("#dataTable tbody tr")) {
+          new DataTable("#dataTable");
+        }
+      });
     </script>
+<script>
+  document.addEventListener('click', async (event) => {
+    const button = event.target.closest('.update-status');
+    if (!button) return;
+    const status = button.closest('td').querySelector('.status-select').value;
+    if (!status) return alert('Choose a new status first.');
+    button.disabled = true;
+    try {
+      const response = await fetch('/appointments/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ appointmentId: button.dataset.id, status }) });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to update appointment');
+      window.location.reload();
+    } catch (error) {
+      button.disabled = false;
+      alert(error.message || 'Unable to update appointment.');
+    }
+  });
+</script>
 <%- include('partials/scripts', { includeJQuery: true, includeDataTables: true }) %>

@@ -4,7 +4,7 @@ async function handleAppointmentAction(action, appointmentId) {
   const endpoint = action === 'cancel' ? `/clearapp/${appointmentId}` : `/make-online/${appointmentId}`;
 
   try {
-    const response = await fetch(endpoint, { method: 'GET' });
+    const response = await fetch(endpoint, { method: 'POST' });
 
     if (action === 'cancel') {
       if (!response.ok) {
