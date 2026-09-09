@@ -172,8 +172,8 @@ async function doctorsregistrationtodb(req, res) {
       subject: "Welcome Message!",
       text: `Welcome to OneLife, ${fullname}!`,
     };
-    await mailsender(obj);
-    await sendWhatsAppMessage(number, doctorWhatsAppMessage);
+    mailsender(obj).catch((mailError) => console.error("Welcome email failed:", mailError.message));
+    sendWhatsAppMessage(number, doctorWhatsAppMessage).catch((whatsappError) => console.error("Welcome WhatsApp message failed:", whatsappError.message));
     res.redirect("/doctors-registration");
   } catch (error) {
     console.error("Error during doctor registration:", error);

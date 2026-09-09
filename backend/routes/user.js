@@ -10,6 +10,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { isMedicalQuery, MEDICAL_ONLY_FALLBACK } = require("../services/medical-query");
 const { doctorImage } = require("../services/doctor-image");
 const path = require("path");
+const mongoose = require("mongoose");
 const Appointment = require("../models/appointment");
 const { validatetoken } = require("../services/auth");
 const {
@@ -464,6 +465,9 @@ router.get("/appointment/:id", async (req, res) => {
     patientdata = await User.findById({ _id: decodedtoken._id });
   }
   const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(404).render("error-404", { title: "Doctor Not Found", message: "The selected doctor does not exist." });
+  }
   const docInfo = await User.findById(id).select("-password");
   if (!docInfo) {
     return res.status(404).send("Doctor not found");

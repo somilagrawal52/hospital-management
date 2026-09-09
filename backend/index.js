@@ -44,15 +44,15 @@ app.use(cookieParser());
 app.use(checkforauthentication("token"));
 
 app.use(
-  "/assets",
+  "/admin-assets",
   express.static(path.join(__dirname, "..", "frontend", "Admin", "assets")),
 );
 app.use(
-  "/assets",
+  "/admin-assets/img",
   express.static(path.join(__dirname, "..", "frontend", "Admin", "assets", "img")),
 );
 app.use(
-  "/assets",
+  "/doctor-assets",
   express.static(path.join(__dirname, "..", "frontend", "doctor", "assets")),
 );
 app.use(

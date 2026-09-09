@@ -9,6 +9,7 @@
       <section class="section video-requests">
         <div class="row" id="video-request-container">
           <% requests.forEach((request) => { %>
+            <% const status = request.status || 'online_requested'; %>
             <div class="col-lg-6">
               <div class="card">
                 <div class="card-header">
@@ -16,7 +17,7 @@
                 </div>
                 <div class="card-body">
                   <h5 class="card-title">Requested At: <%= request.formattedRequestTime %></h5>
-                  <p><strong>Status:</strong> <span class="text-capitalize"><%= request.status.replace(/_/g, ' ') %></span></p>
+                  <p><strong>Status:</strong> <span class="text-capitalize"><%= status.replace(/_/g, ' ') %></span></p>
                   <p><strong>Reason:</strong> <%= request.payment?.reason || "N/A" %></p>
                   <div class="d-flex gap-2">
                     <button class="btn btn-success action-btn" data-action="accept" data-id="<%= request._id %>">Accept</button>

@@ -10,6 +10,7 @@ const Razorpay = require("razorpay");
 const { validatetoken } = require("../services/auth");
 const { cookieOptions } = require("../services/auth");
 const { validatePaymentVerification } = require("razorpay/dist/utils/razorpay-utils");
+const { doctorImage } = require("../services/doctor-image");
 
 
 
@@ -200,6 +201,7 @@ async function myappointments(req,res) {
 
     patientdata.appointments = appointments.map((appointmentDoc) => {
       const appointment = appointmentDoc.toObject();
+      if (appointment.doctordata) appointment.doctordata.image = doctorImage(appointment.doctordata.image);
       appointment.formattedDate = formatAppointmentDate(appointment.date);
       return appointment;
     });
@@ -294,7 +296,7 @@ async function patientregistrationtodb(req, res) {
       subject: "Welcome Message!",
       text: `Welcome to OneLife, ${fullname}!`,
     };
-    await mailsender(obj);
+    mailsender(obj).catch((mailError) => console.error("Welcome email failed:", mailError.message));
     return res.status(200).redirect("/login");
   } catch (error) {
     console.error("Error during patient registration:", error);

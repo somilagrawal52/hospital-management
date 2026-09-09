@@ -2,16 +2,17 @@ const fs = require("fs");
 const path = require("path");
 
 const assetDirectories = [
-  path.resolve(__dirname, "..", "..", "frontend", "patient", "views", "assets"),
-  path.resolve(__dirname, "..", "..", "frontend", "Admin", "assets"),
-  path.resolve(__dirname, "..", "..", "frontend", "Admin", "assets", "img"),
-  path.resolve(__dirname, "..", "..", "frontend", "doctor", "assets", "img"),
+  { directory: path.resolve(__dirname, "..", "..", "frontend", "patient", "views", "assets"), url: "/assets" },
+  { directory: path.resolve(__dirname, "..", "..", "frontend", "Admin", "assets"), url: "/admin-assets" },
+  { directory: path.resolve(__dirname, "..", "..", "frontend", "Admin", "assets", "img"), url: "/admin-assets/img" },
+  { directory: path.resolve(__dirname, "..", "..", "frontend", "doctor", "assets", "img"), url: "/doctor-assets/img" },
 ];
 
 function doctorImage(image) {
   const fileName = path.basename(image || "");
-  if (fileName && assetDirectories.some((directory) => fs.existsSync(path.join(directory, fileName)))) {
-    return `/assets/${fileName}`;
+  const match = assetDirectories.find(({ directory }) => fileName && fs.existsSync(path.join(directory, fileName)));
+  if (match) {
+    return `${match.url}/${fileName}`;
   }
   // Stable fallback: a doctor never receives a different photo after a refresh.
   return "/assets/doc1.png";

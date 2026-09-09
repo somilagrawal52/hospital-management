@@ -1,9 +1,9 @@
 <div class="flex items-center justify-between py-4 mb-5 text-sm font-bold border-b border-b-gray-400">
   <!-- Logo Section -->
-  <img onclick="window.location.href='/'" class="hidden cursor-pointer w-44 md:flex" src="/assets/logo.png" alt="logo" />
+  <img onclick="window.location.href='/'" class="flex cursor-pointer w-28 sm:w-44" src="/assets/logo.png" alt="OneLife Hospital home" />
 
   <!-- Desktop Navigation Links -->
-  <ul class="items-start hidden gap-5 md:flex">
+  <ul class="items-start hidden gap-5 lg:flex">
     <li>
       <a href="/" class="py-1">HOME</a>
       <hr class="border-none outline-none h-0.5 bg-primary w-3/5 m-auto hidden" />
@@ -28,13 +28,13 @@
   <!-- Mobile Menu Button -->
   <img
     onclick="toggleMobileMenu()"
-    class="w-6 md:hidden"
+    class="w-6 lg:hidden"
     src="/assets/menu_icon.svg"
     alt="menu-icon"
   />
 
   <!-- Admin Section -->
-  <p class="hidden md:block border px-2.5 py-0.5 rounded-full border-gray-500 text-gray-600 cursor-pointer" onclick="window.location.href='/admin'">
+  <p class="hidden lg:block border px-2.5 py-0.5 rounded-full border-gray-500 text-gray-600 cursor-pointer" onclick="window.location.href='/admin'">
     Admin
   </p>
 
@@ -59,7 +59,7 @@
 </div>
 
 <!-- Mobile Menu -->
-<div id="mobileMenu" class="fixed top-0 right-0 z-40 hidden w-full h-full transition-all bg-white md:hidden">
+<div id="mobileMenu" class="fixed top-0 right-0 z-40 hidden w-full h-full transition-all bg-white lg:hidden">
   <div class="flex items-center justify-between px-5 py-6 border-b border-gray-300">
     <img class="w-36" src="/assets/logo.png" alt="logo" />
     <img
