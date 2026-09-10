@@ -2,24 +2,24 @@
 
 <div>
     <div>
-      <div class="text-center text-2xl pt-10 text-[#707070]">
-        <p>CONTACT <span class="font-semibold text-gray-700">US</span></p>
+      <div class="pt-10 text-center text-2xl text-gray-600">
+        <h1>CONTACT <span class="font-semibold text-gray-800">US</span></h1>
       </div>
       <div class="flex flex-col justify-center gap-10 my-10 text-sm md:flex-row mb-28">
-        <img class="w-full md:max-w-[360px]" src="/assets/contact_image.png" alt="" />
+        <img class="w-full rounded-xl md:max-w-[360px]" src="/assets/contact_image.png" alt="Family meeting with a healthcare professional" />
         <div class="flex flex-col items-start justify-center gap-6">
           <p class="text-lg font-semibold text-gray-600">SUPPORT</p>
           <p class="text-gray-500">
             Need help with an appointment, billing, or your account? <br />
             Our support team is here to help.
           </p>
-          <p class="text-gray-500">
-            Tel: +91 93993 04021 <br />
-            Email: support@onelife.health
+          <p class="text-gray-600">
+            Tel: <a class="underline hover:text-primary" href="tel:+919399304021">+91 93993 04021</a> <br />
+            Email: <a class="underline hover:text-primary" href="mailto:support@onelife.health">support@onelife.health</a>
           </p>
           <p class="text-lg font-semibold text-gray-600">SAFETY NOTE</p>
           <p class="text-gray-500">Do not use this service for emergencies. Contact your local emergency number if urgent help is needed.</p>
-          <a href="<%= user ? '/messages' : '/login' %>" class="px-8 py-4 text-sm transition-all duration-500 border border-black hover:bg-black hover:text-white">Contact support</a>
+          <a href="<%= user ? '/messages' : '/login' %>" class="px-8 py-4 text-sm transition-all duration-300 border border-black hover:bg-black hover:text-white"><%= user ? 'Contact support' : 'Sign in to contact support' %></a>
         </div>
       </div>
     </div>

@@ -1,23 +1,27 @@
 <%- include('head') %>
-<div class="flex items-center justify-center min-h-screen bg-gray-200">
-    <div id="chat-container" class="flex flex-col w-full sm:w-3/4 lg:w-1/2 max-h-[80vh] bg-white shadow-xl rounded-lg">
+<main class="flex min-h-screen items-center justify-center bg-gray-200 p-4">
+    <div id="chat-container" class="flex w-full max-h-[80vh] max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
         <!-- Header -->
-        <div class="px-6 py-4 text-lg font-bold text-center text-white bg-blue-600 rounded-t-lg">
+        <div class="bg-blue-600 px-6 py-4 text-center text-lg font-bold text-white">
             OneLife Health Information
         </div>
         <p class="px-5 pt-4 text-xs leading-5 text-gray-500">General information only—not diagnosis or emergency care. For urgent symptoms, contact local emergency services.</p>
 
         <!-- Messages Area -->
-        <div id="messages" class="flex flex-col flex-grow p-4 space-y-4 overflow-y-auto bg-gray-50">
-            <!-- Chat messages will appear here -->
+        <div id="messages" role="log" aria-live="polite" aria-relevant="additions" class="flex flex-grow flex-col space-y-4 overflow-y-auto bg-gray-50 p-4">
+            <div class="flex justify-start">
+                <span class="inline-block max-w-[75%] break-words rounded-lg bg-gray-300 px-4 py-2 text-gray-800 shadow-md">Hello. Ask a health or medical-information question and I’ll do my best to help.</span>
+            </div>
         </div>
 
         <!-- Message Input -->
         <form action="#" id="send-msg" class="flex items-center w-full p-4 bg-white border-t border-gray-300">
+            <label for="message-input" class="sr-only">Your medical question</label>
             <input 
                 type="text" 
                 id="message-input" 
-                placeholder="Type a message..." 
+                placeholder="Ask a medical question..."
+                autocomplete="off"
                 class="flex-grow p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button 
@@ -25,11 +29,11 @@
                 id="send-btn" 
                 class="p-3 ml-1 text-white transition-colors bg-blue-600 rounded-r-lg hover:bg-blue-700"
             >
-                Send
+                <span id="send-label">Send</span>
             </button>
         </form>
     </div>
-</div>
+</main>
 <script>
     const sendMessage = async (message) => {
   try {
@@ -61,17 +65,27 @@ form.addEventListener("submit", async (e) => {
 
   if (!message) return; // Skip sending if the input is empty
 
-  // Append user's message to chat
-  appendMessage(`You: ${message}`, 'right');
+  const input = document.getElementById("message-input");
+  const sendButton = document.getElementById("send-btn");
+  const sendLabel = document.getElementById("send-label");
 
-  // Get response from AI
-  const chatbotResponse = await sendMessage(message);
+  appendMessage(message, 'right');
+  input.value = '';
+  input.disabled = true;
+  sendButton.disabled = true;
+  sendLabel.textContent = 'Sending…';
+  document.getElementById("messages").setAttribute('aria-busy', 'true');
 
-  // Append chatbot's response
-  appendMessage(`Chatbot: ${chatbotResponse}`, 'left');
-
-  // Clear the input
-  document.getElementById("message-input").value = '';
+  try {
+    const chatbotResponse = await sendMessage(message);
+    appendMessage(chatbotResponse, 'left');
+  } finally {
+    input.disabled = false;
+    sendButton.disabled = false;
+    sendLabel.textContent = 'Send';
+    document.getElementById("messages").setAttribute('aria-busy', 'false');
+    input.focus();
+  }
 });
 
 const appendMessage = (message, position) => {

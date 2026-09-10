@@ -14,10 +14,13 @@ const Appointment = require("./models/appointment");
 
 const app = express();
 const server = http.createServer(app);
-const PORT = process.env.PORT || 8000;
+// Keep compatibility with the project's existing .env keys while supporting
+// conventional uppercase deployment variables.
+const PORT = process.env.PORT || process.env.port || 8000;
+const DATABASE_URL = process.env.DATABASE_URL || process.env.database_url;
 
 mongoose
-  .connect(process.env.DATABASE_URL)
+  .connect(DATABASE_URL)
   .then(() => console.log("Database connected"))
   .catch((err) => console.error("Database connection error:", err));
 

@@ -1,7 +1,7 @@
 <%- include('partials/page-start', { includeHeroHeader: false, pageTitle: state === 'register' ? 'Register - OneLife' : 'Login - OneLife' }) %>
 
 <% if (typeof error !== 'undefined' && error) { %>
-  <div id="error-msg" class="mx-auto mt-5 max-w-md rounded-lg border border-red-300 bg-red-100 px-5 py-3 text-center font-medium text-red-700 shadow-sm">
+  <div id="error-msg" role="alert" class="mx-auto mt-5 max-w-md rounded-lg border border-red-300 bg-red-100 px-5 py-3 text-center font-medium text-red-700 shadow-sm">
     <%= error %>
   </div>
 <% } %>
@@ -12,15 +12,17 @@
       <%= state === 'register' ? 'Create Account' : 'Login' %>
     </p>
     <p class="mb-2 text-gray-500">
-      Please <%= state === 'register' ? 'register' : 'Login' %> to book an appointment.
+      <%= state === 'register' ? 'Register to book an appointment.' : 'Sign in to book an appointment.' %>
     </p>
 
     <% if (state === 'register') { %>
       <div class="w-full">
-        <p class="mb-1.5">Full Name</p>
+        <label for="fullname" class="mb-1.5 block">Full Name</label>
         <input
           type="text"
+          id="fullname"
           name="fullname"
+          autocomplete="name"
           value="<%= fullname || '' %>"
           required
           class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -29,10 +31,12 @@
     <% } %>
 
     <div class="w-full">
-      <p class="mb-1.5">Email</p>
+      <label for="email" class="mb-1.5 block">Email</label>
       <input
         type="email"
+        id="email"
         name="email"
+        autocomplete="email"
         value="<%= email || '' %>"
         required
         class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
@@ -40,10 +44,12 @@
     </div>
 
     <div class="w-full">
-      <p class="mb-1.5">Password</p>
+      <label for="password" class="mb-1.5 block">Password</label>
       <input
         type="password"
+        id="password"
         name="password"
+        autocomplete="<%= state === 'register' ? 'new-password' : 'current-password' %>"
         value="<%= password || '' %>"
         required
         class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2.5 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"

@@ -1,6 +1,8 @@
 <div class="flex items-center justify-between py-4 mb-5 text-sm font-bold border-b border-b-gray-400">
   <!-- Logo Section -->
-  <img onclick="window.location.href='/'" class="flex cursor-pointer w-28 sm:w-44" src="/assets/logo.png" alt="OneLife Hospital home" />
+  <a href="/" class="flex flex-shrink-0" aria-label="OneLife Hospital home">
+    <img class="w-28 sm:w-44" src="/assets/logo.png" alt="OneLife Hospital" />
+  </a>
 
   <!-- Desktop Navigation Links -->
   <ul class="items-start hidden gap-5 lg:flex">
@@ -26,17 +28,20 @@
   </ul>
 
   <!-- Mobile Menu Button -->
-  <img
+  <button
+    id="mobileMenuButton"
+    type="button"
     onclick="toggleMobileMenu()"
-    class="w-6 lg:hidden"
-    src="/assets/menu_icon.svg"
-    alt="menu-icon"
-  />
+    class="p-1 lg:hidden"
+    aria-label="Open navigation menu"
+    aria-controls="mobileMenu"
+    aria-expanded="false"
+  >
+    <img class="w-6" src="/assets/menu_icon.svg" alt="" />
+  </button>
 
   <!-- Admin Section -->
-  <p class="hidden lg:block border px-2.5 py-0.5 rounded-full border-gray-500 text-gray-600 cursor-pointer" onclick="window.location.href='/admin'">
-    Admin
-  </p>
+  <a href="/admin" class="hidden lg:block rounded-full border border-gray-500 px-2.5 py-0.5 text-gray-600 transition hover:border-primary hover:text-primary">Admin</a>
 
   <!-- User Section -->
   <div class="flex items-center gap-4">
@@ -46,14 +51,14 @@
         <img class="w-2.5" src="/assets/dropdown_icon.svg" alt="dropdown_icon" />
         <div class="absolute top-0 right-0 z-20 hidden text-base font-medium text-gray-600 pt-14 group-hover:block">
           <div class="flex flex-col gap-4 p-4 rounded min-w-48 bg-stone-100">
-            <p onclick="window.location.href='/my-profile'" class="cursor-pointer hover:text-black">My Profile</p>
-            <p onclick="window.location.href='/my-appointment'" class="cursor-pointer hover:text-black">My Appointments</p>
-            <p onclick="logout()" class="cursor-pointer hover:text-black">Logout</p>
+            <a href="/my-profile" class="hover:text-black">My Profile</a>
+            <a href="/my-appointment" class="hover:text-black">My Appointments</a>
+            <button type="button" onclick="logout()" class="text-left hover:text-black">Logout</button>
           </div>
         </div>
       </div>
     <% } else { %>
-      <button onclick="window.location.href='/login'" class="px-8 py-3 font-light text-white rounded-full bg-primary">Create Account</button>
+      <a href="/register" class="px-8 py-3 font-light text-white rounded-full bg-primary transition hover:bg-gray-700">Create Account</a>
     <% } %>
   </div>
 </div>
@@ -62,18 +67,16 @@
 <div id="mobileMenu" class="fixed top-0 right-0 z-40 hidden w-full h-full transition-all bg-white lg:hidden">
   <div class="flex items-center justify-between px-5 py-6 border-b border-gray-300">
     <img class="w-36" src="/assets/logo.png" alt="logo" />
-    <img
-      class="w-6"
-      onclick="toggleMobileMenu()"
-      src="/assets/cross_icon.png"
-      alt="close-icon"
-    />
+    <button type="button" class="p-1" onclick="toggleMobileMenu()" aria-label="Close navigation menu">
+      <img class="w-6" src="/assets/cross_icon.png" alt="" />
+    </button>
   </div>
   <ul class="flex flex-col items-center gap-4 px-5 mt-5 text-lg font-medium">
     <li><a onclick="toggleMobileMenu()" href="/">Home</a></li>
     <li><a onclick="toggleMobileMenu()" href="/doctors">All Doctors</a></li>
     <li><a onclick="toggleMobileMenu()" href="/about">About</a></li>
     <li><a onclick="toggleMobileMenu()" href="/contact">Contact</a></li>
+    <li><a onclick="toggleMobileMenu()" href="/admin">Admin</a></li>
   </ul>
   <div class="flex items-center justify-center mt-6">
     <% if (locals.user) { %>
@@ -85,15 +88,15 @@
         />
         <div class="absolute right-0 hidden top-14 group-hover:block">
           <div class="p-4 bg-gray-100 rounded shadow-md">
-            <p onclick="window.location.href='/my-profile'" class="hover:text-black">My Profile</p>
-            <p onclick="window.location.href='/my-appointment'" class="hover:text-black">My Appointments</p>
-            <p onclick="logout()" class="hover:text-black">Logout</p>
+            <a href="/my-profile" class="hover:text-black">My Profile</a>
+            <a href="/my-appointment" class="hover:text-black">My Appointments</a>
+            <button type="button" onclick="logout()" class="text-left hover:text-black">Logout</button>
           </div>
         </div>
       </div>
     <% } else { %>
       <button
-        onclick="window.location.href='/login'"
+        onclick="window.location.href='/register'"
         class="px-6 py-2 font-medium text-white bg-blue-600 rounded-full"
       >
         Create Account
@@ -105,7 +108,13 @@
 <script>
   function toggleMobileMenu() {
     const menu = document.getElementById('mobileMenu');
+    const button = document.getElementById('mobileMenuButton');
     menu.classList.toggle('hidden');
+    const isOpen = !menu.classList.contains('hidden');
+    if (button) {
+      button.setAttribute('aria-expanded', String(isOpen));
+      button.setAttribute('aria-label', isOpen ? 'Close navigation menu' : 'Open navigation menu');
+    }
   }
   function logout() {
     fetch('/logout', { method: 'POST' }).then(() => {

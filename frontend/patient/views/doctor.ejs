@@ -1,38 +1,25 @@
 <%- include('partials/page-start', { includeHeroHeader: false, pageTitle: 'Doctors - OneLife' }) %>
 
-  <div class="py-8">
-    <div class="max-w-2xl"><h1 class="text-3xl font-semibold text-gray-800">Find a doctor</h1><p class="mt-2 text-gray-600">Browse specialists, review their profile, and choose a convenient appointment time.</p></div>
-    <div class="flex flex-col items-start gap-6 mt-8 lg:flex-row">
+  <div>
+    <p class="text-gray-600">Browse through the doctors specialist.</p>
+    <div class="flex flex-col items-start gap-5 mt-5 sm:flex-row">
       <!-- Specialization Buttons -->
-      <div class="flex w-full flex-row flex-wrap gap-2 text-sm text-gray-600 lg:w-56 lg:flex-col">
-        
-            <a href="<%= speciality === 'Gastroenterologist' ? '/doctors' : '/doctors/Gastroenterologist' %>" class="rounded-full border border-gray-300 px-4 py-2 transition hover:border-primary hover:text-primary <%= speciality === "Gastroenterologist" ? 'bg-primary text-white border-primary' : '' %>">
-          Gastroenterologist
-          </a>
-            <a href="<%= speciality === 'Neurologist' ? '/doctors' : '/doctors/Neurologist' %>" class="rounded-full border border-gray-300 px-4 py-2 transition hover:border-primary hover:text-primary <%= speciality === "Neurologist" ? 'bg-primary text-white border-primary' : '' %>">
-          Neurologist
-          </a>
-            <a href="<%= speciality === 'Pediatricians' ? '/doctors' : '/doctors/Pediatricians' %>" class="rounded-full border border-gray-300 px-4 py-2 transition hover:border-primary hover:text-primary <%= speciality === "Pediatricians" ? 'bg-primary text-white border-primary' : '' %>">
-          Pediatricians
-          </a>
-            <a href="<%= speciality === 'Dermatologist' ? '/doctors' : '/doctors/Dermatologist' %>" class="rounded-full border border-gray-300 px-4 py-2 transition hover:border-primary hover:text-primary <%= speciality === "Dermatologist" ? 'bg-primary text-white border-primary' : '' %>">
-          Dermatologist
-          </a>
-          <a href="<%= speciality === 'General physician' ? '/doctors' : '/doctors/General physician' %>" class="rounded-full border border-gray-300 px-4 py-2 transition hover:border-primary hover:text-primary <%= speciality === "General physician" ? 'bg-primary text-white border-primary' : '' %>">
-          General physician
-          </a>
-          <a href="<%= speciality === 'Gynecologist' ? '/doctors' : '/doctors/Gynecologist' %>" class="rounded-full border border-gray-300 px-4 py-2 transition hover:border-primary hover:text-primary <%= speciality === "Gynecologist" ? 'bg-primary text-white border-primary' : '' %>">
-          Gynecologist
-          </a>
-        
+      <div class="flex flex-col gap-4 text-sm text-gray-600">
+        <% const specialities = ['Gastroenterologist', 'Neurologist', 'Pediatricians', 'Dermatologist', 'General physician', 'Gynecologist']; %>
+        <% specialities.forEach((name) => { %>
+          <a
+            href="<%= speciality === name ? '/doctors' : `/doctors/${encodeURIComponent(name)}` %>"
+            class="w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all <%= speciality === name ? 'bg-indigo-100 text-black' : '' %>"
+          ><%= name %></a>
+        <% }) %>
       </div>
 
       <!-- Doctors Cards -->
-      <div id="doctors-container" class="grid w-full grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+      <div id="doctors-container" class="grid w-full gap-4 grid-cols-auto gap-y-6">
         <% filterDoc.forEach((item) => { %>
-          <a href="/appointment/<%= item._id %>" class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary">
+          <a href="/appointment/<%= item._id %>" class="border border-blue-200 rounded-xl overflow-hidden cursor-pointer hover:translate-y-[-10px] transition-all duration-500">
             <img
-              class="h-56 w-full bg-blue-50 object-cover"
+              class="bg-blue-50 hover:bg-primary"
               src="<%= item.image || '/assets/doc1.png' %>"
               alt="Dr. <%= item.fullname %>"
             />
@@ -43,11 +30,10 @@
               </div>
               <p class="text-lg font-medium text-gray-900"><%= item.fullname %></p>
               <p class="text-sm text-gray-600"><%= item.speciality %></p>
-              <p class="mt-3 text-sm font-medium text-gray-800">Consultation fee: ₹<%= item.fees || '—' %></p>
             </div>
           </a>
         <% }); %>
-        <% if (!filterDoc.length) { %><div class="rounded-xl border border-dashed border-gray-300 p-8 text-center text-gray-500">No doctors match this specialty yet.</div><% } %>
+        <% if (!filterDoc.length) { %><p class="text-gray-500">No doctors match this specialty yet.</p><% } %>
       </div>
     </div>
   </div>
