@@ -1,0 +1,46 @@
+const crypto = require("crypto");
+const Appointment = require("../models/appointment");
+const { finalizePayment } = require("../services/payment-finalization");
+
+function signatureMatches(rawBody, receivedSignature, secret) {
+  if (!receivedSignature || !secret) return false;
+  const expected = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
+  const received = Buffer.from(receivedSignature, "utf8");
+  const expectedBuffer = Buffer.from(expected, "utf8");
+  return received.length === expectedBuffer.length && crypto.timingSafeEqual(received, expectedBuffer);
+}
+
+async function razorpayWebhook(req, res) {
+  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  if (!secret) return res.status(503).json({ error: "Razorpay webhook is not configured." });
+
+  const rawBody = req.body;
+  if (!signatureMatches(rawBody, req.get("x-razorpay-signature"), secret)) {
+    return res.status(400).json({ error: "Invalid webhook signature." });
+  }
+
+  let event;
+  try {
+    event = JSON.parse(rawBody.toString("utf8"));
+  } catch {
+    return res.status(400).json({ error: "Invalid webhook payload." });
+  }
+
+  const payment = event.payload?.payment?.entity;
+  if (!payment?.order_id) return res.status(204).end();
+  const appointment = await Appointment.findOne({ "payment.orderId": payment.order_id });
+  if (!appointment) return res.status(204).end();
+
+  if (event.event === "payment.captured") {
+    await finalizePayment(appointment, { paymentId: payment.id, source: "razorpay_webhook" });
+  } else if (event.event === "payment.failed" && appointment.payment.status !== "success") {
+    appointment.payment.status = "failed";
+    appointment.status = "payment_failed";
+    appointment.statusHistory.push({ status: "payment_failed", source: "razorpay_webhook" });
+    await appointment.save();
+  }
+
+  return res.status(204).end();
+}
+
+module.exports = { razorpayWebhook, signatureMatches };

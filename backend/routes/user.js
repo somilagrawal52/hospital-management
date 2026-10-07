@@ -8,7 +8,9 @@ const User = require("../models/user");
 const { mailsender } = require('../controller/mail');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { isMedicalQuery, MEDICAL_ONLY_FALLBACK } = require("../services/medical-query");
+const { isEmergencyMessage, EMERGENCY_MESSAGE } = require("../services/emergency-triage");
 const { doctorImage } = require("../services/doctor-image");
+const { createVideoSession, createVideoCalendarEvent } = require("../services/video-session");
 const path = require("path");
 const mongoose = require("mongoose");
 const Appointment = require("../models/appointment");
@@ -29,6 +31,7 @@ const {
   adminlogout,
   adminprofile,
   showallmsg,
+  updateSupportThread,
 } = require("../controller/admin");
 const {
   doctorsregistration,
@@ -51,6 +54,7 @@ const {
   bookappointment,
   appointmentdetailtable,
   sendmsg,
+  replyToSupportThread,
   messagesdetailtable,
   savePayments,
   patientregistrationtodb,
@@ -361,37 +365,40 @@ router.get("/video-requests", requireAuth, restrictTo(["DOCTOR"]), async (req, r
 
 router.post("/video-requests/accept/:id", requireAuth, restrictTo(["DOCTOR"]), async (req, res) => {
   try {
-    const appointment = await Appointment.findById(req.params.id); // Fetch the appointment details
+    const appointment = await Appointment.findById(req.params.id);
     if (!appointment || appointment.docId !== String(req.user._id)) {
       return res.status(404).json({ error: "Appointment not found" });
     }
+    if (appointment.status !== "online_requested") {
+      return res.status(409).json({ error: "This online request is no longer awaiting approval." });
+    }
 
-    await Appointment.findByIdAndUpdate(req.params.id, {
-      status: "confirmed",
-      iscompleted: false,
-      isOnline: true,
-      cancelled: false,
-    });
+    appointment.status = "confirmed";
+    appointment.iscompleted = false;
+    appointment.isOnline = true;
+    appointment.cancelled = false;
+    appointment.video = { ...appointment.video?.toObject?.(), ...createVideoSession() };
+    appointment.statusHistory.push({ status: "confirmed", changedBy: req.user._id, source: "video_request_accepted" });
+    await appointment.save();
 
-    const patient = await User.findById(appointment.userid);
+    const patient = await User.findById(appointment.patientId || appointment.userid);
     if (patient?.email) {
-      const filePath = `./invoices/${appointment._id}.pdf`;
       const patientmail = {
         to: patient.email,
         subject: "Your Online Appointment Request is Accepted",
         text: `
           Hello ${patient.fullname || "Patient"},
           Your online appointment request for ${appointment.date} has been accepted.
-          Doctor: ${appointment.doctorname || "Assigned Doctor"}
-          Reason: ${appointment.payment?.reason || "N/A"}
+          Doctor: ${appointment.doctor || "Assigned Doctor"}
+          Join securely at: ${appointment.video.joinUrl}
           
           Thank you for using OneLife.
         `,
       };
-      await mailsender(patientmail, fs.existsSync(filePath) ? filePath : null);
+      mailsender(patientmail).catch((mailError) => console.error("Video appointment email failed:", mailError.message));
     }
 
-    res.status(200).json({ message: "Request accepted" });
+    res.status(200).json({ message: "Request accepted", joinUrl: appointment.video.joinUrl });
   } catch (err) {
     console.error("Error accepting request:", err);
     res.status(500).json({ error: "Failed to accept request" });
@@ -400,17 +407,63 @@ router.post("/video-requests/accept/:id", requireAuth, restrictTo(["DOCTOR"]), a
 
 router.post("/video-requests/decline/:id", requireAuth, restrictTo(["DOCTOR"]), async (req, res) => {
   try {
-    const appointment = await Appointment.findOneAndUpdate({ _id: req.params.id, docId: req.user._id }, {
-      status: "cancelled",
-      cancelled: true,
-      isOnline: false,
-      iscompleted: false,
-    });
+    const appointment = await Appointment.findOne({ _id: req.params.id, docId: req.user._id });
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
+    appointment.status = "cancelled";
+    appointment.cancelled = true;
+    appointment.isOnline = false;
+    appointment.iscompleted = false;
+    appointment.video.status = "declined";
+    appointment.statusHistory.push({ status: "cancelled", changedBy: req.user._id, source: "video_request_declined" });
+    await appointment.save();
     res.status(200).json({ message: "Request declined" });
   } catch (err) {
     res.status(500).json({ error: "Failed to decline request" });
   }
+});
+
+function mayAccessAppointment(appointment, user) {
+  return user.role === "ADMIN" || appointment.userid === String(user._id) || appointment.docId === String(user._id);
+}
+
+router.get("/appointments/:id/video/calendar", requireAuth, async (req, res) => {
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment || !mayAccessAppointment(appointment, req.user) || appointment.video?.status !== "scheduled") {
+    return res.status(404).json({ error: "Online appointment not found" });
+  }
+  res.type("text/calendar");
+  res.attachment(`onelife-video-appointment-${appointment._id}.ics`);
+  return res.send(createVideoCalendarEvent(appointment));
+});
+
+router.get("/appointments/:id/video/join", requireAuth, async (req, res) => {
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment || !mayAccessAppointment(appointment, req.user) || appointment.video?.status !== "scheduled") {
+    return res.status(404).render("error-404", { title: "Online Appointment Not Found", message: "This video consultation is not available." });
+  }
+  if (req.user.role === "DOCTOR") appointment.video.doctorJoinedAt ||= new Date();
+  if (req.user.role === "NORMAL") appointment.video.patientJoinedAt ||= new Date();
+  appointment.video.status = "in_progress";
+  await appointment.save();
+  return res.redirect(appointment.video.joinUrl);
+});
+
+router.post("/appointments/:id/video/events", requireAuth, async (req, res) => {
+  const { event } = req.body;
+  const appointment = await Appointment.findById(req.params.id);
+  if (!appointment || !mayAccessAppointment(appointment, req.user) || !["joined", "ended"].includes(event)) {
+    return res.status(404).json({ success: false, message: "Online appointment not found" });
+  }
+  if (event === "joined") {
+    appointment.video.status = "in_progress";
+    if (req.user.role === "DOCTOR") appointment.video.doctorJoinedAt ||= new Date();
+    if (req.user.role === "NORMAL") appointment.video.patientJoinedAt ||= new Date();
+  } else {
+    appointment.video.status = "completed";
+    appointment.video.endedAt = new Date();
+  }
+  await appointment.save();
+  return res.json({ success: true, videoStatus: appointment.video.status });
 });
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY);
@@ -419,15 +472,24 @@ router.post("/chat", requireAuth, chatLimiter, async (req, res) => {
   if (!userMessage || userMessage.length > 1000) {
     return res.status(400).json({ error: "Enter a message of up to 1,000 characters." });
   }
+  if (isEmergencyMessage(userMessage)) {
+    return res.json({ message: EMERGENCY_MESSAGE, emergency: true });
+  }
   if (!isMedicalQuery(userMessage)) {
     return res.json({ message: MEDICAL_ONLY_FALLBACK, fallback: true });
   }
 
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    const prompt = `You are OneLife's health-information assistant. Give general, cautious information only; do not diagnose, prescribe, or claim certainty. Encourage the user to contact a qualified clinician for personal advice and to seek emergency help for urgent symptoms. User question: ${userMessage}`;
+    const prompt = `You are OneLife's health-information assistant. Give general, cautious information only; do not diagnose, prescribe, or claim certainty. Encourage the user to contact a qualified clinician for personal advice and to seek emergency help for urgent symptoms. Keep the answer concise. Do not invent citations or claim a source supports a statement unless you are certain. User question: ${userMessage}`;
     const result = await model.generateContent(prompt);
-    res.json({ message: result.response.text() });
+    res.json({
+      message: result.response.text(),
+      sources: [
+        { label: "WHO health topics", url: "https://www.who.int/health-topics" },
+        { label: "CDC health information", url: "https://www.cdc.gov/health-topics/" },
+      ],
+    });
   } catch (error) {
     console.error("Error with AI Studio API:", error);
     res.status(500).json({ error: "Error processing your request." });
@@ -609,6 +671,10 @@ router.post("/update-profile", requireAuth, restrictTo(["NORMAL"]), upload.singl
 router.get("/doctor", restrictTo(["DOCTOR"]), doctorsdashboard);
 
 router.post("/messages", requireAuth, restrictTo(["NORMAL"]), sendmsg);
+
+router.post("/support/threads/:id/replies", requireAuth, restrictTo(["NORMAL"]), replyToSupportThread);
+
+router.post("/admin/support/threads/:id", requireAuth, restrictTo(["ADMIN"]), updateSupportThread);
 
 router.get("/message", requireAuth, restrictTo(["ADMIN"]), messagesdetailtable);
 

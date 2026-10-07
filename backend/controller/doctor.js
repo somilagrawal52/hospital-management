@@ -101,6 +101,10 @@ async function showalldocmsg(req, res) {
     const requests = await Appointment.find({ status: "online_requested", docId: req.user._id })
       .sort({ date: -1 })
       .lean();
+    const scheduledVideoAppointments = await Appointment.find({
+      docId: req.user._id,
+      "video.status": { $in: ["scheduled", "in_progress"] },
+    }).sort({ date: 1 }).lean();
 
     const formattedRequests = requests.map((request) => ({
       ...request,
@@ -117,6 +121,7 @@ async function showalldocmsg(req, res) {
     return res.render("doctor-messages", {
       doctor,
       requests: formattedRequests,
+      scheduledVideoAppointments,
     });
   } catch (error) {
     console.error("Error loading doctor requests:", error);

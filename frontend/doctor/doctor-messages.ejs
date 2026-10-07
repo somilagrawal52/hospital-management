@@ -38,6 +38,28 @@
           <% } %>
         </div>
       </section>
+
+      <% if (scheduledVideoAppointments && scheduledVideoAppointments.length) { %>
+        <section class="section pt-0">
+          <div class="pagetitle"><h2 class="h4">Scheduled video consultations</h2></div>
+          <div class="row">
+            <% scheduledVideoAppointments.forEach((appointment) => { %>
+              <div class="col-lg-6">
+                <div class="card">
+                  <div class="card-body">
+                    <h5 class="card-title"><%= appointment.fullname %></h5>
+                    <p class="mb-3"><%= new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(appointment.date)) %></p>
+                    <div class="d-flex gap-2 flex-wrap">
+                      <a class="btn btn-primary" href="/appointments/<%= appointment._id %>/video/join">Join consultation</a>
+                      <a class="btn btn-outline-primary" href="/appointments/<%= appointment._id %>/video/calendar">Add to calendar</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        </section>
+      <% } %>
     </main>
 
 <%- include('partials/footer') %>

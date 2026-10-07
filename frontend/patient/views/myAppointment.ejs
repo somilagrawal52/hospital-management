@@ -28,6 +28,12 @@
                   <% if (!item.isOnline && status !== 'cancelled' && status !== 'completed') { %>
                   <button class="appointment-action text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300" data-action="online" data-appointment-id="<%= item._id %>">Book An Online Video Conference Instead</button>
                   <% } %>
+                  <% if (item.video?.status === 'scheduled' || item.video?.status === 'in_progress') { %>
+                    <a class="sm:min-w-48 py-2 border rounded text-primary border-primary hover:bg-primary hover:text-white transition-all duration-300" href="/appointments/<%= item._id %>/video/join">Join video consultation</a>
+                    <a class="sm:min-w-48 py-2 border rounded text-[#696969] hover:bg-gray-100 transition-all duration-300" href="/appointments/<%= item._id %>/video/calendar">Add to calendar</a>
+                  <% } else if (item.video?.status === 'requested') { %>
+                    <p class="text-xs text-gray-500">Online consultation request pending doctor approval.</p>
+                  <% } %>
                 </div>
               </div>
               

@@ -1,11 +1,15 @@
 const mongoose = require("mongoose");
 
 const appointmentStatuses = [
+  "payment_pending",
   "pending",
   "confirmed",
   "online_requested",
   "completed",
   "cancelled",
+  "payment_failed",
+  // Kept for legacy records created before the payment-pending state existed.
+  "created",
 ];
 
 const appointmentschema = new mongoose.Schema(
@@ -13,6 +17,11 @@ const appointmentschema = new mongoose.Schema(
     userid:{
       type: String,
       required: true,
+    },
+    patientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      index: true,
     },
     fullname: {
       type: String,
@@ -40,6 +49,11 @@ const appointmentschema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    doctorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "user",
+      index: true,
+    },
     doctor: {
       type: String,
       required: true,
@@ -62,6 +76,8 @@ const appointmentschema = new mongoose.Schema(
         required: true,
       },
       paymentId: { type: String },
+      confirmationSentAt: { type: Date },
+      reconciledAt: { type: Date },
     },
     invoiceFile: { type: String },
     isOnline: {
@@ -98,11 +114,34 @@ const appointmentschema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    video: {
+      provider: { type: String, enum: ["jitsi"], default: "jitsi" },
+      roomName: { type: String },
+      joinUrl: { type: String },
+      status: {
+        type: String,
+        enum: ["not_requested", "requested", "scheduled", "in_progress", "completed", "declined"],
+        default: "not_requested",
+      },
+      consentAt: { type: Date },
+      acceptedAt: { type: Date },
+      patientJoinedAt: { type: Date },
+      doctorJoinedAt: { type: Date },
+      endedAt: { type: Date },
+    },
+    statusHistory: [{
+      status: { type: String, enum: appointmentStatuses, required: true },
+      changedAt: { type: Date, default: Date.now },
+      changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
+      source: { type: String, default: "system" },
+    }],
   },
 );
 
 appointmentschema.index({ docId: 1, date: 1 });
 appointmentschema.index({ userid: 1, date: -1 });
+appointmentschema.index({ doctorId: 1, date: 1 });
+appointmentschema.index({ patientId: 1, date: -1 });
 
 const Appointment = mongoose.model("appointment", appointmentschema);
 Appointment.statuses = appointmentStatuses;

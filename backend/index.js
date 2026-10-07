@@ -11,6 +11,7 @@ const userRoute = require("./routes/user");
 const { checkforauthentication, restrictTo } = require("./middlewares/auth");
 const User = require("./models/user");
 const Appointment = require("./models/appointment");
+const { razorpayWebhook } = require("./controller/webhooks");
 
 const app = express();
 const server = http.createServer(app);
@@ -41,6 +42,9 @@ app.use(
     legacyHeaders: false,
   }),
 );
+// Razorpay signatures are calculated from the unparsed request body, so this
+// route must be registered before the JSON parser.
+app.post("/webhooks/razorpay", express.raw({ type: "application/json", limit: "100kb" }), razorpayWebhook);
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 app.use(cookieParser());

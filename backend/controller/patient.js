@@ -1,8 +1,8 @@
-const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const Appointment = require("../models/appointment");
 const Message = require("../models/messages");
+const SupportThread = require("../models/support-thread");
 const { mailsender,sendWhatsAppMessage } = require("./mail");
 const User = require("../models/user");
 // const otpgeneration = require("otp-generator");
@@ -11,6 +11,7 @@ const { validatetoken } = require("../services/auth");
 const { cookieOptions } = require("../services/auth");
 const { validatePaymentVerification } = require("razorpay/dist/utils/razorpay-utils");
 const { doctorImage } = require("../services/doctor-image");
+const { finalizePayment, formatAppointmentDate } = require("../services/payment-finalization");
 
 
 
@@ -18,19 +19,6 @@ const instance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
-
-function formatAppointmentDate(date) {
-  return new Intl.DateTimeFormat("en-IN", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  }).format(new Date(date));
-}
-
-
 
 async function appointment(req, res) {
   return res.redirect("/");
@@ -47,9 +35,11 @@ async function messages(req, res) {
     const decodedtoken = validatetoken(token);
     patientdata = await User.findById({ _id: decodedtoken._id });
   }
+  const threads = await SupportThread.find({ patientId: req.user._id }).sort({ lastMessageAt: -1 }).lean();
   return res.render("patient-messages", {
     user: req.user,
     patientdata,
+    threads,
     success: req.query.success === "1",
   });
 }
@@ -106,7 +96,9 @@ async function bookappointment(req, res) {
       number,
       address: { line1, line2 },
       userid,
+      patientId: req.user._id,
       docId,
+      doctorId: doctordata._id,
       doctor: doctordata.fullname,
       payment: {
         orderId: razorpayOrder.id,
@@ -118,7 +110,8 @@ async function bookappointment(req, res) {
       amount: doctordata.fees,
       userdata,
       doctordata,
-        status: "created",
+      status: "payment_pending",
+      statusHistory: [{ status: "payment_pending", changedBy: req.user._id, source: "booking" }],
     });
 
     await appointment.save();
@@ -157,19 +150,39 @@ async function appointmentdetailtable(req, res) {
 }
 
 async function sendmsg(req, res) {
-  const { fullname, question, msgbody } = req.body;
-  console.log(req.body);
+  const { fullname, question, msgbody, category, priority } = req.body;
   try {
-    await Message.create({
-      senderId: req.user._id,
-      fullname,
-      question,
-      message: msgbody,
+    if (!fullname?.trim() || !question?.trim() || !msgbody?.trim()) {
+      return res.redirect("/messages");
+    }
+    await SupportThread.create({
+      patientId: req.user._id,
+      subject: question,
+      category: ["appointment", "billing", "account", "technical", "other"].includes(category) ? category : "other",
+      priority: ["normal", "high", "urgent"].includes(priority) ? priority : "normal",
+      messages: [{ senderId: req.user._id, senderRole: "NORMAL", body: msgbody }],
     });
-    console.log("Message Send");
     return res.redirect("/messages?success=1");
   } catch (error) {
     console.log(error);
+    return res.redirect("/messages");
+  }
+}
+
+async function replyToSupportThread(req, res) {
+  const body = String(req.body.message || "").trim();
+  if (!body) return res.redirect("/messages");
+  try {
+    const thread = await SupportThread.findOne({ _id: req.params.id, patientId: req.user._id });
+    if (!thread) return res.status(404).render("error-404", { title: "Support Request Not Found", message: "This support request is not available." });
+    thread.messages.push({ senderId: req.user._id, senderRole: "NORMAL", body });
+    thread.status = "open";
+    thread.resolvedAt = undefined;
+    thread.lastMessageAt = new Date();
+    await thread.save();
+    return res.redirect("/messages");
+  } catch (error) {
+    console.error("Error replying to support thread:", error);
     return res.redirect("/messages");
   }
 }
@@ -238,37 +251,7 @@ async function savePayments(req, res) {
     );
     if (!isValid) return res.status(400).json({ message: "Payment verification failed." });
 
-    appointment.payment.paymentId = paymentId;
-    appointment.payment.status = "success";
-    appointment.status = "confirmed";
-
-    const invoiceDir = path.join(__dirname, "..", "invoices");
-    fs.mkdirSync(invoiceDir, { recursive: true });
-    const invoiceName = `invoice-${appointment._id}.pdf`;
-    const filePath = path.join(invoiceDir, invoiceName);
-    await new Promise((resolve, reject) => {
-      const document = new PDFDocument();
-      const stream = fs.createWriteStream(filePath);
-      stream.on("finish", resolve).on("error", reject);
-      document.pipe(stream);
-      document.fontSize(20).text("OneLife appointment invoice");
-      document.moveDown().fontSize(12);
-      document.text(`Invoice ID: ${appointment.payment.orderId}`);
-      document.text(`Patient: ${appointment.fullname}`);
-      document.text(`Doctor: Dr. ${appointment.doctor}`);
-      document.text(`Appointment: ${formatAppointmentDate(appointment.date)}`);
-      document.text(`Amount paid: Rs. ${appointment.amount}`);
-      document.end();
-    });
-    appointment.invoiceFile = invoiceName;
-
-    await appointment.save();
-
-    const doctor = await User.findById(appointment.docId).select("email fullname number");
-    await Promise.allSettled([
-      mailsender({ to: appointment.email, subject: "Appointment confirmed", text: `Your appointment with Dr. ${appointment.doctor} is confirmed.`, attachments: [{ path: filePath, contentType: "application/pdf" }] }),
-      doctor && mailsender({ to: doctor.email, subject: "New confirmed appointment", text: `${appointment.fullname} has a confirmed appointment on ${formatAppointmentDate(appointment.date)}.`, attachments: [{ path: filePath, contentType: "application/pdf" }] }),
-    ]);
+    await finalizePayment(appointment, { paymentId, source: "browser_verification" });
 
     res.json({ message: "Payment saved successfully." });
   } catch (error) {
@@ -427,7 +410,10 @@ async function updateAppointmentStatus(req, res) {
     }
     const appointment = await Appointment.findByIdAndUpdate(
       appointmentId,
-      statusUpdates[status],
+      {
+        ...statusUpdates[status],
+        $push: { statusHistory: { status, changedBy: req.user._id, source: "dashboard" } },
+      },
       { new: true }
     );
 
@@ -466,6 +452,9 @@ async function markAppointmentOnline(req, res) {
     appointment.isOnline = true;
     appointment.status = "online_requested";
     appointment.cancelled = false;
+    appointment.video.status = "requested";
+    appointment.video.consentAt = new Date();
+    appointment.statusHistory.push({ status: "online_requested", changedBy: req.user._id, source: "patient_request" });
     await appointment.save();
 
     // Optionally notify doctor or patient
@@ -491,6 +480,7 @@ module.exports = {
   appointmentdetailtable,
   messagesdetailtable,
   sendmsg,
+  replyToSupportThread,
   myappointments,
   savePayments,
   getOnlineAppointmentRequests,
