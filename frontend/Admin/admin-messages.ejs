@@ -4,28 +4,83 @@
 
     <main id="main" class="main">
       <div class="pagetitle">
-        <h1>Asked Questions</h1>
+        <h1>Support inbox</h1>
+        <p class="text-muted mb-0">Assign, reply to, and resolve patient support requests.</p>
       </div>
       <section class="section faq">
         <div class="row">
-          <% messages.forEach((message) => { %>
+          <% threads.forEach((thread) => { %>
             <div class="col-lg-6">
               <div class="card">
                 <div class="card-header">
-                  <h6>Name: <%= message.fullname || "Unknown" %></h6>
+                  <h6><%= thread.patientId?.fullname || "Unknown patient" %></h6>
+                  <small class="text-muted"><%= thread.patientId?.email || "No email" %> · <%= thread.category %></small>
                 </div>
                 <div class="card-body">
-                  <h5 class="card-title">Question: <%= message.question || "N/A" %></h5>
-                  <p><%= message.msgbody || message.message || "No message body available." %></p>
+                  <h5 class="card-title"><%= thread.subject %></h5>
+                  <div class="mb-3">
+                    <% thread.messages.forEach((message) => { %>
+                      <div class="border rounded p-2 mb-2 <%= message.senderRole === 'ADMIN' ? 'bg-light' : '' %>">
+                        <small class="fw-semibold"><%= message.senderRole === 'ADMIN' ? 'Support' : 'Patient' %></small>
+                        <p class="mb-0"><%= message.body %></p>
+                      </div>
+                    <% }) %>
+                  </div>
+                  <form action="/admin/support/threads/<%= thread._id %>" method="post" class="row g-2">
+                    <div class="col-sm-6">
+                      <label class="form-label small" for="status-<%= thread._id %>">Status</label>
+                      <select id="status-<%= thread._id %>" name="status" class="form-select form-select-sm">
+                        <% ['open', 'in_progress', 'resolved'].forEach((status) => { %><option value="<%= status %>" <%= thread.status === status ? 'selected' : '' %>><%= status.replace('_', ' ') %></option><% }) %>
+                      </select>
+                    </div>
+                    <div class="col-sm-6">
+                      <label class="form-label small" for="priority-<%= thread._id %>">Priority</label>
+                      <select id="priority-<%= thread._id %>" name="priority" class="form-select form-select-sm">
+                        <% ['normal', 'high', 'urgent'].forEach((priority) => { %><option value="<%= priority %>" <%= thread.priority === priority ? 'selected' : '' %>><%= priority %></option><% }) %>
+                      </select>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label small" for="assignee-<%= thread._id %>">Assign to</label>
+                      <select id="assignee-<%= thread._id %>" name="assignedTo" class="form-select form-select-sm">
+                        <option value="">Unassigned</option>
+                        <% admins.forEach((admin) => { %><option value="<%= admin._id %>" <%= String(thread.assignedTo?._id || '') === String(admin._id) ? 'selected' : '' %>><%= admin.fullname %></option><% }) %>
+                      </select>
+                    </div>
+                    <div class="col-12">
+                      <label class="form-label small" for="reply-<%= thread._id %>">Reply</label>
+                      <textarea id="reply-<%= thread._id %>" name="reply" rows="3" maxlength="3000" class="form-control" placeholder="Write a reply for the patient"></textarea>
+                    </div>
+                    <div class="col-12"><button type="submit" class="btn btn-primary btn-sm">Save support request</button></div>
+                  </form>
                 </div>
               </div>
             </div>
           <% }) %>
-          <% if (!messages.length) { %>
+<% if (!threads.length) { %>
             <div class="col-12">
               <div class="card">
                 <div class="card-body py-4">
-                  <p class="mb-0">No messages available.</p>
+                  <p class="mb-0">No support requests available.</p>
+                </div>
+              </div>
+            </div>
+<% } %>
+
+          <% if (legacyMessages?.length) { %>
+            <div class="col-12">
+              <div class="card border-warning">
+                <div class="card-body bg-warning-subtle">
+                  <h2 class="h5">Older messages</h2>
+                  <p class="mb-4 text-muted">These were submitted before support conversations were introduced. They remain available for reference.</p>
+                  <div class="vstack gap-3">
+      <% legacyMessages.forEach((message) => { %>
+                    <article class="rounded border bg-white p-3">
+                      <p class="mb-0 fw-semibold"><%= message.fullname || "Patient" %></p>
+                      <p class="mb-1 small text-muted"><%= message.question || "General message" %></p>
+                      <p class="mb-0 small"><%= message.msgbody || "" %></p>
+                    </article>
+      <% }) %>
+                  </div>
                 </div>
               </div>
             </div>

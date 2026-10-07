@@ -1,5 +1,3 @@
-const fs = require('fs');
-const path = require('path');
 const Appointment = require("../models/appointment");
 const Message = require("../models/messages");
 const SupportThread = require("../models/support-thread");
@@ -81,7 +79,14 @@ async function bookappointment(req, res) {
     if (!doctordata) return res.status(404).json({ success: false, message: "Doctor not found." });
     if (!doctordata.available) return res.status(400).json({ success: false, message: "This doctor is not currently available." });
 
-    const alreadyBooked = await Appointment.exists({ docId, date: appointmentDate, status: { $nin: ["cancelled"] } });
+    // A declined or failed payment must not hold a doctor's slot indefinitely.
+    // Keep the legacy "created" state in this list so historic in-progress bookings
+    // are still protected during the transition to payment_pending.
+    const alreadyBooked = await Appointment.exists({
+      docId,
+      date: appointmentDate,
+      status: { $in: ["payment_pending", "pending", "confirmed", "online_requested", "created"] },
+    });
     if (alreadyBooked) return res.status(409).json({ success: false, message: "This appointment slot is no longer available." });
     
     const razorpayOrder = await instance.orders.create({
@@ -452,6 +457,8 @@ async function markAppointmentOnline(req, res) {
     appointment.isOnline = true;
     appointment.status = "online_requested";
     appointment.cancelled = false;
+    // Older appointments do not have the video subdocument yet.
+    if (!appointment.video) appointment.video = {};
     appointment.video.status = "requested";
     appointment.video.consentAt = new Date();
     appointment.statusHistory.push({ status: "online_requested", changedBy: req.user._id, source: "patient_request" });

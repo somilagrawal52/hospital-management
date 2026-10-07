@@ -42,11 +42,13 @@ async function adminprofile(req, res) {
 
 async function showallmsg(req, res) {
   try {
-    const [threads, admins] = await Promise.all([
+    const [threads, admins, legacyMessages] = await Promise.all([
       SupportThread.find({}).populate("patientId", "fullname email").populate("assignedTo", "fullname email").sort({ lastMessageAt: -1 }).lean(),
       User.find({ role: "ADMIN" }).select("fullname email").lean(),
+      // Keep messages created before threaded support was introduced visible to admins.
+      Message.find({}).sort({ createdAt: -1 }).lean(),
     ]);
-    return res.render("admin-messages", { threads, admins });
+    return res.render("admin-messages", { threads, admins, legacyMessages });
   } catch (error) {
     console.error("Error loading admin messages:", error);
     return res.status(500).send("Server error");
@@ -63,7 +65,8 @@ async function updateSupportThread(req, res) {
       thread.resolvedAt = status === "resolved" ? new Date() : undefined;
     }
     if (["normal", "high", "urgent"].includes(priority)) thread.priority = priority;
-    if (assignedTo) thread.assignedTo = assignedTo;
+    if (assignedTo === "") thread.assignedTo = null;
+    else if (assignedTo) thread.assignedTo = assignedTo;
     if (String(reply || "").trim()) {
       thread.messages.push({ senderId: req.user._id, senderRole: "ADMIN", body: reply.trim() });
       thread.firstResponseAt ||= new Date();

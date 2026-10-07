@@ -413,6 +413,8 @@ router.post("/video-requests/decline/:id", requireAuth, restrictTo(["DOCTOR"]), 
     appointment.cancelled = true;
     appointment.isOnline = false;
     appointment.iscompleted = false;
+    // Older appointments do not have the video subdocument yet.
+    if (!appointment.video) appointment.video = {};
     appointment.video.status = "declined";
     appointment.statusHistory.push({ status: "cancelled", changedBy: req.user._id, source: "video_request_declined" });
     await appointment.save();
@@ -428,7 +430,7 @@ function mayAccessAppointment(appointment, user) {
 
 router.get("/appointments/:id/video/calendar", requireAuth, async (req, res) => {
   const appointment = await Appointment.findById(req.params.id);
-  if (!appointment || !mayAccessAppointment(appointment, req.user) || appointment.video?.status !== "scheduled") {
+  if (!appointment || !mayAccessAppointment(appointment, req.user) || !["scheduled", "in_progress"].includes(appointment.video?.status)) {
     return res.status(404).json({ error: "Online appointment not found" });
   }
   res.type("text/calendar");
@@ -438,7 +440,7 @@ router.get("/appointments/:id/video/calendar", requireAuth, async (req, res) => 
 
 router.get("/appointments/:id/video/join", requireAuth, async (req, res) => {
   const appointment = await Appointment.findById(req.params.id);
-  if (!appointment || !mayAccessAppointment(appointment, req.user) || appointment.video?.status !== "scheduled") {
+  if (!appointment || !mayAccessAppointment(appointment, req.user) || !["scheduled", "in_progress"].includes(appointment.video?.status)) {
     return res.status(404).render("error-404", { title: "Online Appointment Not Found", message: "This video consultation is not available." });
   }
   if (req.user.role === "DOCTOR") appointment.video.doctorJoinedAt ||= new Date();
@@ -451,7 +453,7 @@ router.get("/appointments/:id/video/join", requireAuth, async (req, res) => {
 router.post("/appointments/:id/video/events", requireAuth, async (req, res) => {
   const { event } = req.body;
   const appointment = await Appointment.findById(req.params.id);
-  if (!appointment || !mayAccessAppointment(appointment, req.user) || !["joined", "ended"].includes(event)) {
+  if (!appointment || !mayAccessAppointment(appointment, req.user) || !appointment.video || !["scheduled", "in_progress"].includes(appointment.video.status) || !["joined", "ended"].includes(event)) {
     return res.status(404).json({ success: false, message: "Online appointment not found" });
   }
   if (event === "joined") {

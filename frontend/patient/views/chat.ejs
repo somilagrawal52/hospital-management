@@ -50,10 +50,14 @@
     }
 
     const data = await response.json();
-    return data.message || "Oops, I couldn't process your request.";
+    return {
+      message: data.message || "Oops, I couldn't process your request.",
+      emergency: Boolean(data.emergency),
+      sources: Array.isArray(data.sources) ? data.sources : [],
+    };
   } catch (error) {
     console.error("Error fetching AI response:", error);
-    return "Sorry, something went wrong.";
+    return { message: "Sorry, something went wrong.", emergency: false, sources: [] };
   }
 };
 
@@ -78,7 +82,8 @@ form.addEventListener("submit", async (e) => {
 
   try {
     const chatbotResponse = await sendMessage(message);
-    appendMessage(chatbotResponse, 'left');
+    appendMessage(chatbotResponse.message, 'left', chatbotResponse.emergency);
+    appendSources(chatbotResponse.sources);
   } finally {
     input.disabled = false;
     sendButton.disabled = false;
@@ -88,7 +93,7 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-const appendMessage = (message, position) => {
+const appendMessage = (message, position, emergency = false) => {
   const messages = document.getElementById("messages");
   const messageElement = document.createElement("div");
 
@@ -98,7 +103,7 @@ const appendMessage = (message, position) => {
 
   // Apply classes based on the position (user's message or chatbot response)
   const baseClasses = 'inline-block px-4 py-2 max-w-[75%] break-words rounded-lg shadow-md';
-  const leftClasses = 'bg-gray-300 text-gray-800'; // Other user's messages
+  const leftClasses = emergency ? 'border border-red-300 bg-red-50 text-red-900' : 'bg-gray-300 text-gray-800';
   const rightClasses = 'bg-blue-500 text-white'; // User's messages
   textElement.className = `${baseClasses} ${position === 'right' ? rightClasses : leftClasses}`;
 
@@ -109,6 +114,30 @@ const appendMessage = (message, position) => {
   messages.append(messageElement);
 
   // Auto-scroll to the bottom
+  messages.scrollTop = messages.scrollHeight;
+};
+
+const appendSources = (sources) => {
+  if (!sources.length) return;
+  const messages = document.getElementById("messages");
+  const sourceElement = document.createElement("div");
+  const label = document.createElement("span");
+  label.className = "mr-2 font-semibold text-gray-700";
+  label.textContent = "Health resources:";
+  sourceElement.className = "flex flex-wrap items-center gap-2 text-xs text-blue-700";
+  sourceElement.appendChild(label);
+
+  sources.forEach((source) => {
+    if (!source || !source.label || !source.url) return;
+    const link = document.createElement("a");
+    link.href = source.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.className = "underline hover:text-blue-900";
+    link.textContent = source.label;
+    sourceElement.appendChild(link);
+  });
+  messages.append(sourceElement);
   messages.scrollTop = messages.scrollHeight;
 };
 
