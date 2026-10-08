@@ -88,6 +88,8 @@ const appointmentschema = new mongoose.Schema(
       type: Date,
       required: true,
     },
+    slotDate: { type: String, match: /^\d{4}-\d{2}-\d{2}$/ },
+    slotTime: { type: String, match: /^\d{2}:\d{2}$/ },
     amount: {
       type: Number,
       required: true,
@@ -135,6 +137,12 @@ const appointmentschema = new mongoose.Schema(
       changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
       source: { type: String, default: "system" },
     }],
+    rescheduleHistory: [{
+      from: { type: Date, required: true },
+      to: { type: Date, required: true },
+      changedAt: { type: Date, default: Date.now },
+      changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
+    }],
   },
 );
 
@@ -142,6 +150,7 @@ appointmentschema.index({ docId: 1, date: 1 });
 appointmentschema.index({ userid: 1, date: -1 });
 appointmentschema.index({ doctorId: 1, date: 1 });
 appointmentschema.index({ patientId: 1, date: -1 });
+appointmentschema.index({ doctorId: 1, slotDate: 1, slotTime: 1 });
 
 const Appointment = mongoose.model("appointment", appointmentschema);
 Appointment.statuses = appointmentStatuses;

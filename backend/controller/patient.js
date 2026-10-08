@@ -1,6 +1,7 @@
 const Appointment = require("../models/appointment");
 const Message = require("../models/messages");
 const SupportThread = require("../models/support-thread");
+const Waitlist = require("../models/waitlist");
 const { mailsender,sendWhatsAppMessage } = require("./mail");
 const User = require("../models/user");
 // const otpgeneration = require("otp-generator");
@@ -10,6 +11,9 @@ const { cookieOptions } = require("../services/auth");
 const { validatePaymentVerification } = require("razorpay/dist/utils/razorpay-utils");
 const { doctorImage } = require("../services/doctor-image");
 const { finalizePayment, formatAppointmentDate } = require("../services/payment-finalization");
+const { assertSlotAvailable, isDateKey, isTime } = require("../services/scheduling");
+const { fulfilPatientWaitlist } = require("../services/waitlist");
+const { notifyWaitlistForSlot } = require("../services/waitlist");
 
 
 
@@ -68,26 +72,17 @@ async function bookappointment(req, res) {
   try {
     const { docId, fullname, email, number, date, time, line1, line2 } = req.body;
     const userid = req.user._id;
-    if (!docId || !fullname?.trim() || !email?.trim() || !number?.trim() || !date || !line1?.trim() || !line2?.trim()) {
+    if (!docId || !fullname?.trim() || !email?.trim() || !number?.trim() || !isDateKey(date) || !isTime(time) || !line1?.trim() || !line2?.trim()) {
       return res.status(400).json({ success: false, message: "Please complete all appointment details." });
-    }
-    const appointmentDate = new Date(`${date}T${time || "09:00"}:00+05:30`);
-    if (Number.isNaN(appointmentDate.getTime()) || appointmentDate < new Date(new Date().setHours(0, 0, 0, 0))) {
-      return res.status(400).json({ success: false, message: "Choose a future appointment date." });
     }
     const doctordata = await User.findOne({ _id: docId, role: "DOCTOR" }).select("-password");
     if (!doctordata) return res.status(404).json({ success: false, message: "Doctor not found." });
-    if (!doctordata.available) return res.status(400).json({ success: false, message: "This doctor is not currently available." });
-
-    // A declined or failed payment must not hold a doctor's slot indefinitely.
-    // Keep the legacy "created" state in this list so historic in-progress bookings
-    // are still protected during the transition to payment_pending.
-    const alreadyBooked = await Appointment.exists({
-      docId,
-      date: appointmentDate,
-      status: { $in: ["payment_pending", "pending", "confirmed", "online_requested", "created"] },
-    });
-    if (alreadyBooked) return res.status(409).json({ success: false, message: "This appointment slot is no longer available." });
+    let appointmentDate;
+    try {
+      appointmentDate = await assertSlotAvailable(doctordata, date, time);
+    } catch (error) {
+      return res.status(409).json({ success: false, message: error.message || "This appointment slot is no longer available." });
+    }
     
     const razorpayOrder = await instance.orders.create({
       // Never trust the fee supplied by the browser.
@@ -112,6 +107,8 @@ async function bookappointment(req, res) {
         status: "pending",
       },
       date: appointmentDate,
+      slotDate: date,
+      slotTime: time,
       amount: doctordata.fees,
       userdata,
       doctordata,
@@ -120,6 +117,8 @@ async function bookappointment(req, res) {
     });
 
     await appointment.save();
+    fulfilPatientWaitlist({ patientId: req.user._id, doctorId: doctordata._id, slotDate: date, appointmentId: appointment._id })
+      .catch((error) => console.error("Unable to fulfil waitlist entry:", error));
 
     res.json({
       message: "Appointment created successfully.",
@@ -216,6 +215,10 @@ async function myappointments(req,res) {
     const appointments = await Appointment.find({ userid: decoded._id }).sort({
       date: -1,
     });
+    const waitlist = await Waitlist.find({ patientId: decoded._id, status: { $in: ["active", "notified"] } })
+      .populate("doctorId", "fullname speciality")
+      .sort({ slotDate: 1 })
+      .lean();
 
     patientdata.appointments = appointments.map((appointmentDoc) => {
       const appointment = appointmentDoc.toObject();
@@ -226,6 +229,7 @@ async function myappointments(req,res) {
     patientdata.upcomingAppointmentsCount = patientdata.appointments.filter(
       (item) => item.status === "confirmed" && new Date(item.date) >= new Date(),
     ).length;
+    patientdata.waitlist = waitlist;
     console.log("Patient appointments data:", patientdata.appointments);
 
     res.render('myAppointment',{user:req.user,patientdata});
@@ -424,6 +428,16 @@ async function updateAppointmentStatus(req, res) {
 
     if (!appointment) {
       return res.status(404).json({ success: false, message: "Appointment not found" });
+    }
+
+    if (status === "cancelled") {
+      const slotTime = existing.slotTime || new Date(existing.date).toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false });
+      notifyWaitlistForSlot({
+        doctorId: existing.doctorId || existing.docId,
+        date: existing.date,
+        time: slotTime,
+        doctorName: existing.doctor,
+      }).catch((error) => console.error("Waitlist notification failed after cancellation:", error));
     }
 
     res.json({ success: true, message: `Appointment ${status}` });

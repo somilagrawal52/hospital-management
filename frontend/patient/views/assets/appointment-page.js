@@ -54,4 +54,58 @@ if (appointmentForm) {
 }
 
 const dateInput = document.getElementById('date');
-if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
+const timeSelect = document.getElementById('time');
+const slotMessage = document.getElementById('slot-message');
+const waitlistPanel = document.getElementById('waitlist-panel');
+const waitlistButton = document.getElementById('join-waitlist');
+
+function indiaDate() {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' })
+    .formatToParts(new Date()).reduce((value, part) => ({ ...value, [part.type]: part.value }), {});
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function formatSlot(iso) {
+  return new Intl.DateTimeFormat('en-IN', { hour: 'numeric', minute: '2-digit' }).format(new Date(iso));
+}
+
+async function loadSlots() {
+  if (!dateInput?.value || !window.DOCTOR_ID) return;
+  timeSelect.disabled = true;
+  timeSelect.innerHTML = '<option value="">Loading available slots…</option>';
+  slotMessage.textContent = 'Checking the doctor’s live calendar…';
+  waitlistPanel?.classList.add('hidden');
+  try {
+    const response = await fetch(`/doctors/${window.DOCTOR_ID}/slots?date=${encodeURIComponent(dateInput.value)}`);
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load appointment slots.');
+    timeSelect.replaceChildren(new Option(data.slots.length ? 'Choose an available time' : 'No slots are available', ''));
+    data.slots.forEach((slot) => timeSelect.add(new Option(formatSlot(slot.startsAt), slot.time)));
+    timeSelect.disabled = !data.slots.length;
+    slotMessage.textContent = data.slots.length ? `${data.slots.length} real-time slots available.` : (data.unavailable ? 'This doctor is currently unavailable.' : 'No slots are available for this date.');
+    if (!data.slots.length) waitlistPanel?.classList.remove('hidden');
+  } catch (error) {
+    timeSelect.innerHTML = '<option value="">Unable to load slots</option>';
+    slotMessage.textContent = error.message;
+    waitlistPanel?.classList.remove('hidden');
+  }
+}
+
+if (dateInput) {
+  dateInput.min = indiaDate();
+  dateInput.addEventListener('change', loadSlots);
+}
+
+waitlistButton?.addEventListener('click', async () => {
+  if (!dateInput?.value) return;
+  waitlistButton.disabled = true;
+  try {
+    const response = await fetch('/waitlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ doctorId: window.DOCTOR_ID, date: dateInput.value }) });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.message || 'Unable to join the waitlist.');
+    waitlistButton.textContent = 'Added to waitlist';
+  } catch (error) {
+    waitlistButton.disabled = false;
+    alert(error.message || 'Unable to join the waitlist.');
+  }
+});

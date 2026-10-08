@@ -12,6 +12,7 @@ const { checkforauthentication, restrictTo } = require("./middlewares/auth");
 const User = require("./models/user");
 const Appointment = require("./models/appointment");
 const { razorpayWebhook } = require("./controller/webhooks");
+const { notifyWaitlistForSlot } = require("./services/waitlist");
 
 const app = express();
 const server = http.createServer(app);
@@ -142,6 +143,13 @@ app.post("/clearapp/:id", restrictTo(["ADMIN", "NORMAL"]), async (req, res) => {
       isOnline: false,
       iscompleted: false,
     });
+    const slotTime = appointment.slotTime || new Date(appointment.date).toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false });
+    notifyWaitlistForSlot({
+      doctorId: appointment.doctorId || appointment.docId,
+      date: appointment.date,
+      time: slotTime,
+      doctorName: appointment.doctor,
+    }).catch((notificationError) => console.error("Waitlist notification failed after cancellation:", notificationError));
     const token = req.cookies.token;
     const decoded = validatetoken(token);
     const patientdata = await User.findById(decoded._id).select("-password");

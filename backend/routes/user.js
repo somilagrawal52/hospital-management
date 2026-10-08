@@ -11,6 +11,7 @@ const { isMedicalQuery, MEDICAL_ONLY_FALLBACK } = require("../services/medical-q
 const { isEmergencyMessage, EMERGENCY_MESSAGE } = require("../services/emergency-triage");
 const { doctorImage } = require("../services/doctor-image");
 const { createVideoSession, createVideoCalendarEvent } = require("../services/video-session");
+const { notifyWaitlistForSlot } = require("../services/waitlist");
 const path = require("path");
 const mongoose = require("mongoose");
 const Appointment = require("../models/appointment");
@@ -70,6 +71,14 @@ const {
   contactpage,
 } = require("../controller/patient");
 const { register } = require("../controller/patient");
+const {
+  availabilityPage,
+  cancelWaitlist,
+  getPublicSlots,
+  joinWaitlist,
+  rescheduleAppointment,
+  updateAvailability,
+} = require("../controller/scheduling");
 const multer = require("multer");
 const rateLimit = require("express-rate-limit");
 const { restrictTo, checkforauthentication, requireAuth } = require("../middlewares/auth");
@@ -114,6 +123,14 @@ router.get("/admin/login", adminlogin);
 router.post("/admin/login", adminloginfromdb);
 
 router.get("/my-appointment", requireAuth, restrictTo(["NORMAL"]), myappointments);
+
+router.get("/doctors/:doctorId/slots", getPublicSlots);
+
+router.post("/waitlist", requireAuth, restrictTo(["NORMAL"]), joinWaitlist);
+
+router.post("/waitlist/:id/cancel", requireAuth, restrictTo(["NORMAL"]), cancelWaitlist);
+
+router.post("/appointments/:id/reschedule", requireAuth, restrictTo(["NORMAL"]), rescheduleAppointment);
 
 router.get("/appointments/online", requireAuth, restrictTo(["DOCTOR"]), getOnlineAppointmentRequests);
 
@@ -418,6 +435,9 @@ router.post("/video-requests/decline/:id", requireAuth, restrictTo(["DOCTOR"]), 
     appointment.video.status = "declined";
     appointment.statusHistory.push({ status: "cancelled", changedBy: req.user._id, source: "video_request_declined" });
     await appointment.save();
+    const slotTime = appointment.slotTime || new Date(appointment.date).toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false });
+    notifyWaitlistForSlot({ doctorId: appointment.doctorId || appointment.docId, date: appointment.date, time: slotTime, doctorName: appointment.doctor })
+      .catch((notificationError) => console.error("Waitlist notification failed after declining video request:", notificationError));
     res.status(200).json({ message: "Request declined" });
   } catch (err) {
     res.status(500).json({ error: "Failed to decline request" });
@@ -667,6 +687,10 @@ router.post("/register", patientregistrationtodb);
 router.get("/showmsg", requireAuth, restrictTo(["ADMIN"]), showallmsg);
 
 router.get("/showdocmsg", requireAuth, restrictTo(["DOCTOR"]), showalldocmsg);
+
+router.get("/doctor/availability", requireAuth, restrictTo(["DOCTOR"]), availabilityPage);
+
+router.patch("/doctor/availability", requireAuth, restrictTo(["DOCTOR"]), updateAvailability);
 
 router.post("/update-profile", requireAuth, restrictTo(["NORMAL"]), upload.single("image"), UpdateProfile);
 

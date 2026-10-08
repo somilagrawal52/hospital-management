@@ -8,6 +8,7 @@ const SupportThread = require("../models/support-thread");
 const { isEmergencyMessage, EMERGENCY_MESSAGE } = require("../services/emergency-triage");
 const { createVideoSession, createVideoCalendarEvent } = require("../services/video-session");
 const { signatureMatches } = require("../controller/webhooks");
+const { availabilityForDate, dateTimeForSlot, normaliseAvailability } = require("../services/scheduling");
 
 const patientId = new mongoose.Types.ObjectId();
 const doctorId = new mongoose.Types.ObjectId();
@@ -86,4 +87,25 @@ test("Razorpay webhook signatures are verified against the exact raw body", () =
   const signature = crypto.createHmac("sha256", secret).update(rawBody).digest("hex");
   assert.equal(signatureMatches(rawBody, signature, secret), true);
   assert.equal(signatureMatches(rawBody, "invalid", secret), false);
+});
+
+test("doctors receive a usable default schedule and can close or override specific dates", () => {
+  assert.deepEqual(availabilityForDate({ available: true }, "2030-01-14"), {
+    enabled: true,
+    startTime: "09:00",
+    endTime: "17:00",
+    slotMinutes: 30,
+  });
+  assert.deepEqual(availabilityForDate({ availability: { exceptions: [{ date: "2030-01-14", unavailable: true }] } }, "2030-01-14"), { enabled: false });
+  const availability = normaliseAvailability({
+    weekly: [{ day: 1, enabled: true, startTime: "10:00", endTime: "13:00", slotMinutes: 20 }],
+    exceptions: [{ date: "2030-01-14", unavailable: false, startTime: "11:00", endTime: "12:00", slotMinutes: 30 }],
+  });
+  assert.equal(availability.weekly[0].slotMinutes, 20);
+  assert.equal(availability.exceptions[0].startTime, "11:00");
+});
+
+test("slot times are interpreted in India time and invalid calendar dates are rejected", () => {
+  assert.equal(dateTimeForSlot("2030-01-14", "09:30").toISOString(), "2030-01-14T04:00:00.000Z");
+  assert.throws(() => dateTimeForSlot("2030-02-30", "09:30"), /valid date and time/i);
 });

@@ -59,6 +59,24 @@ const userschema = new mongoose.Schema(
       type:Boolean,
       default:true
     },
+    // Doctors can override the default Mon-Sat 09:00-17:00, 30-minute calendar.
+    // Existing doctor records remain valid and use that default until they save a schedule.
+    availability: {
+      weekly: [{
+        day: { type: Number, min: 0, max: 6 },
+        enabled: { type: Boolean, default: true },
+        startTime: { type: String },
+        endTime: { type: String },
+        slotMinutes: { type: Number },
+      }],
+      exceptions: [{
+        date: { type: String },
+        unavailable: { type: Boolean, default: false },
+        startTime: { type: String },
+        endTime: { type: String },
+        slotMinutes: { type: Number },
+      }],
+    },
     fees:{
       type:Number,
     },
