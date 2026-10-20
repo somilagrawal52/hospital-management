@@ -1,108 +1,46 @@
-<%- include('partials/head', { pageTitle: 'Doctor Registration - OneLife' }) %>
-<%- include('partials/header', { adminName: 'Admin Panel', adminSubtitle: 'Hospital Management' }) %>
+<%- include('partials/head', { pageTitle: 'Register clinician | OneLife' }) %>
+<%- include('partials/header', { adminName: 'Admin' }) %>
 <%- include('partials/sidebar', { activePage: 'registration' }) %>
 
-    <main id="main" class="main">
-      <div class="pagetitle">
-        <h1>Doctors Registrations</h1>
-        <p class="text-muted mb-0">Create a verified clinician profile for the patient directory.</p>
-      </div>
-      <section class="section">
-        <div class="row">
-          <div class="col-lg-12">
-            <div class="card shadow-sm">
-              <div class="card-body">
-                <h5 class="card-title">Doctors Registration Form</h5>
-                <form class="row g-3" action="/doctors-registration" method="post" enctype="multipart/form-data" id="doctorsregistrationform">
-                  <div class="col-12">
-                    <label class="form-label">Doctor's full name</label>
-                    <input type="text" class="form-control" name="fullname" required />
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label">Email</label>
-                    <input type="email" class="form-control" name="email" required />
-                  </div>
-                  <fieldset class="mb-3 row">
-                    <legend class="pt-0 col-form-label col-sm-2">Gender</legend>
-                    <div class="col-sm-10">
-                      <div class="form-check">
-                        <input class="form-check-input" type="radio" name="gender" value="Male" checked required />
-                        <label class="form-check-label">Male</label>
-                      </div>
-                      <div class="form-check">
-                        <input class="form-check-input" type="radio" name="gender" value="Female" />
-                        <label class="form-check-label">Female</label>
-                      </div>
-                      <div class="form-check">
-                        <input class="form-check-input" type="radio" name="gender" value="Others" />
-                        <label class="form-check-label">Others</label>
-                      </div>
-                    </div>
-                  </fieldset>
-                  <div class="col-12">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" name="password" minlength="8" required />
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Degree</label>
-                    <input type="text" class="form-control" name="degree" required />
-                  </div>
-                  <div class="col-md-4">
-                    <label class="form-label">Number</label>
-                    <input type="number" class="form-control" name="number" required />
-                  </div>
-                  <div class="col-md-2">
-                    <label class="form-label">Experience</label>
-                    <input type="number" class="form-control" name="experience" required />
-                  </div>
-                  <div class="col-md-2">
-                    <label class="form-label">Consultation fee (₹)</label>
-                    <input type="number" class="form-control" name="fees" min="0" required />
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label">File Upload</label>
-                    <input class="form-control" type="file" name="image" accept="image/jpeg,image/png,image/webp" required />
-                  </div>
-                  <div class="col-md-5">
-                    <label class="form-label">Department</label>
-                    <select class="form-select" name="speciality" required>
-                      <option value="">Select Your Department</option>
-                      <option value="Neurologist">Neurologist</option>
-                      <option value="Pediatricians">Pediatricians</option>
-                      <option value="Dermatologist">Dermatologist</option>
-                      <option value="Gastroenterologist">Gastroenterologist</option>
-                      <option value="General physician">General physician</option>
-                      <option value="Gynecologist">Gynecologist</option>
-                    </select>
-                  </div>
-                  <div class="col-12">
-                    <label class="form-label">About yourself</label>
-                    <textarea class="form-control" name="about" rows="4" placeholder="Tell us about you"></textarea>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Address Line 1</label>
-                    <input type="text" class="form-control" name="line1" placeholder="Street address" required />
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Address Line 2</label>
-                    <input type="text" class="form-control" name="line2" placeholder="City, State" required />
-                  </div>
-                  <div class="text-center">
-                    <button type="submit" class="btn btn-primary" id="submitbtn" disabled>Submit</button>
-                    <button type="reset" class="btn btn-secondary">Reset</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
+<main id="main-content" class="console-main">
+  <header class="console-page-heading"><div><p class="console-eyebrow">Clinician directory</p><h1>Register a doctor</h1><p>Create the information patients will use to find and book a clinician.</p></div></header>
+  <section class="console-panel"><div class="console-panel__header"><div><h2>Clinician details</h2><p>Fields marked by your browser as required must be completed before submitting.</p></div></div>
+    <div class="console-panel__body">
+      <form class="console-form" action="/doctors-registration" method="post" enctype="multipart/form-data" id="doctorsregistrationform">
+        <div class="console-form-grid">
+          <div class="console-field console-field--full"><label for="fullname">Doctor’s full name</label><input id="fullname" type="text" name="fullname" autocomplete="name" required /></div>
+          <div class="console-field"><label for="email">Email address</label><input id="email" type="email" name="email" autocomplete="email" required /></div>
+          <div class="console-field"><fieldset><legend>Gender</legend><label><input type="radio" name="gender" value="Male" checked required /> Male</label><label><input type="radio" name="gender" value="Female" /> Female</label><label><input type="radio" name="gender" value="Others" /> Others</label></fieldset></div>
+          <div class="console-field"><label for="password">Temporary password</label><input id="password" type="password" name="password" autocomplete="new-password" minlength="8" required /><p class="console-field__help">At least eight characters.</p></div>
+          <div class="console-field"><label for="degree">Degree</label><input id="degree" type="text" name="degree" required /></div>
         </div>
-      </section>
-    </main>
-
+        <div class="console-form-grid console-form-grid--three">
+          <div class="console-field"><label for="number">Phone number</label><input id="number" type="number" name="number" required /></div>
+          <div class="console-field"><label for="experience">Experience</label><input id="experience" type="number" name="experience" required /></div>
+          <div class="console-field"><label for="fees">Consultation fee (₹)</label><input id="fees" type="number" name="fees" min="0" required /></div>
+        </div>
+        <div class="console-form-grid">
+          <div class="console-field"><label for="speciality">Department</label><select id="speciality" name="speciality" required><option value="">Select a department</option><option value="Neurologist">Neurologist</option><option value="Pediatricians">Pediatricians</option><option value="Dermatologist">Dermatologist</option><option value="Gastroenterologist">Gastroenterologist</option><option value="General physician">General physician</option><option value="Gynecologist">Gynecologist</option></select></div>
+          <div class="console-field"><label for="image">Profile image</label><input id="image" type="file" name="image" accept="image/jpeg,image/png,image/webp" required /><p class="console-field__help">JPEG, PNG, or WebP only.</p></div>
+        </div>
+        <div class="console-form-grid">
+          <div class="console-field"><label for="line1">Address line 1</label><input id="line1" type="text" name="line1" placeholder="Street address" required /></div>
+          <div class="console-field"><label for="line2">Address line 2</label><input id="line2" type="text" name="line2" placeholder="City, State" required /></div>
+          <div class="console-field console-field--full"><label for="about">About the clinician</label><textarea id="about" name="about" rows="4" placeholder="Tell patients about this doctor"></textarea></div>
+        </div>
+        <div class="console-form-actions"><button type="submit" class="console-button" id="submitbtn" disabled>Register doctor</button><button type="reset" class="console-button console-button--quiet">Reset form</button></div>
+      </form>
+    </div>
+  </section>
+</main>
 <%- include('partials/footer') %>
-    <script>
-      document.getElementById("doctorsregistrationform").addEventListener("input", () => {
-        document.getElementById("submitbtn").disabled = !document.getElementById("doctorsregistrationform").checkValidity();
-      });
-    </script>
+<script>
+  const doctorRegistrationForm = document.getElementById('doctorsregistrationform');
+  const registerDoctorButton = document.getElementById('submitbtn');
+  const syncDoctorRegistration = () => { registerDoctorButton.disabled = !doctorRegistrationForm.checkValidity(); };
+  doctorRegistrationForm.addEventListener('input', syncDoctorRegistration);
+  doctorRegistrationForm.addEventListener('change', syncDoctorRegistration);
+  doctorRegistrationForm.addEventListener('reset', () => window.setTimeout(syncDoctorRegistration));
+  syncDoctorRegistration();
+</script>
 <%- include('partials/scripts') %>

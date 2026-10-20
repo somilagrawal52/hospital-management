@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const secret = process.env.JWT_SECRET || process.env.secret;
+const { configuredJwtSecret } = require("./runtime-config");
 const cookieOptions = {
   httpOnly: true,
   sameSite: "lax",
@@ -9,6 +9,7 @@ const cookieOptions = {
 
 function createtokenforuser(user) {
   try {
+    const secret = configuredJwtSecret();
     if (!secret) throw new Error("JWT_SECRET is not configured");
     const payload = {
       _id: user._id,
@@ -25,6 +26,7 @@ function createtokenforuser(user) {
 
 function validatetoken(token) {
   try {
+    const secret = configuredJwtSecret();
     if (!secret) throw new Error("JWT_SECRET is not configured");
     const payload = jwt.verify(token, secret);
     return payload;

@@ -1,38 +1,12 @@
-<header id="header" class="header fixed-top d-flex align-items-center">
-  <div class="d-flex align-items-center justify-content-between">
-    <a href="/doctor" class="logo d-flex align-items-center">
-      <img src="/doctor-assets/img/logo.png" alt="OneLife" />
-      <span class="d-none d-lg-block"><%= brandLabel || "Doctor" %></span>
-    </a>
-  </div>
-  <nav class="header-nav ms-auto">
-    <ul class="d-flex align-items-center">
-      <% if (showMessagesLink) { %>
-        <li class="nav-item dropdown">
-          <a class="nav-link nav-icon" href="/showdocmsg">
-            <i class="bi bi-chat-left-text"></i>
-          </a>
-        </li>
-      <% } %>
-      <li class="nav-item dropdown pe-3">
-        <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-          <img src="/doctor-assets/img/profile-img.jpg" alt="Profile" class="rounded-circle" />
-          <span class="d-none d-md-block dropdown-toggle ps-2"><%= doctor?.fullname || "Doctor" %></span>
-        </a>
-        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
-          <li class="dropdown-header">
-            <h6><%= doctor?.fullname || "Doctor" %></h6>
-            <span><%= doctor?.speciality || "Doctor" %></span>
-          </li>
-          <li><hr class="dropdown-divider" /></li>
-          <li>
-            <a class="dropdown-item d-flex align-items-center" href="/doctorlogout">
-              <i class="bi bi-box-arrow-right"></i>
-              <span>Sign Out</span>
-            </a>
-          </li>
-        </ul>
-      </li>
-    </ul>
+<header class="console-header">
+  <a class="console-brand" href="/doctor" aria-label="OneLife doctor dashboard">
+    <span class="console-brand__mark" aria-hidden="true"></span>
+    <span class="console-brand__copy"><strong>OneLife</strong><span><%= brandLabel || 'Clinician workspace' %></span></span>
+  </a>
+  <nav class="console-inline" aria-label="Doctor navigation">
+    <a class="console-button console-button--quiet console-button--small" href="/doctor">Dashboard</a>
+    <a class="console-button console-button--quiet console-button--small" href="/doctor/availability">Availability</a>
+    <% if (showMessagesLink) { %><a class="console-button console-button--quiet console-button--small" href="/showdocmsg">Requests</a><% } %>
+    <details class="console-menu"><summary aria-label="Open doctor account menu"><span class="console-avatar"><%= (doctor?.fullname || 'D').charAt(0).toUpperCase() %></span><span><%= doctor?.fullname || 'Doctor' %></span></summary><div class="console-menu__panel"><a href="/doctorlogout">Sign out</a></div></details>
   </nav>
 </header>

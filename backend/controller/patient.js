@@ -5,7 +5,7 @@ const Waitlist = require("../models/waitlist");
 const { mailsender,sendWhatsAppMessage } = require("./mail");
 const User = require("../models/user");
 // const otpgeneration = require("otp-generator");
-const Razorpay = require("razorpay");
+const { razorpayClient } = require("../services/razorpay-client");
 const { validatetoken } = require("../services/auth");
 const { cookieOptions } = require("../services/auth");
 const { validatePaymentVerification } = require("razorpay/dist/utils/razorpay-utils");
@@ -16,11 +16,6 @@ const { fulfilPatientWaitlist } = require("../services/waitlist");
 const { notifyWaitlistForSlot } = require("../services/waitlist");
 
 
-
-const instance = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
 
 async function appointment(req, res) {
   return res.redirect("/");
@@ -84,7 +79,7 @@ async function bookappointment(req, res) {
       return res.status(409).json({ success: false, message: error.message || "This appointment slot is no longer available." });
     }
     
-    const razorpayOrder = await instance.orders.create({
+    const razorpayOrder = await razorpayClient().orders.create({
       // Never trust the fee supplied by the browser.
       amount: Math.round(Number(doctordata.fees) * 100),
       currency: "INR",
@@ -127,6 +122,9 @@ async function bookappointment(req, res) {
       amount: Number(doctordata.fees) * 100,
       });
   } catch (error) {
+    if (error.code === "PAYMENT_NOT_CONFIGURED") {
+      return res.status(503).json({ success: false, message: "Payments are temporarily unavailable." });
+    }
     console.error(error);
     res.status(500).json({ message: "Error booking appointment." });
   }
@@ -230,8 +228,6 @@ async function myappointments(req,res) {
       (item) => item.status === "confirmed" && new Date(item.date) >= new Date(),
     ).length;
     patientdata.waitlist = waitlist;
-    console.log("Patient appointments data:", patientdata.appointments);
-
     res.render('myAppointment',{user:req.user,patientdata});
   } catch (error) {
     console.error(error);
@@ -338,7 +334,6 @@ async function UpdateProfile(req, res) {
     const token = req.cookies.token;
     const decoded = validatetoken(token);
     const { fullname, email, number, address, dob, gender } = req.body;
-    console.log("Address value:", address);
     let parsedAddress;
     if (address) {
       try {
@@ -357,16 +352,11 @@ async function UpdateProfile(req, res) {
       dob,
       gender
     };
-    console.log("Update data:", updateData);
-
     const result = await User.findByIdAndUpdate(
       { _id: decoded._id },
       updateData,
       { new: true, runValidators: true }
     );
-
-    // Log the result of the update operation
-    console.log("Update result:", result);
 
     if (!result) {
       return res.status(404).json({ success: false, message: "User not found" });

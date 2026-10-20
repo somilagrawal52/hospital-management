@@ -1,31 +1,14 @@
-<aside id="sidebar" class="sidebar">
-  <ul class="sidebar-nav" id="sidebar-nav">
-    <li class="nav-item">
-      <a class="nav-link <%= activePage === 'dashboard' ? '' : 'collapsed' %>" href="/admin">
-        <i class="bi bi-grid"></i>
-        <span>Dashboard</span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a href="/doctors-registration" class="nav-link <%= activePage === 'registration' ? '' : 'collapsed' %>">
-        <i class="bi bi-journal-text"></i><span>Doctors Registrations</span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a href="/showmsg" class="nav-link <%= activePage === 'messages' ? '' : 'collapsed' %>">
-        <i class="bi bi-bell-fill"></i><span>Messages</span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a href="/doctors-detail" class="nav-link <%= activePage === 'details' ? '' : 'collapsed' %>">
-        <i class="bi bi-layout-text-window-reverse"></i><span>Doctors Details</span>
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link <%= activePage === 'profile' ? '' : 'collapsed' %>" href="/profile">
-        <i class="bi bi-person"></i>
-        <span>Profile</span>
-      </a>
-    </li>
-  </ul>
+<aside class="console-sidebar" aria-label="Administration navigation">
+  <a class="console-brand" href="/admin">
+    <span class="console-brand__mark" aria-hidden="true"></span>
+    <span class="console-brand__copy"><strong>OneLife</strong><span>Administration</span></span>
+  </a>
+  <nav class="console-nav">
+    <a href="/admin" <%= activePage === 'dashboard' ? 'aria-current="page"' : '' %>><span class="nav-glyph" aria-hidden="true">D</span>Dashboard</a>
+    <a href="/doctors-registration" <%= activePage === 'registration' ? 'aria-current="page"' : '' %>><span class="nav-glyph" aria-hidden="true">+</span>Register doctor</a>
+    <a href="/doctors-detail" <%= activePage === 'details' ? 'aria-current="page"' : '' %>><span class="nav-glyph" aria-hidden="true">C</span>Clinicians</a>
+    <a href="/showmsg" <%= activePage === 'messages' ? 'aria-current="page"' : '' %>><span class="nav-glyph" aria-hidden="true">S</span>Support inbox</a>
+    <a href="/profile" <%= activePage === 'profile' ? 'aria-current="page"' : '' %>><span class="nav-glyph" aria-hidden="true">P</span>Profile</a>
+  </nav>
+  <p class="console-sidebar__footer">OneLife care operations</p>
 </aside>

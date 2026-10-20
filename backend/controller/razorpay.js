@@ -1,14 +1,9 @@
 const fs = require("fs");
-const Razorpay = require("razorpay");
 const path = require("path");
+const { razorpayClient } = require("../services/razorpay-client");
 const {
   validateWebhookSignature,
 } = require("razorpay/dist/utils/razorpay-utils");
-
-var instance = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
 
 const readData = () => {
   if (fs.existsSync("orders.json")) {
@@ -25,7 +20,7 @@ const writeData = (data) => {
 async function appointmentcreated(req, res) {
   try {
     const { amount } = req.body;
-    const order = await instance.orders.create({
+    const order = await razorpayClient().orders.create({
       amount: amount * 100, // Amount in paisa
       currency: "INR",
     });
@@ -40,7 +35,7 @@ async function verifypayment(req, res) {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
     req.body;
 
-  const secret = instance.key_secret;
+  const secret = process.env.RAZORPAY_KEY_SECRET;
   const body = razorpay_order_id + "|" + razorpay_payment_id;
 
   try {

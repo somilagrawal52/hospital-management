@@ -9,13 +9,17 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const userRoute = require("./routes/user");
 const { checkforauthentication, restrictTo } = require("./middlewares/auth");
+const { requireSameOrigin } = require("./middlewares/csrf-origin");
 const User = require("./models/user");
 const Appointment = require("./models/appointment");
 const { razorpayWebhook } = require("./controller/webhooks");
 const { notifyWaitlistForSlot } = require("./services/waitlist");
+const { assertRuntimeConfig } = require("./services/runtime-config");
 
 const app = express();
 const server = http.createServer(app);
+app.set("trust proxy", 1);
+assertRuntimeConfig();
 // Keep compatibility with the project's existing .env keys while supporting
 // conventional uppercase deployment variables.
 const PORT = process.env.PORT || process.env.port || 8000;
@@ -49,6 +53,7 @@ app.post("/webhooks/razorpay", express.raw({ type: "application/json", limit: "1
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 app.use(cookieParser());
+app.use(requireSameOrigin);
 app.use(checkforauthentication("token"));
 
 app.use(
@@ -62,6 +67,10 @@ app.use(
 app.use(
   "/doctor-assets",
   express.static(path.join(__dirname, "..", "frontend", "doctor", "assets")),
+);
+app.use(
+  "/console-assets",
+  express.static(path.join(__dirname, "..", "frontend", "shared", "assets")),
 );
 app.use(
   "/user",

@@ -1,87 +1,11 @@
-<%- include('partials/head', { pageTitle: 'Online Requests - Doctor' }) %>
-<%- include('partials/header', { doctor, brandLabel: 'Doctor', showMessagesLink: false }) %>
+<%- include('partials/head', { pageTitle: 'Online requests | OneLife' }) %>
+<%- include('partials/header', { doctor, brandLabel: 'Clinician workspace', showMessagesLink: false }) %>
 
-    <main id="main" class="main">
-      <div class="pagetitle">
-        <h1>Online Appointment Requests</h1>
-      </div>
-
-      <section class="section video-requests">
-        <div class="row" id="video-request-container">
-          <% requests.forEach((request) => { %>
-            <% const status = request.status || 'online_requested'; %>
-            <div class="col-lg-6">
-              <div class="card">
-                <div class="card-header">
-                  <h6>Patient: <%= request.fullname %></h6>
-                </div>
-                <div class="card-body">
-                  <h5 class="card-title">Requested At: <%= request.formattedRequestTime %></h5>
-                  <p><strong>Status:</strong> <span class="text-capitalize"><%= status.replace(/_/g, ' ') %></span></p>
-                  <p><strong>Reason:</strong> <%= request.payment?.reason || "N/A" %></p>
-                  <div class="d-flex gap-2">
-                    <button class="btn btn-success action-btn" data-action="accept" data-id="<%= request._id %>">Accept</button>
-                    <button class="btn btn-danger action-btn" data-action="decline" data-id="<%= request._id %>">Decline</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          <% }) %>
-          <% if (!requests.length) { %>
-            <div class="col-12">
-              <div class="card">
-                <div class="card-body py-4">
-                  <p class="mb-0">No online appointment requests right now.</p>
-                </div>
-              </div>
-            </div>
-          <% } %>
-        </div>
-      </section>
-
-      <% if (scheduledVideoAppointments && scheduledVideoAppointments.length) { %>
-        <section class="section pt-0">
-          <div class="pagetitle"><h2 class="h4">Scheduled video consultations</h2></div>
-          <div class="row">
-            <% scheduledVideoAppointments.forEach((appointment) => { %>
-              <div class="col-lg-6">
-                <div class="card">
-                  <div class="card-body">
-                    <h5 class="card-title"><%= appointment.fullname %></h5>
-                    <p class="mb-3"><%= new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(appointment.date)) %></p>
-                    <div class="d-flex gap-2 flex-wrap">
-                      <a class="btn btn-primary" href="/appointments/<%= appointment._id %>/video/join">Join consultation</a>
-                      <a class="btn btn-outline-primary" href="/appointments/<%= appointment._id %>/video/calendar">Add to calendar</a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            <% }) %>
-          </div>
-        </section>
-      <% } %>
-    </main>
-
+<main id="main-content" class="console-main">
+  <header class="console-page-heading"><div><p class="console-eyebrow">Virtual care</p><h1>Online appointment requests</h1><p>Accept or decline new virtual consultation requests.</p></div></header>
+  <section id="video-request-container" class="console-card-grid"><% requests.forEach((request) => { %><% const status = request.status || 'online_requested'; %><article class="console-panel console-person-card"><div><h2><%= request.fullname %></h2><p>Requested <%= request.formattedRequestTime %></p></div><dl class="console-key-value"><div><dt>Status</dt><dd><span class="console-pill console-pill--warning"><%= status.replace(/_/g, ' ') %></span></dd></div><div><dt>Reason</dt><dd><%= request.payment?.reason || 'N/A' %></dd></div></dl><div class="console-form-actions"><button class="console-button action-btn" data-action="accept" data-id="<%= request._id %>">Accept</button><button class="console-button console-button--danger action-btn" data-action="decline" data-id="<%= request._id %>">Decline</button></div></article><% }) %><% if (!requests.length) { %><article class="console-panel"><p class="console-empty">No online appointment requests right now.</p></article><% } %></section>
+  <% if (scheduledVideoAppointments && scheduledVideoAppointments.length) { %><section class="console-stack" style="margin-top: 1.2rem"><header class="console-page-heading"><div><p class="console-eyebrow">Scheduled care</p><h2>Video consultations</h2></div></header><div class="console-card-grid"><% scheduledVideoAppointments.forEach((appointment) => { %><article class="console-panel console-person-card"><div><h3><%= appointment.fullname %></h3><p><%= new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(appointment.date)) %></p></div><div class="console-form-actions"><a class="console-button" href="/appointments/<%= appointment._id %>/video/join">Join consultation</a><a class="console-button console-button--quiet" href="/appointments/<%= appointment._id %>/video/calendar">Add to calendar</a></div></article><% }) %></div></section><% } %>
+</main>
 <%- include('partials/footer') %>
-    <script>
-      document.addEventListener("click", async (event) => {
-        const button = event.target.closest(".action-btn");
-        if (!button) return;
-
-        try {
-          const response = await fetch(`/video-requests/${button.dataset.action}/${button.dataset.id}`, {
-            method: "POST",
-          });
-
-          if (!response.ok) {
-            throw new Error("Failed to process request");
-          }
-
-          window.location.reload();
-        } catch (error) {
-          console.error(error);
-          alert("Failed to process request.");
-        }
-      });
-    </script>
+<script>document.addEventListener('click', async (event) => { const button = event.target.closest('.action-btn'); if (!button) return; button.disabled = true; try { const response = await fetch(`/video-requests/${button.dataset.action}/${button.dataset.id}`, { method: 'POST' }); if (!response.ok) throw new Error('Failed to process request.'); window.location.reload(); } catch (error) { button.disabled = false; window.alert(error.message || 'Failed to process request.'); } });</script>
 <%- include('partials/scripts') %>

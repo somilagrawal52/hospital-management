@@ -3,6 +3,7 @@ const Appointment = require("../models/appointment");
 const path = require("path");
 const fs=require('fs');
 const { doctorImage } = require("../services/doctor-image");
+const { adminDoctor } = require("../services/response-sanitizers");
 const { mailsender, sendWhatsAppMessage } = require("./mail");
 const {validatetoken}=require("../services/auth");
 const { cookieOptions } = require("../services/auth");
@@ -45,7 +46,9 @@ async function doctorsdetailtable(req, res) {
       patientdata = await User.findById({ _id: decodedtoken._id });
     }
     const { speciality } = req.params;
-    const doctors = await User.find({ role: "DOCTOR" }).select('-password');
+    const doctors = await User.find({ role: "DOCTOR" })
+      .select("_id fullname speciality degree experience about fees image available")
+      .lean();
     const filterDoc = speciality
     ? doctors.filter((doc) => doc.speciality === speciality)
     : doctors;
@@ -208,14 +211,13 @@ async function doctorloginfromdb(req, res) {
 
 async function doctorsdetailpage(req, res) {
   try {
-    const doctors = await User.find({ role: "DOCTOR" }).select("-password").lean();
+    const doctors = await User.find({ role: "DOCTOR" })
+      .select("_id fullname email gender number speciality degree experience about fees image available")
+      .lean();
     const formattedDoctors = doctors.map((doctor) => {
       const image = doctorImage(doctor.image);
 
-      return {
-        ...doctor,
-        image,
-      };
+      return { ...adminDoctor(doctor), image };
     });
 
     return res.render("doctors-detail", { doctors: formattedDoctors });

@@ -8,11 +8,11 @@ function checkforauthentication(cookieName) {
 
     try {
       const userpayload = validatetoken(tokencookievalue);
-      req.user = userpayload;  // Set user object in request
+      req.user = userpayload;
     } catch (error) {
-      console.error("Token validation Error:", error);
+      console.warn("Rejected invalid authentication token.");
       res.clearCookie(cookieName);
-      return res.redirect("/login");  
+      return res.redirect(req.originalUrl.startsWith("/admin") ? "/admin/login" : req.originalUrl.startsWith("/doctor") ? "/doctorlogin" : "/login");
     }
     next();
   };
@@ -28,8 +28,6 @@ function requireAuth(req, res, next) {
 
 function restrictTo(roles = []) {
   return function (req, res, next) {
-    console.log("User info: ", req.user);
-
     if (!req.user) {
       if (req.originalUrl.startsWith("/admin")) {
         return res.redirect("/admin/login");

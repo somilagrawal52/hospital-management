@@ -1,59 +1,10 @@
-<%- include('partials/head', { pageTitle: 'Admin Profile - OneLife' }) %>
-<%- include('partials/header', { adminName: admin?.fullname || 'Admin', adminSubtitle: 'Administrator' }) %>
+<%- include('partials/head', { pageTitle: 'Profile | OneLife Administration' }) %>
+<%- include('partials/header', { adminName: admin?.fullname || 'Admin' }) %>
 <%- include('partials/sidebar', { activePage: 'profile' }) %>
 
-    <main id="main" class="main">
-      <div class="pagetitle">
-        <h1>Profile</h1>
-      </div>
-
-      <section class="section profile">
-        <div class="row">
-          <div class="col-xl-4">
-            <div class="card">
-              <div class="pt-4 card-body profile-card d-flex flex-column align-items-center">
-                <img src="/admin-assets/img/profile-img.jpg" alt="Profile" class="rounded-circle" />
-                <h2><%= admin?.fullname || "Admin" %></h2>
-                <h3>Administrator</h3>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-xl-8">
-            <div class="card">
-              <div class="pt-3 card-body">
-                <h5 class="card-title">About</h5>
-                <p class="small fst-italic">
-                  This page belongs to the admin account for OneLife hospital management.
-                </p>
-
-                <h5 class="card-title">Profile Details</h5>
-                <div class="row">
-                  <div class="col-lg-3 col-md-4 label">Full Name</div>
-                  <div class="col-lg-9 col-md-8"><%= admin?.fullname || "N/A" %></div>
-                </div>
-                <div class="row">
-                  <div class="col-lg-3 col-md-4 label">Role</div>
-                  <div class="col-lg-9 col-md-8"><%= admin?.role || "ADMIN" %></div>
-                </div>
-                <div class="row">
-                  <div class="col-lg-3 col-md-4 label">Country</div>
-                  <div class="col-lg-9 col-md-8"><%= admin?.country || "N/A" %></div>
-                </div>
-                <div class="row">
-                  <div class="col-lg-3 col-md-4 label">Phone</div>
-                  <div class="col-lg-9 col-md-8"><%= admin?.number || "N/A" %></div>
-                </div>
-                <div class="row">
-                  <div class="col-lg-3 col-md-4 label">Email</div>
-                  <div class="col-lg-9 col-md-8"><%= admin?.email || "N/A" %></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
+<main id="main-content" class="console-main">
+  <header class="console-page-heading"><div><p class="console-eyebrow">Account</p><h1>Your administration profile</h1><p>Profile information associated with this OneLife administrator account.</p></div></header>
+  <section class="console-grid console-grid--wide"><article class="console-profile-card console-person-card"><div class="console-avatar"><%= (admin?.fullname || 'A').charAt(0).toUpperCase() %></div><div><h2><%= admin?.fullname || 'Admin' %></h2><p>Administrator</p></div><p class="console-status">This account manages hospital operations and support.</p></article><article class="console-panel"><div class="console-panel__header"><div><h2>Profile details</h2><p>Read-only account information.</p></div></div><div class="console-panel__body"><dl class="console-key-value"><div><dt>Full name</dt><dd><%= admin?.fullname || 'N/A' %></dd></div><div><dt>Role</dt><dd><%= admin?.role || 'ADMIN' %></dd></div><div><dt>Country</dt><dd><%= admin?.country || 'N/A' %></dd></div><div><dt>Phone</dt><dd><%= admin?.number || 'N/A' %></dd></div><div><dt>Email</dt><dd><%= admin?.email || 'N/A' %></dd></div></dl></div></article></section>
+</main>
 <%- include('partials/footer') %>
 <%- include('partials/scripts') %>

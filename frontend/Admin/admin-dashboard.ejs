@@ -1,115 +1,47 @@
-<%- include('partials/head', { pageTitle: 'Dashboard - OneLife Admin' }) %>
-<%- include('partials/header', { adminName: 'Admin Panel', adminSubtitle: 'Hospital Management' }) %>
+<%- include('partials/head', { pageTitle: 'Administration dashboard | OneLife' }) %>
+<%- include('partials/header', { adminName: 'Admin' }) %>
 <%- include('partials/sidebar', { activePage: 'dashboard' }) %>
 
-    <main id="main" class="main">
-      <div class="pagetitle">
-        <h1>Dashboard</h1>
-        <p class="text-muted mb-0">A quick view of your hospital activity and latest bookings.</p>
+<main id="main-content" class="console-main">
+  <header class="console-page-heading">
+    <div><p class="console-eyebrow">Care operations</p><h1>Hospital overview</h1><p>Track care activity and keep appointments moving.</p></div>
+  </header>
+
+  <section class="console-grid console-grid--metrics" aria-label="Key statistics">
+    <article class="console-metric"><div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">P</span>Registered patients</div><p class="console-metric__value"><%= patientsCount %></p><p class="console-metric__note">Patient accounts on the platform</p></article>
+    <article class="console-metric"><div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">D</span>Active clinicians</div><p class="console-metric__value"><%= doctorsCount %></p><p class="console-metric__note">Doctors in the directory</p></article>
+    <article class="console-metric"><div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">T</span>Today’s schedule</div><p class="console-metric__value"><%= todayAppointmentsCount %></p><p class="console-metric__note">Appointments not cancelled</p></article>
+  </section>
+
+  <section class="console-panel" style="margin-top: 1.2rem">
+    <div class="console-panel__header"><div><h2>Recent appointments</h2><p>Review and update the latest patient bookings.</p></div></div>
+    <div class="console-panel__body">
+      <div class="console-table-wrap">
+        <table class="console-table">
+          <thead><tr><th>Patient</th><th>Doctor</th><th>Phone</th><th>Date</th><th>Status</th><th>Update</th></tr></thead>
+          <tbody>
+            <% appointments.forEach((appointment) => { %>
+              <% const status = appointment.status || 'pending'; const statusTone = status === 'cancelled' ? 'danger' : status === 'completed' ? 'success' : status === 'pending' || status === 'online_requested' ? 'warning' : ''; %>
+              <tr>
+                <td><%= appointment.fullname || '—' %></td><td><%= appointment.doctor || '—' %></td><td><%= appointment.number || '—' %></td><td><%= appointment.formattedDate %></td>
+                <td><span class="console-pill <%= statusTone ? `console-pill--${statusTone}` : '' %>"><%= status.replace(/_/g, ' ') %></span></td>
+                <td>
+                  <% if (!['completed', 'cancelled'].includes(status)) { %>
+                    <div class="console-inline">
+                      <label><span class="console-skip-link">New appointment status</span><select class="console-field status-select" aria-label="Update appointment status"><option value="">Update status</option><% if (status !== 'confirmed') { %><option value="confirmed">Confirm</option><% } %><option value="completed">Complete</option><option value="cancelled">Cancel</option></select></label>
+                      <button type="button" class="console-button console-button--small update-status" data-id="<%= appointment._id %>">Save</button>
+                    </div>
+                  <% } else { %><span class="console-status">Final</span><% } %>
+                </td>
+              </tr>
+            <% }) %>
+            <% if (!appointments.length) { %><tr><td colspan="6" class="console-empty">No appointments found.</td></tr><% } %>
+          </tbody>
+        </table>
       </div>
-
-      <section class="section dashboard">
-        <div class="row">
-          <div class="col-lg-12">
-            <div class="row">
-              <div class="col-md-6 col-xl-4">
-                <div class="card info-card customers-card">
-                  <div class="card-body">
-                    <h5 class="card-title">Patients <span class="text-muted small pt-1">registered</span></h5>
-                    <div class="d-flex align-items-center">
-                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                        <i class="bi bi-people"></i>
-                      </div>
-                      <div class="ps-3">
-                        <h6><%= patientsCount %></h6>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-md-6 col-xl-4">
-                <div class="card info-card customers-card">
-                  <div class="card-body">
-                    <h5 class="card-title">Doctors <span class="text-muted small pt-1">on platform</span></h5>
-                    <div class="d-flex align-items-center">
-                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
-                        <i class="bi bi-people"></i>
-                      </div>
-                      <div class="ps-3">
-                        <h6><%= doctorsCount %></h6>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-md-6 col-xl-4">
-                <div class="card info-card customers-card h-100">
-                  <div class="card-body">
-                    <h5 class="card-title">Today <span class="text-muted small pt-1">scheduled</span></h5>
-                    <div class="d-flex align-items-center">
-                      <div class="card-icon rounded-circle d-flex align-items-center justify-content-center"><i class="bi bi-calendar-check"></i></div>
-                      <div class="ps-3"><h6><%= todayAppointmentsCount %></h6></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-12">
-                <div class="card recent-sales">
-                  <div class="card-body">
-                    <h5 class="card-title">Recent Appointments</h5>
-                    <div class="table-responsive"><table class="table table-borderless align-middle mb-0">
-                      <thead>
-                        <tr>
-                          <th scope="col">Patient</th>
-                          <th scope="col">Doctor</th>
-                          <th scope="col">Phone</th>
-                          <th scope="col">Date</th>
-                          <th scope="col">Status</th>
-                          <th scope="col">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <% appointments.forEach((appointment) => { %>
-                          <% const status = appointment.status || 'pending'; %>
-                          <tr>
-                            <td><%= appointment.fullname %></td>
-                            <td><%= appointment.doctor %></td>
-                            <td><%= appointment.number %></td>
-                            <td><%= appointment.formattedDate %></td>
-                            <td><span class="badge rounded-pill text-bg-<%= status === 'cancelled' ? 'danger' : status === 'completed' ? 'success' : 'primary' %> text-capitalize"><%= status.replace(/_/g, ' ') %></span></td>
-                            <td>
-                              <% if (!['completed', 'cancelled'].includes(status)) { %>
-                                <div class="d-flex gap-2 align-items-center">
-                                  <select class="form-select form-select-sm status-select" aria-label="Update appointment status">
-                                    <option value="">Update…</option>
-                                    <% if (status !== 'confirmed') { %><option value="confirmed">Confirm</option><% } %>
-                                    <option value="completed">Complete</option>
-                                    <option value="cancelled">Cancel</option>
-                                  </select>
-                                  <button type="button" class="btn btn-sm btn-primary update-status" data-id="<%= appointment._id %>">Save</button>
-                                </div>
-                              <% } else { %><span class="text-muted small">Final</span><% } %>
-                            </td>
-                          </tr>
-                        <% }) %>
-                        <% if (!appointments.length) { %>
-                          <tr>
-                            <td colspan="6">No appointments found.</td>
-                          </tr>
-                        <% } %>
-                      </tbody>
-                    </table></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
+    </div>
+  </section>
+</main>
 
 <%- include('partials/footer') %>
 <script>
@@ -117,17 +49,14 @@
     const button = event.target.closest('.update-status');
     if (!button) return;
     const status = button.closest('td').querySelector('.status-select').value;
-    if (!status) return alert('Choose a new status first.');
+    if (!status) return window.alert('Choose a new status first.');
     button.disabled = true;
     try {
       const response = await fetch('/appointments/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ appointmentId: button.dataset.id, status }) });
       const data = await response.json();
-      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to update appointment');
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to update appointment.');
       window.location.reload();
-    } catch (error) {
-      button.disabled = false;
-      alert(error.message || 'Unable to update appointment.');
-    }
+    } catch (error) { button.disabled = false; window.alert(error.message || 'Unable to update appointment.'); }
   });
 </script>
 <%- include('partials/scripts') %>

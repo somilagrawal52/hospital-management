@@ -81,6 +81,7 @@ const {
 } = require("../controller/scheduling");
 const multer = require("multer");
 const rateLimit = require("express-rate-limit");
+const { adminAppointment, adminDoctor, doctorAppointment } = require("../services/response-sanitizers");
 const { restrictTo, checkforauthentication, requireAuth } = require("../middlewares/auth");
 const {
   appointmentcreated,
@@ -117,10 +118,22 @@ const upload = multer({
   },
 });
 const chatLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: "draft-7", legacyHeaders: false });
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  handler(req, res) {
+    const error = "Too many sign-in attempts. Please wait 15 minutes and try again.";
+    if (req.path === "/admin/login") return res.status(429).render("admin-login", { email: req.body?.email || "", error });
+    if (req.path === "/doctorlogin") return res.status(429).render("doctor-login", { email: req.body?.email || "", error });
+    return res.status(429).render("login", { state: "login", fullname: "", email: req.body?.email || "", password: "", error });
+  },
+});
 
 router.get("/admin/login", adminlogin);
 
-router.post("/admin/login", adminloginfromdb);
+router.post("/admin/login", loginLimiter, adminloginfromdb);
 
 router.get("/my-appointment", requireAuth, restrictTo(["NORMAL"]), myappointments);
 
@@ -624,9 +637,9 @@ router.post(
   upload.single("image"),
   doctorsregistrationtodb
 );
-router.post("/doctorlogin", doctorloginfromdb);
+router.post("/doctorlogin", loginLimiter, doctorloginfromdb);
 
-router.post("/login", patientloginfromdb);
+router.post("/login", loginLimiter, patientloginfromdb);
 
 router.get("/register", patientsregisterpage);
 
@@ -640,9 +653,10 @@ router.get("/my-profile", requireAuth, restrictTo(["NORMAL"]), PatientProfile);
 
 router.get("/admin/doctors-detail", requireAuth, restrictTo(["ADMIN"]), async (req, res) => {
   try {
-    const doctors = await User.find({ role: "DOCTOR" });
-    doctors.forEach((doctor) => { doctor.image = doctorImage(doctor.image); });
-    res.json(doctors);
+    const doctors = await User.find({ role: "DOCTOR" })
+      .select("_id fullname email gender number speciality degree experience about fees image available")
+      .lean();
+    res.json(doctors.map((doctor) => ({ ...adminDoctor(doctor), image: doctorImage(doctor.image) })));
   } catch (error) {
     console.error("Error fetching doctors:", error);
     res.status(500).send("Internal Server Error");
@@ -660,11 +674,9 @@ router.get("/appointments", requireAuth, restrictTo(["NORMAL"]), appointmentdeta
 router.get("/doctor/appointments", requireAuth, restrictTo(["DOCTOR"]), async (req, res) => {
   try {
     const doctordata = await Appointment.find({ docId: req.user._id })
-      .select("-userdata")
-      .select("-doctordata")
-      .select("-payment");
-
-    return res.json({ doctordata });
+      .select("_id fullname email number doctor date slotDate slotTime status isOnline cancelled iscompleted video")
+      .lean();
+    return res.json({ doctordata: doctordata.map(doctorAppointment) });
   } catch (error) {
     console.error("Error fetching appointments:", error);
     return res.status(500).json({ error: "Internal server error" });
@@ -673,8 +685,10 @@ router.get("/doctor/appointments", requireAuth, restrictTo(["DOCTOR"]), async (r
 
 router.get("/admin/appointments", requireAuth, restrictTo(["ADMIN"]), async (req, res) => {
   try {
-    const appointments = await Appointment.find();
-    res.json({ appointments });
+    const appointments = await Appointment.find()
+      .select("_id fullname email number doctor date slotDate slotTime amount status isOnline cancelled iscompleted")
+      .lean();
+    res.json({ appointments: appointments.map(adminAppointment) });
   } catch (error) {
     console.log(error);
   }
