@@ -13,4 +13,4 @@ OneLife is an Express, EJS, and MongoDB source project for appointment booking, 
 
 ### Buyer disclosure
 
-This is source code for owner review and staging validation, not a certified healthcare platform or a production deployment. External provider credentials, data, hosting, legal terms, and final compliance are not included. The sale package must exclude historical restricted template material and unresolved assets; country/state/city dependency licensing remains subject to legal review.
+This is source code for owner review and staging validation, not a certified healthcare platform or a production deployment. External provider credentials, data, hosting, legal terms, and final compliance are not included. The sale package must exclude historical restricted template material and unresolved assets. The bundled country/state/city data is separately noticed under ODbL-1.0 and remains subject to legal review of attribution/share-alike treatment.

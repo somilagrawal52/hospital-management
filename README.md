@@ -18,7 +18,7 @@ The app is available at `http://localhost:8000`.
 - [Render staging and deployment guide](docs/DEPLOYMENT.md)
 - [Third-party material status](THIRD_PARTY_NOTICES.md)
 
-The Admin and Doctor consoles are independently authored EJS/CSS/JavaScript. Their former template and editor bundles are not part of this branch. The Patient interface has deliberately not been redesigned as part of that migration.
+The Admin and Doctor consoles are independently authored EJS/CSS/JavaScript. Their former template and editor bundles are not part of this branch. The active Patient interface uses original SVG marks and newly generated OneLife imagery; legacy images remain only for live-record compatibility and must be reviewed before an export.
 
 ## Safety and production checklist
 
@@ -36,3 +36,5 @@ The Admin and Doctor consoles are independently authored EJS/CSS/JavaScript. The
 ## DataVendor source-package note
 
 Do not package `.env`, `node_modules`, generated invoices, uploads, logs, database exports, or Git history without a separate rights and secret review. The repository history retains prior dashboard-template material and must not be included in a clean commercial source export. See `audit-reports/DATAVENDOR_FINAL_COMPLETION/` for the final review checklist.
+
+Country/state/city lookup is an offline ODbL-1.0 data component, separately documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Keep its attribution with an export and obtain legal review of any database share-alike obligations.
