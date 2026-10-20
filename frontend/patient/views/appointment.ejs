@@ -15,7 +15,7 @@
           <!-- Doctor Info -->
           <p class="flex items-center gap-2 text-2xl font-semibold text-gray-900">Dr.
             <%= docInfo.fullname %> 
-            <img class="w-5" src="/assets/verified_icon.svg" alt="Verified" />
+            <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-white" aria-label="Verified">✓</span>
           </p>
           <div class="flex items-center gap-3 mt-2 text-sm text-gray-600">
             <p class="font-medium"><%= `${docInfo.degree} - ${docInfo.speciality}` %></p>
@@ -26,7 +26,7 @@
           <!-- Doctor About -->
           <div class="mt-4">
             <p class="flex items-center gap-2 text-sm font-medium text-gray-800">
-              About <img src="/assets/info_icon.svg" alt="Info" />
+              About <span class="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-500 text-[10px] text-gray-500" aria-label="Information">i</span>
             </p>
             <p class="mt-2 text-sm leading-relaxed text-gray-600"><%= docInfo.about %></p>
           </div>

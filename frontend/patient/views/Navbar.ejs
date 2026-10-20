@@ -1,7 +1,8 @@
 <div class="flex items-center justify-between py-4 mb-5 text-sm font-bold border-b border-b-gray-400">
   <!-- Logo Section -->
-  <a href="/" class="flex flex-shrink-0" aria-label="OneLife Hospital home">
-    <img class="w-28 sm:w-44" src="/assets/logo.png" alt="OneLife Hospital" />
+  <a href="/" class="flex flex-shrink-0 items-center gap-2 text-primary" aria-label="OneLife Hospital home">
+    <img class="h-8 w-8" src="/assets/onelife-mark.svg" alt="" />
+    <span class="text-lg font-bold tracking-tight sm:text-2xl">OneLife</span>
   </a>
 
   <!-- Desktop Navigation Links -->
@@ -37,7 +38,7 @@
     aria-controls="mobileMenu"
     aria-expanded="false"
   >
-    <img class="w-6" src="/assets/menu_icon.svg" alt="" />
+    <span class="text-2xl leading-none" aria-hidden="true">☰</span>
   </button>
 
   <!-- Admin Section -->
@@ -47,8 +48,8 @@
   <div class="flex items-center gap-4">
     <% if (locals.user) { %>
       <div class="relative flex items-center gap-2 cursor-pointer group">
-        <img class="w-10 rounded-full" src="<%= patientdata.image ? `${patientdata.image}` : '/assets/upload_area.png' %>" alt="profile_pic" />
-        <img class="w-2.5" src="/assets/dropdown_icon.svg" alt="dropdown_icon" />
+        <img class="w-10 rounded-full" src="<%= patientdata.image ? `${patientdata.image}` : '/assets/onelife-avatar.svg' %>" alt="profile_pic" />
+        <span class="text-xs" aria-hidden="true">▾</span>
         <div class="absolute top-0 right-0 z-20 hidden text-base font-medium text-gray-600 pt-14 group-hover:block">
           <div class="flex flex-col gap-4 p-4 rounded min-w-48 bg-stone-100">
             <a href="/my-profile" class="hover:text-black">My Profile</a>
@@ -66,9 +67,9 @@
 <!-- Mobile Menu -->
 <div id="mobileMenu" class="fixed top-0 right-0 z-40 hidden w-full h-full transition-all bg-white lg:hidden">
   <div class="flex items-center justify-between px-5 py-6 border-b border-gray-300">
-    <img class="w-36" src="/assets/logo.png" alt="logo" />
+    <a href="/" class="flex items-center gap-2 text-primary" aria-label="OneLife Hospital home"><img class="h-8 w-8" src="/assets/onelife-mark.svg" alt="" /><span class="text-xl font-bold">OneLife</span></a>
     <button type="button" class="p-1" onclick="toggleMobileMenu()" aria-label="Close navigation menu">
-      <img class="w-6" src="/assets/cross_icon.png" alt="" />
+      <span class="text-2xl leading-none" aria-hidden="true">×</span>
     </button>
   </div>
   <ul class="flex flex-col items-center gap-4 px-5 mt-5 text-lg font-medium">
@@ -83,7 +84,7 @@
       <div class="relative flex items-center gap-2 cursor-pointer group">
         <img
           class="w-10 rounded-full"
-          src="<%= patientdata.image ? `${patientdata.image}` : '/assets/upload_area.png' %>"
+          src="<%= patientdata.image ? `${patientdata.image}` : '/assets/onelife-avatar.svg' %>"
           alt="profile_pic"
         />
         <div class="absolute right-0 hidden top-14 group-hover:block">

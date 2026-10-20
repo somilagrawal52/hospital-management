@@ -9,10 +9,17 @@ This file is an engineering inventory, not legal advice and not a project licens
 
 TinyMCE 7 is GPL-2.0-or-later; the project no longer distributes its copied bundle. Simple-DataTables is LGPL according to its upstream package page; the unversioned copied bundle is no longer distributed. BootstrapMade’s own terms prohibit reselling or mass redistribution of template material, so prior historical copies remain excluded from any sale artifact.
 
-## Retained decision point
+## Address data component
 
-`country-state-city` 3.2.1 is installed and used only by `backend/controller/address.js` for the `/countries`, `/states/:countryCode`, and `/cities/:countryCode/:stateCode` routes. Its installed package declares GPL-3.0. Do not claim a commercial-compatible status for that code/data until qualified counsel selects one of these paths: retain under its terms, replace with a verified-permissive dataset/service while preserving route behavior, or remove the feature with product approval.
+The GPL-3.0 `country-state-city` package was removed. The same three public routes now use the offline `@countrystatecity/countries` 2.0.0 package. Its npm metadata and upstream repository declare the geographic dataset under ODbL-1.0.
+
+- Use: country, state, and city lookup only; no patient information is supplied to the package or a remote service.
+- Data attribution: `Data by Countries States Cities Database — https://github.com/dr5hn/countries-states-cities-database — ODbL v1.0`.
+- Important: ODbL allows commercial use, modification, and redistribution, but it requires attribution and may require share-alike/open-database obligations when a public derivative database is distributed. It is not a permissive-code license. Keep this notice and obtain legal review before commercial distribution of a package that includes the data.
+- The OneLife application code and this geographic dataset must remain separately identified in any DataVendor export. No legal clearance is asserted here.
 
 ## Asset provenance
 
-The replacement consoles do not reference old dashboard logos, profile images, or template graphics. Existing patient assets and legacy Admin/Doctor image files are not asserted to be original. Some Admin image files may be persisted clinician uploads referenced by live database records; exclude them from a DataVendor export unless the owner supplies rights evidence, and do not delete them from an active deployment without a migration plan.
+The replacement consoles do not reference old dashboard logos, profile images, or template graphics. The actively referenced patient-facing visual set now uses original SVG marks (`onelife-mark.svg`, `onelife-avatar.svg`) and two newly generated OneLife images (`onelife-team-generated.png`, `onelife-clinician-generated.png`). These generated images were created in this development pass without input images, logos, or borrowed brand material; this is provenance evidence, not a legal ownership opinion.
+
+Existing patient assets and legacy Admin/Doctor image files are not asserted to be original. Timestamped image names are consistent with application uploads, but that is not proof of rights. Some of them may be persisted clinician uploads referenced by live database records through `backend/services/doctor-image.js`; exclude these files and any database uploads from a DataVendor export unless the owner supplies rights evidence, and do not delete them from an active deployment without a migration plan.

@@ -11,12 +11,12 @@
   "license": "ISC",
   "description": "OneLife hospital appointment and care coordination platform",
   "dependencies": {
+    "@countrystatecity/countries": "2.0.0",
     "@google/generative-ai": "^0.21.0",
     "axios": "^1.11.0",
     "bcryptjs": "^2.4.3",
     "cheerio": "^1.1.2",
     "cookie-parser": "^1.4.7",
-    "country-state-city": "^3.2.1",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^5.2.1",

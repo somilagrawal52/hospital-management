@@ -15,7 +15,7 @@ function doctorImage(image) {
     return `${match.url}/${fileName}`;
   }
   // Stable fallback: a doctor never receives a different photo after a refresh.
-  return "/assets/doc1.png";
+  return "/assets/onelife-clinician-generated.png";
 }
 
 module.exports = { doctorImage };

@@ -6,7 +6,7 @@
             <% if (specialityData && specialityData.length > 0) { %>
                 <% specialityData.forEach((item, index) => { %>
                   <a class='flex flex-col items-center text-xs cursor-pointer flex-shrink-0 hover:translate-y-[-10px] transition-all duration-500' key="<%= index %>" href="/doctors/<%= item.speciality %>">
-                      <img class='w-16 mb-2 sm:w-24' src="<%= item.image %>" alt="<%= item.speciality %>" />
+                      <img class='mb-2 w-16 sm:w-24' src="<%= item.image %>" alt="" />
                       <p><%= item.speciality %></p>
                   </a>
                 <% }) %>
@@ -16,8 +16,8 @@
         </div>
       </div>
       <div class="fixed z-50 bottom-[40px] right-[40px]">
-        <a href="/chats">
-          <img src="/assets/icons8-chat-64.png" alt="Chat Icon" class="w-16 h-16 cursor-pointer hover:scale-125">
+        <a href="/chats" class="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white shadow-lg transition hover:scale-110" aria-label="Open support chat">
+          Chat
         </a>
       </div>
         <%- include('banner') %>
