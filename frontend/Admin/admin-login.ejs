@@ -1,62 +1,95 @@
-<%- include('partials/head', { pageTitle: 'Admin Login - OneLife' }) %>
-    <main>
-      <div class="container">
-        <section class="py-4 section register min-vh-100 d-flex flex-column align-items-center justify-content-center">
-          <div class="container">
-            <div class="row justify-content-center">
-              <div class="col-lg-4 col-md-6 d-flex flex-column align-items-center justify-content-center">
-                <div class="py-4 d-flex justify-content-center">
-                  <a href="/admin/login" class="w-auto logo d-flex align-items-center">
-                    <img src="/admin-assets/img/logo.png" alt="OneLife" />
-                    <span class="d-none d-lg-block">Admin</span>
-                  </a>
-                </div>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0f5f70" />
+    <title>Admin Login - OneLife</title>
+    <link rel="stylesheet" href="/admin-assets/css/onelife-admin-login.css" />
+  </head>
+  <body class="admin-login-page">
+    <main class="admin-login-shell">
+      <section class="admin-login-intro" aria-labelledby="admin-login-heading">
+        <a class="brand" href="/admin/login" aria-label="OneLife Hospital administration login">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span class="brand-copy">
+            <strong>OneLife</strong>
+            <span>Hospital administration</span>
+          </span>
+        </a>
 
-                <div class="mb-3 card">
-                  <div class="card-body">
-                    <div class="pt-4 pb-2">
-                      <h5 class="pb-0 text-center card-title fs-4">Login to Your Account</h5>
-                      <p class="text-center small">Enter your email and password to login</p>
-                    </div>
+        <div class="intro-copy">
+          <p class="eyebrow">Administration portal</p>
+          <h1 id="admin-login-heading">A clearer start to every care day.</h1>
+          <p>
+            Sign in to coordinate appointments, support teams, and hospital operations from one secure place.
+          </p>
+        </div>
 
-                    <% if (error) { %>
-                      <div class="alert alert-danger py-2" role="alert"><%= error %></div>
-                    <% } %>
+        <p class="intro-note">OneLife Hospital · Internal access only</p>
+      </section>
 
-                    <form class="row g-3 needs-validation" action="/admin/login" method="post" novalidate>
-                      <div class="col-12">
-                        <label class="form-label">Email</label>
-                        <div class="input-group has-validation">
-                          <span class="input-group-text">@</span>
-                          <input
-                            type="email"
-                            name="email"
-                            class="form-control"
-                            value="<%= email %>"
-                            required
-                          />
-                          <div class="invalid-feedback">Please enter your email.</div>
-                        </div>
-                      </div>
-
-                      <div class="col-12">
-                        <label class="form-label">Password</label>
-                        <input type="password" name="password" class="form-control" required />
-                        <div class="invalid-feedback">Please enter your password.</div>
-                      </div>
-
-                      <div class="col-12">
-                        <button class="btn btn-primary w-100" type="submit">Login</button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-
-                <div class="credits">Designed by Somil Agrawal</div>
-              </div>
-            </div>
+      <section class="admin-login-panel" aria-label="Administrator sign in">
+        <div class="login-card">
+          <div class="login-card__heading">
+            <p class="eyebrow">Welcome back</p>
+            <h2>Sign in to administration</h2>
+            <p>Use your administrator email and password to continue.</p>
           </div>
-        </section>
-      </div>
+
+          <% if (error) { %>
+            <div class="server-error" role="alert"><%= error %></div>
+          <% } %>
+
+          <form id="admin-login-form" action="/admin/login" method="post" novalidate>
+            <div class="form-field">
+              <label for="email">Email address</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                inputmode="email"
+                autocomplete="email"
+                value="<%= email || '' %>"
+                aria-describedby="email-help"
+                required
+              />
+              <p id="email-help" class="field-help">Enter the email linked to your administrator account.</p>
+              <p class="field-error">Please enter a valid email address.</p>
+            </div>
+
+            <div class="form-field">
+              <label for="password">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+              />
+              <p class="field-error">Please enter your password.</p>
+            </div>
+
+            <button class="submit-button" type="submit">Sign in securely</button>
+          </form>
+
+          <p class="support-copy">Need access? Please contact the OneLife system administrator.</p>
+        </div>
+      </section>
     </main>
-<%- include('partials/scripts') %>
+
+    <script>
+      (function () {
+        var form = document.getElementById('admin-login-form');
+
+        form.addEventListener('submit', function (event) {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            form.classList.add('was-validated');
+            form.querySelector(':invalid').focus();
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>
