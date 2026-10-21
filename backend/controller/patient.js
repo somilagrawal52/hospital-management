@@ -6,6 +6,7 @@ const { mailsender,sendWhatsAppMessage } = require("./mail");
 const User = require("../models/user");
 // const otpgeneration = require("otp-generator");
 const { razorpayClient } = require("../services/razorpay-client");
+const { paymentVerificationSecret } = require("../services/integrations");
 const { validatetoken } = require("../services/auth");
 const { cookieOptions } = require("../services/auth");
 const { validatePaymentVerification } = require("razorpay/dist/utils/razorpay-utils");
@@ -236,6 +237,7 @@ async function myappointments(req,res) {
 }
 
 async function savePayments(req, res) {
+  if (!paymentVerificationSecret()) return res.status(503).json({ message: "Payments are disabled in this environment." });
   const { appointmentId, paymentId, orderId, signature } = req.body;
 
   try {
@@ -252,7 +254,7 @@ async function savePayments(req, res) {
     const isValid = validatePaymentVerification(
       { order_id: orderId, payment_id: paymentId },
       signature,
-      process.env.RAZORPAY_KEY_SECRET
+      paymentVerificationSecret()
     );
     if (!isValid) return res.status(400).json({ message: "Payment verification failed." });
 

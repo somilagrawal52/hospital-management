@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+    <script src="/console-assets/js/csrf.js"></script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#0d6873" />

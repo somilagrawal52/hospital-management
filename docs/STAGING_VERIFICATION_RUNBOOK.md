@@ -1,6 +1,6 @@
 # OneLife isolated Render staging runbook
 
-Prepared 21 October 2026. This is a configuration and manual procedure, not an authorization to push or deploy. The current application has the blockers recorded in [final verification](../audit-reports/FINAL_VERIFICATION_2026-10-21/REPORT.md). Resolve/retest those before deployment approval.
+Updated 21 October 2026. This is a configuration and manual procedure, not authorization to push or deploy. See [current local results](../audit-reports/FINAL_STAGING_READINESS/FULL_REGRESSION_RESULTS.md): 31 backend tests and 49 isolated MongoDB browser checks pass. Earlier model-double diagnostics are superseded, not deleted. Review remaining build-tool audit and licensing risks before approval.
 
 ## Exact service settings
 
@@ -14,34 +14,37 @@ Prepared 21 October 2026. This is a configuration and manual procedure, not an a
 | Start command | `npm --prefix backend start` |
 | Health check path | `/health` |
 | Auto-Deploy | Off for this new staging service; manual, approved deploys only |
-| Node runtime | `NODE_VERSION=22` selects the tested major; record and test the exact patched version Render resolves. Local verification used 22.17.0, not every 22.x release. |
+| Node runtime | `NODE_VERSION=22.17.0` reproduces the tested version, not necessarily the latest secure patch. Retest a supported newer Node 22 patch before adopting it. |
 | Environment groups | None; do not attach production groups |
 | Custom domains | Use only the new staging hostname; leave production domains/DNS unchanged |
 
 The blank Root Directory is essential: the backend loads EJS/static assets from `../frontend`. Render explicitly says files outside a service's root are unavailable during build/runtime. See [Render monorepo documentation](https://render.com/docs/monorepo-support). Earlier instructions to set root to `backend` are superseded.
 
-The Tailwind command is a one-time build; the existing `build:css` script includes `--watch` and must not be used as the Render build command. Frontend build tools are installed with `--include=dev` even under production mode. Node starts from `backend` via npm's package script, with Render injecting the runtime environment.
+The Tailwind command is a one-time build; `build:css` is now also one-time, while `watch:css` is local development only. Frontend build tools are installed with `--include=dev` even under production mode. Node starts from `backend` via npm's package script, with Render injecting runtime variables.
 
 ## Environment names and behavior
 
 | Name | Staging configuration |
 | --- | --- |
 | `NODE_ENV` | `production` |
-| `NODE_VERSION` | `22`; verify resolved patched version in build log |
+| `NODE_VERSION` | `22.17.0` for exact reproduction; retest a newer supported security patch separately |
+| `APP_ENV` | `staging` (required isolation marker while retaining production behavior) |
+| `INTEGRATION_MODE` | Explicit `mock`; `disabled` is suitable only if provider workflows are intentionally unavailable |
+| `PUBLIC_BASE_URL` | Exact HTTPS staging origin; never the production hostname |
 | `PORT` | Allow Render to supply it |
 | `DATABASE_URL` | URI for a new staging-only MongoDB deployment/database named `onelife_staging`, using a new user with `readWrite` permission only on that database |
 | `JWT_SECRET` | New random staging-only secret, at least 32 characters; 48 random bytes encoded as hex is suitable. Store privately, never in Git or this document. |
-| `VIDEO_MEETING_BASE_URL` | `https://video.invalid` for no-provider verification; browser tests must block the attempted navigation. Use a locally mocked meeting page for full workflow tests. |
-| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | Omit for initial no-provider checks. Full payment testing requires a local/mock boundary, not live or provider-sandbox requests under the current restrictions. |
-| `GEMINI_API_KEY`, `OPENAI_API_KEY` | Omit; AI calls must be stubbed or blocked. The current code passes either variable into the Gemini client; `OPENAI_API_KEY` is not a verified OpenAI-provider selector. |
-| `mail_user`, `mail_pass`, `mail_port`, `MAIL_FROM` | Omit until mail transport is mocked. Mail is hardcoded to Gmail; supplying fake credentials or a staging email address does not create a non-delivering transport. |
-| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | Omit until messaging is mocked. No existing disabling flag prevents message attempts. |
+| `VIDEO_MEETING_BASE_URL` | Omit; mock mode creates local simulated video URLs and never navigates to Jitsi |
+| `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | Omit; mock checkout and verification are local. Staging refuses these variables. Optional `MOCK_WEBHOOK_SECRET` must be independently generated for synthetic signed webhook tests only. |
+| `GEMINI_API_KEY`, `OPENAI_API_KEY` | Omit; staging refuses them. AI returns a clearly marked simulation, not medical advice. |
+| `mail_user`, `mail_pass`, `mail_port`, `MAIL_FROM` | Omit; mock notifications do not construct a transport or deliver. Staging rejects `mail_user`/`mail_pass`. |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` | Omit; staging rejects them and mock messaging does not construct a client. |
 
-`NODE_ENV=production` activates production JWT/database validation, Secure session cookies and generic error responses. `development` enables some diagnostic errors; `staging` would bypass the production checks and Secure-cookie condition and is unsuitable here. There is no additional required staging marker and no `APP_ENV`/`INTEGRATIONS_DISABLED`/`STAGING` switch consumed by the current application. Adding one as a label would not isolate providers.
+`NODE_ENV=production` activates production validation, Secure cookies and generic errors. Do not set `NODE_ENV=staging`. The new `APP_ENV=staging` marker requires explicit mock/disabled integrations and rejects provider credentials. `APP_ENV=production` defaults to live and rejects mock/disabled modes, preventing silent production disablement. Omitting both new variables preserves existing production integration behavior.
 
 Compatibility aliases currently accepted: `database_url`, `secret`, `port`. For a new service use the uppercase names above. Do not copy production values or environment groups. Actual Render production variables have not been read; the operator should compare names privately with this table. Avoid retaining two differently valued aliases.
 
-Provider isolation is a deployment gate. Blank provider variables prevent some successful operations but are not an outbound-network barrier: registration can invoke Gmail, online requests can invoke Twilio, medical chat can invoke Gemini, and the booking template loads Razorpay's remote checkout script. Before testing those flows on Render, approve a targeted mock/disabled integration mode or an enforceable network/test-proxy policy. Do not assume Render supplies an application-specific egress denylist. A service publicly exposing those routes must have controls before it is created, even if a human tester plans to avoid them.
+Provider isolation is implemented at application boundaries and backed by a self-only browser CSP in isolated mode. Tests deny external sockets and remote browser resources. This is not an OS firewall against future unreviewed code: retain synthetic-only data and review new integrations. Blank credentials alone remain insufficient; use the explicit mode.
 
 ## Isolated MongoDB and synthetic accounts
 
@@ -80,11 +83,11 @@ const User = require('./models/user');
 '@ | node -
 ```
 
-Seeding was reviewed against the schema but not database-tested. A partial create is possible on connection failure; inspect synthetic records and resume deliberately, rather than deleting/reseeding an unknown database. No destructive reset/migration is prescribed. Clear seed-only shell environment variables after use. Use empty phone numbers and reserved `example.test` addresses; these do not replace provider isolation.
+The same `User.create`/bcrypt model path was exercised with five synthetic accounts in a fresh loopback MongoDB 8.0.17 database; this remote-host recipe itself has not been executed. A partial create is possible on connection failure; inspect synthetic records and resume deliberately. No destructive reset/migration is prescribed. Clear seed-only variables after use. Reserved addresses and empty phone numbers do not replace isolation.
 
 ## Authenticated acceptance checklist
 
-Record expected/actual status, role, synthetic record identifier, commit SHA and a redacted screenshot/request for each test. Baseline login currently fails; none of the persistent workflows below is certified by the diagnostic model doubles.
+Record expected/actual status, role, synthetic identifier, commit SHA and redacted evidence. Local persistent workflows now pass against real isolated MongoDB, not model doubles. Repeat this checklist on Render after deployment approval; local success does not certify the hosted environment.
 
 | Area | Acceptance tests |
 | --- | --- |

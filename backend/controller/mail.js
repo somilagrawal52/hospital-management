@@ -1,12 +1,10 @@
 require("dotenv").config();
-const nodemailer = require("nodemailer");
-const fs = require("fs");
-
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
-const client = require('twilio')(accountSid, authToken);
+const { integrationMode, requireLiveIntegration } = require("../services/integrations");
 
 async function mailsender(obj,filePath) {
+  if (integrationMode() === "mock") return { mocked: true, accepted: [], messageId: "mock-email-not-delivered" };
+  requireLiveIntegration("Email");
+  const nodemailer = require("nodemailer");
   let mailtransporter = nodemailer.createTransport({
     service: "gmail",
     secure: true,
@@ -29,7 +27,10 @@ async function mailsender(obj,filePath) {
 }
 
 async function sendWhatsAppMessage(to, body) {
+  if (integrationMode() === "mock") return "mock-whatsapp-not-delivered";
+  requireLiveIntegration("WhatsApp");
   try {
+    const client = require("twilio")(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
     const message = await client.messages.create({
       body,
       from: 'whatsapp:+14155238886',

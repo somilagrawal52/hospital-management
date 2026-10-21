@@ -11,8 +11,8 @@ function isUsableProductionSecret(secret) {
 }
 
 function validationErrors(env = process.env) {
-  if (env.NODE_ENV !== "production") return [];
-  const errors = [];
+  const errors = require("./integrations").integrationErrors(env);
+  if (env.NODE_ENV !== "production") return errors;
   if (!env.DATABASE_URL && !env.database_url) errors.push("DATABASE_URL is required in production.");
   if (!isUsableProductionSecret(configuredJwtSecret(env))) {
     errors.push("JWT_SECRET must be a non-placeholder secret of at least 32 characters in production.");

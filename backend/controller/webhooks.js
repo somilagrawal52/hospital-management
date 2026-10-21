@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const Appointment = require("../models/appointment");
 const { finalizePayment } = require("../services/payment-finalization");
+const { webhookVerificationSecret } = require("../services/integrations");
 
 function signatureMatches(rawBody, receivedSignature, secret) {
   if (!receivedSignature || !secret) return false;
@@ -11,7 +12,7 @@ function signatureMatches(rawBody, receivedSignature, secret) {
 }
 
 async function razorpayWebhook(req, res) {
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+  const secret = webhookVerificationSecret();
   if (!secret) return res.status(503).json({ error: "Razorpay webhook is not configured." });
 
   const rawBody = req.body;

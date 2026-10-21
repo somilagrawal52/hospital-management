@@ -10,7 +10,7 @@
         <article class="console-panel console-person-card">
           <div class="console-inline"><div class="console-avatar"><% if (doctor.image) { %><img src="<%= doctor.image %>" alt="Dr. <%= doctor.fullname %>" /><% } else { %><%= (doctor.fullname || 'D').charAt(0).toUpperCase() %><% } %></div><div><h2>Dr. <%= doctor.fullname %></h2><p><%= doctor.speciality || 'Department unavailable' %></p></div></div>
           <dl class="console-key-value"><div><dt>Email</dt><dd><%= doctor.email %></dd></div><div><dt>Phone</dt><dd><%= doctor.number || 'N/A' %></dd></div><div><dt>Gender</dt><dd><%= doctor.gender || 'N/A' %></dd></div></dl>
-          <form method="post" action="/clear/<%= doctor._id %>" data-confirm="Remove this doctor account? This cannot be undone from the dashboard."><button class="console-button console-button--danger console-button--small" type="submit">Remove doctor</button></form>
+          <form method="post" action="/clear/<%= doctor._id %>" data-confirm="Remove this doctor account? This cannot be undone from the dashboard."><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" /><button class="console-button console-button--danger console-button--small" type="submit">Remove doctor</button></form>
         </article>
       <% }) %>
     </section>

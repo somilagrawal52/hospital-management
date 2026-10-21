@@ -1,6 +1,6 @@
 # Render staging and deployment guide
 
-Updated 21 October 2026. Use the detailed [staging verification runbook](STAGING_VERIFICATION_RUNBOOK.md) and [current verification results](../audit-reports/FINAL_VERIFICATION_2026-10-21/REPORT.md). The current commit has blocking login/API/dependency findings; deployment is not approved.
+Updated 21 October 2026. Use the detailed [staging verification runbook](STAGING_VERIFICATION_RUNBOOK.md) and [remediation results](../audit-reports/FINAL_STAGING_READINESS/FULL_REGRESSION_RESULTS.md). Local verification now passes; external deployment remains unapproved. Earlier verification reports are historical, not the current result.
 
 ## Safe staging configuration
 
@@ -12,20 +12,20 @@ Create a separate Render web service named `onelife-staging` from the `datavendo
 - Health check path: `/health`
 - Runtime: Node 22 or a supported current Node LTS after compatibility testing
 
-Use an isolated MongoDB database containing synthetic records. Configure `NODE_ENV=production` with a new staging-only JWT secret to exercise production validation and Secure cookies. No additional staging environment marker is consumed by the application. Keep the new staging service's Auto-Deploy Off.
+Use an isolated MongoDB database containing synthetic records. Configure `NODE_ENV=production`, `APP_ENV=staging`, `INTEGRATION_MODE=mock`, and a new staging-only JWT secret. Keep the new staging service's Auto-Deploy Off. Do not attach production environment groups.
 
 ## Required environment names
 
-`PORT` is provided by Render. Configure `DATABASE_URL`, `JWT_SECRET`, `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `VIDEO_MEETING_BASE_URL`, and only the provider variables required for the staged scenario: `GEMINI_API_KEY` or `OPENAI_API_KEY`, `mail_user`, `mail_pass`, `MAIL_FROM`, `mail_port`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`.
+`PORT` is provided by Render. Set `NODE_VERSION=22.17.0` to reproduce the locally tested runtime (not a claim that this old patch is the latest security release), `NODE_ENV=production`, `APP_ENV=staging`, `INTEGRATION_MODE=mock`, `DATABASE_URL`, `JWT_SECRET`, and `PUBLIC_BASE_URL` to the staging HTTPS origin. Test a newer supported Node 22 patch separately before selecting it.
 
-Do not copy values from production. Under the current no-provider testing restriction, omit payment/AI/mail/Twilio credentials and mock the integration boundaries before exercising provider-dependent workflows. There is no existing disabling switch or configurable non-delivering Gmail transport; omission alone is not a network safety boundary. Full staging is blocked until this isolation exists. Use `VIDEO_MEETING_BASE_URL=https://video.invalid` and block/mock video navigation. See the runbook for the complete variable matrix and synthetic-account recipe.
+Do not copy values from production. Omit all Razorpay, AI, mail and Twilio credentials; staging startup rejects configured credentials. Mock mode supplies local checkout, non-delivering notifications, AI/WHO simulation and local video navigation. Disabled mode fails closed. `/health` is liveness only; independently verify database-backed login. See the runbook for the complete matrix and synthetic-account recipe. Review the documented frontend build-tool audit exception before deployment.
 
 ## Before a production approval
 
 1. Verify the health endpoint and startup logs with no secret output.
 2. Exercise Admin, Doctor, and Patient login failures/successes, role denial, logout, booking, status changes, cancellation, rescheduling, file upload rejection, and responsive navigation against synthetic data.
-3. Verify Razorpay webhooks using a sandbox event and no real charge.
-4. Verify same-origin protection on form and JSON posts.
+3. Verify webhook signatures using a locally generated synthetic event; do not contact Razorpay.
+4. Verify signed CSRF protection on form, JSON and multipart posts.
 5. Confirm `master` has not changed and create a release commit only after owner approval.
 
 ## Rollback

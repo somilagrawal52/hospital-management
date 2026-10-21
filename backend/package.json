@@ -5,7 +5,7 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "node --watch index.js"
   },
   "author": "",
   "license": "ISC",
@@ -32,8 +32,5 @@
     "qs": "^6.16.0",
     "razorpay": "^2.9.5",
     "twilio": "^5.4.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
   }
 }

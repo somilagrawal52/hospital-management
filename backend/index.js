@@ -9,7 +9,8 @@ const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const userRoute = require("./routes/user");
 const { checkforauthentication, restrictTo } = require("./middlewares/auth");
-const { requireSameOrigin } = require("./middlewares/csrf-origin");
+const { requireSameOrigin, csrfContext } = require("./middlewares/csrf-origin");
+const { integrationMode, isolatedIntegrations } = require("./services/integrations");
 const User = require("./models/user");
 const Appointment = require("./models/appointment");
 const { razorpayWebhook } = require("./controller/webhooks");
@@ -38,7 +39,15 @@ app.set("views", [
 ]);
 
 app.disable("x-powered-by");
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+  referrerPolicy: { policy: "same-origin" },
+  contentSecurityPolicy: isolatedIntegrations() ? { directives: {
+    defaultSrc: ["'self'"], scriptSrc: ["'self'", "'unsafe-inline'"],
+    scriptSrcAttr: ["'unsafe-inline'"], styleSrc: ["'self'", "'unsafe-inline'"],
+    connectSrc: ["'self'"], imgSrc: ["'self'", "data:", "blob:"], frameSrc: ["'none'"],
+    formAction: ["'self'"],
+  } } : false,
+}));
 app.use(
   rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -53,7 +62,9 @@ app.post("/webhooks/razorpay", express.raw({ type: "application/json", limit: "1
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 app.use(cookieParser());
+app.use(csrfContext);
 app.use(requireSameOrigin);
+app.use((req, res, next) => { res.locals.integrationMode = integrationMode(); next(); });
 app.use(checkforauthentication("token"));
 
 app.use(

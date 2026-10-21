@@ -10,6 +10,8 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { isMedicalQuery, MEDICAL_ONLY_FALLBACK } = require("../services/medical-query");
 const { isEmergencyMessage, EMERGENCY_MESSAGE } = require("../services/emergency-triage");
 const { doctorImage } = require("../services/doctor-image");
+const { integrationMode, isolatedIntegrations, requireLiveIntegration, paymentVerificationSecret } = require("../services/integrations");
+const crypto = require("node:crypto");
 const { createVideoSession, createVideoCalendarEvent } = require("../services/video-session");
 const { notifyWaitlistForSlot } = require("../services/waitlist");
 const path = require("path");
@@ -157,6 +159,10 @@ router.get("/disease/:name", async (req, res) => {
   const diseaseName = req.params.name;
   if (!/^[a-z0-9 -]{2,80}$/i.test(diseaseName)) {
     return res.status(400).json({ error: "Enter a valid disease name." });
+  }
+  if (isolatedIntegrations()) {
+    if (integrationMode() === "disabled") return res.status(503).json({ error: "External disease lookup is disabled in this environment." });
+    return res.json({ disease: diseaseName, pageTitle: diseaseName, intro: "Staging simulation: external disease lookup was not performed.", symptoms: [], treatment: [], prevention: [], keyFacts: [], mocked: true });
   }
   const url = `https://www.who.int/health-topics/${encodeURIComponent(diseaseName)}`;
   
@@ -394,6 +400,7 @@ router.get("/video-requests", requireAuth, restrictTo(["DOCTOR"]), async (req, r
 });
 
 router.post("/video-requests/accept/:id", requireAuth, restrictTo(["DOCTOR"]), async (req, res) => {
+  if (integrationMode() === "disabled") return res.status(503).json({ error: "Video meetings are disabled in this environment." });
   try {
     const appointment = await Appointment.findById(req.params.id);
     if (!appointment || appointment.docId !== String(req.user._id)) {
@@ -472,6 +479,7 @@ router.get("/appointments/:id/video/calendar", requireAuth, async (req, res) => 
 });
 
 router.get("/appointments/:id/video/join", requireAuth, async (req, res) => {
+  if (integrationMode() === "disabled") return res.status(503).json({ error: "Video consultations are disabled in this environment." });
   const appointment = await Appointment.findById(req.params.id);
   if (!appointment || !mayAccessAppointment(appointment, req.user) || !["scheduled", "in_progress"].includes(appointment.video?.status)) {
     return res.status(404).render("error-404", { title: "Online Appointment Not Found", message: "This video consultation is not available." });
@@ -480,7 +488,7 @@ router.get("/appointments/:id/video/join", requireAuth, async (req, res) => {
   if (req.user.role === "NORMAL") appointment.video.patientJoinedAt ||= new Date();
   appointment.video.status = "in_progress";
   await appointment.save();
-  return res.redirect(appointment.video.joinUrl);
+  return res.redirect(integrationMode() === "mock" ? `/testing/mock-video/${encodeURIComponent(appointment.video.roomName || String(appointment._id))}` : appointment.video.joinUrl);
 });
 
 router.post("/appointments/:id/video/events", requireAuth, async (req, res) => {
@@ -501,7 +509,6 @@ router.post("/appointments/:id/video/events", requireAuth, async (req, res) => {
   return res.json({ success: true, videoStatus: appointment.video.status });
 });
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY);
 router.post("/chat", requireAuth, chatLimiter, async (req, res) => {
   const userMessage = String(req.body.message || "").trim();
   if (!userMessage || userMessage.length > 1000) {
@@ -513,8 +520,12 @@ router.post("/chat", requireAuth, chatLimiter, async (req, res) => {
   if (!isMedicalQuery(userMessage)) {
     return res.json({ message: MEDICAL_ONLY_FALLBACK, fallback: true });
   }
+  if (integrationMode() === "mock") return res.json({ message: "Staging simulation: no AI provider was contacted. Please consult a qualified clinician for health advice.", mocked: true, sources: [] });
+  if (integrationMode() === "disabled") return res.status(503).json({ error: "AI responses are disabled in this environment." });
 
   try {
+    requireLiveIntegration("AI");
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
     const prompt = `You are OneLife's health-information assistant. Give general, cautious information only; do not diagnose, prescribe, or claim certainty. Encourage the user to contact a qualified clinician for personal advice and to seek emergency help for urgent symptoms. Keep the answer concise. Do not invent citations or claim a source supports a statement unless you are certain. User question: ${userMessage}`;
     const result = await model.generateContent(prompt);
@@ -573,7 +584,7 @@ router.get("/appointment/:id", async (req, res) => {
   res.render("appointment", {
     docInfo,
     currencySymbol: "₹",
-    razorpayKey: process.env.RAZORPAY_KEY_ID,
+    razorpayKey: integrationMode() === "live" ? process.env.RAZORPAY_KEY_ID : "mock-key-no-provider",
     user: req.user,
     patientdata,
   });
@@ -731,6 +742,18 @@ router.post("/verify-payment", (req, res) => res.status(410).json({ message: "Pa
 router.get("/payment-success", payemntsuccessfull);
 
 router.post("/save-payment", requireAuth, restrictTo(["NORMAL"]), savePayments);
+
+router.post("/testing/mock-payment", (req, res, next) => integrationMode() === "mock" ? next() : res.sendStatus(404), requireAuth, restrictTo(["NORMAL"]), async (req, res) => {
+  const appointment = await Appointment.findOne({ "payment.orderId": req.body.orderId, userid: String(req.user._id) });
+  if (!appointment || !String(appointment.payment.orderId).startsWith("mock_order_")) return res.status(404).json({ message: "Synthetic order not found." });
+  const paymentId = `mock_payment_${crypto.randomUUID()}`;
+  const signature = crypto.createHmac("sha256", paymentVerificationSecret()).update(`${appointment.payment.orderId}|${paymentId}`).digest("hex");
+  return res.json({ razorpay_order_id: appointment.payment.orderId, razorpay_payment_id: paymentId, razorpay_signature: signature, mocked: true });
+});
+
+router.get("/testing/mock-video/:room", (req, res, next) => integrationMode() === "mock" ? next() : res.sendStatus(404), requireAuth, (req, res) => {
+  res.type("text/plain").send("OneLife staging video simulation. No video provider was contacted.");
+});
 
 router.post(
   "/change-availability",

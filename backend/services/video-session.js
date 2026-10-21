@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { integrationMode, requireLiveIntegration } = require("./integrations");
 
 function configuredMeetingBaseUrl() {
   const rawUrl = process.env.VIDEO_MEETING_BASE_URL || "https://meet.jit.si";
@@ -8,11 +9,12 @@ function configuredMeetingBaseUrl() {
 }
 
 function createVideoSession() {
+  if (integrationMode() === "disabled") requireLiveIntegration("Video");
   const roomName = `onelife-${crypto.randomBytes(18).toString("hex")}`;
   return {
     provider: "jitsi",
     roomName,
-    joinUrl: `${configuredMeetingBaseUrl()}/${roomName}`,
+    joinUrl: integrationMode() === "mock" ? `${process.env.PUBLIC_BASE_URL || "https://video.invalid"}/testing/mock-video/${roomName}` : `${configuredMeetingBaseUrl()}/${roomName}`,
     status: "scheduled",
     acceptedAt: new Date(),
   };

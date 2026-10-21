@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="en">
-  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="theme-color" content="#0d6873" /><title>Doctor Login - OneLife</title><link rel="stylesheet" href="/doctor-assets/css/onelife-doctor-login.css" /></head>
+  <head>
+    <meta name="csrf-token" content="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+    <script src="/console-assets/js/csrf.js"></script><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><meta name="theme-color" content="#0d6873" /><title>Doctor Login - OneLife</title><link rel="stylesheet" href="/doctor-assets/css/onelife-doctor-login.css" /></head>
   <body class="doctor-login-page">
     <main class="doctor-login-shell">
       <section class="doctor-login-aside" aria-labelledby="doctor-login-heading">
@@ -8,7 +10,7 @@
         <div><h1 id="doctor-login-heading">Care starts with a well-prepared team.</h1><p>Access your schedule, online requests, and patient appointments from the clinician workspace.</p></div>
         <small>OneLife Hospital · Clinician access only</small>
       </section>
-      <section class="doctor-login-panel" aria-label="Doctor sign in"><div class="doctor-login-card"><h2>Sign in to your workspace</h2><p>Use the email and password assigned to your clinician account.</p><% if (error) { %><div class="doctor-login-error" role="alert"><%= error %></div><% } %><form id="doctor-login-form" action="/doctorlogin" method="post" novalidate><div class="doctor-login-field"><label for="email">Email address</label><input id="email" type="email" name="email" autocomplete="email" value="<%= email || '' %>" required /><p class="doctor-login-help">Enter a valid email address.</p></div><div class="doctor-login-field"><label for="password">Password</label><input id="password" type="password" name="password" autocomplete="current-password" required /><p class="doctor-login-help">Enter your password.</p></div><button class="doctor-login-submit" type="submit">Sign in securely</button></form></div></section>
+      <section class="doctor-login-panel" aria-label="Doctor sign in"><div class="doctor-login-card"><h2>Sign in to your workspace</h2><p>Use the email and password assigned to your clinician account.</p><% if (error) { %><div class="doctor-login-error" role="alert"><%= error %></div><% } %><form id="doctor-login-form" action="/doctorlogin" method="post" novalidate><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" /><div class="doctor-login-field"><label for="email">Email address</label><input id="email" type="email" name="email" autocomplete="email" value="<%= email || '' %>" required /><p class="doctor-login-help">Enter a valid email address.</p></div><div class="doctor-login-field"><label for="password">Password</label><input id="password" type="password" name="password" autocomplete="current-password" required /><p class="doctor-login-help">Enter your password.</p></div><button class="doctor-login-submit" type="submit">Sign in securely</button></form></div></section>
     </main>
     <script>document.getElementById('doctor-login-form').addEventListener('submit', function (event) { if (!this.checkValidity()) { event.preventDefault(); this.classList.add('was-validated'); this.querySelector(':invalid').focus(); } });</script>
   </body>

@@ -6,7 +6,7 @@
   <header class="console-page-heading"><div><p class="console-eyebrow">Clinician directory</p><h1>Register a doctor</h1><p>Create the information patients will use to find and book a clinician.</p></div></header>
   <section class="console-panel"><div class="console-panel__header"><div><h2>Clinician details</h2><p>Fields marked by your browser as required must be completed before submitting.</p></div></div>
     <div class="console-panel__body">
-      <form class="console-form" action="/doctors-registration" method="post" enctype="multipart/form-data" id="doctorsregistrationform">
+      <form class="console-form" action="/doctors-registration" method="post" enctype="multipart/form-data" id="doctorsregistrationform"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
         <div class="console-form-grid">
           <div class="console-field console-field--full"><label for="fullname">Doctor’s full name</label><input id="fullname" type="text" name="fullname" autocomplete="name" required /></div>
           <div class="console-field"><label for="email">Email address</label><input id="email" type="email" name="email" autocomplete="email" required /></div>

@@ -7,7 +7,7 @@ OneLife is an EJS/Express/MongoDB application for patient appointment booking, d
 1. Copy `backend/.env.example` to `backend/.env` and enter service credentials.
 2. Run `npm install` in `backend` and `frontend/patient`.
 3. Run `npm run dev` from `backend`.
-4. In a separate terminal, run `npm run build:css` from `frontend/patient` when editing Tailwind styles.
+4. Run `npm run build:css` from `frontend/patient` for a one-time CSS build, or `npm run watch:css` while editing styles.
 
 The app is available at `http://localhost:8000`.
 
@@ -31,7 +31,13 @@ The Admin and Doctor consoles are independently authored EJS/CSS/JavaScript. The
 
 - A doctor accepting an online request creates a unique Jitsi room, records the call lifecycle, and exposes a calendar download to both participants. Set `VIDEO_MEETING_BASE_URL` to a trusted HTTPS Jitsi deployment for production; the public Jitsi endpoint is the development default.
 - Configure `RAZORPAY_WEBHOOK_SECRET` and create a Razorpay webhook at `https://your-domain.example/webhooks/razorpay`. Subscribe to `payment.captured` and `payment.failed`. The webhook is the reconciliation path; browser verification only gives the patient immediate feedback.
-- `nodemon` is development-only. The production-only audit currently reports no high-severity findings; the full audit currently reports three high findings through its development-only `chokidar` chain. Do not use `npm audit fix --force` without reviewing its breaking dependency proposal.
+- Development uses Node 22's native `--watch`; nodemon and its vulnerable dependency chain were removed. Backend full/production audits report zero findings. The frontend Tailwind build-only tree still has seven audit findings (five high, two moderate); see the final staging report. Do not use `npm audit fix --force`.
+
+## Isolated staging
+
+Keep `NODE_ENV=production`, set `APP_ENV=staging` and explicitly set `INTEGRATION_MODE=mock` (local simulations) or `disabled`. Remove all provider credentials; startup rejects them in staging. Production defaults remain live when these new variables are absent. Never copy the development `.env` into Render. See [final staging readiness](audit-reports/FINAL_STAGING_READINESS/RENDER_STAGING_READINESS.md) and the [runbook](docs/STAGING_VERIFICATION_RUNBOOK.md).
+
+Unsafe browser requests now require the signed CSRF token supplied by EJS forms or the shared fetch helper. Multipart forms use same-origin JavaScript submission so the header is checked before upload parsing. A provider webhook instead requires its raw-body signature.
 
 ## DataVendor source-package note
 

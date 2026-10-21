@@ -6,7 +6,7 @@
   </div>
 <% } %>
 
-<form class="flex min-h-[80vh] items-center" method="POST" action="<%= state === 'register' ? '/register' : '/login' %>">
+<form class="flex min-h-[80vh] items-center" method="POST" action="<%= state === 'register' ? '/register' : '/login' %>"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
   <div class="mx-auto flex w-full max-w-md flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-8 text-sm text-gray-700 shadow-lg">
     <p class="text-3xl font-bold text-gray-900">
       <%= state === 'register' ? 'Create Account' : 'Login' %>

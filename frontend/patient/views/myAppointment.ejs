@@ -40,7 +40,7 @@
               <% if (status !== 'cancelled' && status !== 'completed') { %>
                 <div id="reschedule-<%= item._id %>" class="reschedule-panel hidden rounded-xl border border-primary/20 bg-primary/5 p-4" data-appointment-id="<%= item._id %>" data-doctor-id="<%= String(item.doctorId || item.docId) %>">
                   <p class="text-sm font-semibold text-gray-800">Choose a new available slot</p>
-                  <form class="reschedule-form mt-3 grid gap-3 sm:grid-cols-3 sm:items-end">
+                  <form class="reschedule-form mt-3 grid gap-3 sm:grid-cols-3 sm:items-end"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
                     <label class="text-xs text-gray-600">New date<input type="date" required class="reschedule-date mt-1 block w-full rounded border-gray-300 text-sm"></label>
                     <label class="text-xs text-gray-600">Available time<select required disabled class="reschedule-time mt-1 block w-full rounded border-gray-300 text-sm"><option value="">Choose a date first</option></select></label>
                     <button type="submit" class="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark">Save new time</button>
