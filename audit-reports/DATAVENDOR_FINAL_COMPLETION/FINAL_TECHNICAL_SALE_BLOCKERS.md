@@ -1,10 +1,12 @@
 # Final technical sale blockers and staging plan
 
+Superseded by the [21 October independent verification](../FINAL_VERIFICATION_2026-10-21/REPORT.md) and [staging runbook](../../docs/STAGING_VERIFICATION_RUNBOOK.md). That verification found incompatible address payloads and browser login failures, corrected the Render root to the repository root, and requires `NODE_ENV=production`. The historical configuration/test statements below must not be used as current deployment instructions.
+
 Status at this commit: the current working branch is `datavendor-improvements`; `master` is not modified by this work. This is an engineering assessment, not legal advice or a commercial-license grant.
 
 ## Address-selection replacement
 
-`backend/controller/address.js` retains the existing public API routes and response shape for countries, states, and cities. It now reads `@countrystatecity/countries` 2.0.0 rather than the former GPL-3.0 `country-state-city` package. A direct contract test covers India, Maharashtra, and Mumbai without a network request or database.
+`backend/controller/address.js` retains the existing public API route URLs. It now reads `@countrystatecity/countries` 2.0.0 rather than the former GPL-3.0 `country-state-city` package. The 21 October comparison found that response shapes and some state/city identifiers are incompatible. The initial lookup test covers India, Maharashtra, and Mumbai but does not establish legacy contract compatibility.
 
 The replacement package's published metadata declares ODbL-1.0. The upstream Countries States Cities Database says commercial use, modification, and redistribution are permitted with attribution and share-alike requirements for derivative databases. This is a compatible engineering path only if the final export:
 

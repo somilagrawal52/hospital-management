@@ -1,0 +1,259 @@
+{
+  "mode": "NODE_ENV=production, in-memory model doubles, real routes/controllers/EJS/bcrypt/JWT, no database persistence",
+  "diagnosticPolicy": true,
+  "builtCss": false,
+  "results": [
+    {
+      "label": "Production-mode liveness",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /about",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /contact",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /login",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /register",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /admin/login",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /doctorlogin",
+      "result": "PASS"
+    },
+    {
+      "label": "Login client required-field validation",
+      "result": "PASS"
+    },
+    {
+      "label": "Mobile navigation opens and closes",
+      "result": "PASS"
+    },
+    {
+      "label": "ADMIN successful login, redirect, production cookie",
+      "result": "PASS"
+    },
+    {
+      "label": "ADMIN authenticated GET /admin",
+      "result": "PASS"
+    },
+    {
+      "label": "ADMIN authenticated GET /doctors-registration",
+      "result": "PASS"
+    },
+    {
+      "label": "ADMIN authenticated GET /doctors-detail",
+      "result": "PASS"
+    },
+    {
+      "label": "ADMIN authenticated GET /showmsg",
+      "result": "PASS"
+    },
+    {
+      "label": "ADMIN authenticated GET /profile",
+      "result": "PASS"
+    },
+    {
+      "label": "ADMIN incorrect-password feedback",
+      "result": "PASS"
+    },
+    {
+      "label": "DOCTOR successful login, redirect, production cookie",
+      "result": "PASS"
+    },
+    {
+      "label": "DOCTOR authenticated GET /doctor",
+      "result": "PASS"
+    },
+    {
+      "label": "DOCTOR authenticated GET /doctor/availability",
+      "result": "PASS"
+    },
+    {
+      "label": "DOCTOR authenticated GET /showdocmsg",
+      "result": "PASS"
+    },
+    {
+      "label": "Doctor table paging, search, and sort",
+      "result": "PASS"
+    },
+    {
+      "label": "Availability client renders seven days and date exception controls",
+      "result": "PASS"
+    },
+    {
+      "label": "DOCTOR incorrect-password feedback",
+      "result": "PASS"
+    },
+    {
+      "label": "NORMAL successful login, redirect, production cookie",
+      "result": "PASS"
+    },
+    {
+      "label": "NORMAL authenticated GET /",
+      "result": "PASS"
+    },
+    {
+      "label": "NORMAL authenticated GET /doctors",
+      "result": "PASS"
+    },
+    {
+      "label": "NORMAL authenticated GET /my-profile",
+      "result": "PASS"
+    },
+    {
+      "label": "NORMAL authenticated GET /my-appointment",
+      "result": "PASS"
+    },
+    {
+      "label": "NORMAL authenticated GET /messages",
+      "result": "PASS"
+    },
+    {
+      "label": "Patient role denied admin/doctor APIs",
+      "result": "PASS"
+    },
+    {
+      "label": "Unsafe request without same-origin proof rejected",
+      "result": "PASS"
+    },
+    {
+      "label": "Incomplete appointment rejected before provider boundary",
+      "result": "PASS"
+    },
+    {
+      "label": "NORMAL incorrect-password feedback",
+      "result": "PASS"
+    },
+    {
+      "label": "Referenced browser assets return successful responses",
+      "result": "PASS"
+    },
+    {
+      "label": "Browser pages produce no JavaScript errors",
+      "result": "PASS"
+    }
+  ],
+  "passed": 36,
+  "failed": 0,
+  "attemptedExternal": [],
+  "failedAssets": [],
+  "browserErrors": [],
+  "layouts": [
+    {
+      "width": 1440,
+      "route": "/",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": [],
+      "overflowingElements": []
+    },
+    {
+      "width": 1440,
+      "route": "/admin/login",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": [],
+      "overflowingElements": []
+    },
+    {
+      "width": 1440,
+      "route": "/doctorlogin",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": [],
+      "overflowingElements": []
+    },
+    {
+      "width": 1440,
+      "route": "/login",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": [],
+      "overflowingElements": []
+    },
+    {
+      "width": 390,
+      "route": "/",
+      "viewport": 390,
+      "scrollWidth": 469,
+      "brokenImages": [],
+      "overflowingElements": [
+        {
+          "tag": "A",
+          "class": "flex flex-col items-center text-xs cursor-pointer flex-shrink-0 hover:translate-y-[-10px] transition-all duration-500",
+          "right": 448
+        },
+        {
+          "tag": "IMG",
+          "class": "mb-2 w-16 sm:w-24",
+          "right": 448
+        },
+        {
+          "tag": "P",
+          "class": "",
+          "right": 447
+        },
+        {
+          "tag": "A",
+          "class": "flex flex-col items-center text-xs cursor-pointer flex-shrink-0 hover:translate-y-[-10px] transition-all duration-500",
+          "right": 561
+        },
+        {
+          "tag": "IMG",
+          "class": "mb-2 w-16 sm:w-24",
+          "right": 545
+        },
+        {
+          "tag": "P",
+          "class": "",
+          "right": 561
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "route": "/admin/login",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": [],
+      "overflowingElements": []
+    },
+    {
+      "width": 390,
+      "route": "/doctorlogin",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": [],
+      "overflowingElements": []
+    },
+    {
+      "width": 390,
+      "route": "/login",
+      "viewport": 390,
+      "scrollWidth": 469,
+      "brokenImages": [],
+      "overflowingElements": [
+        {
+          "tag": "SPAN",
+          "class": "text-2xl font-bold",
+          "right": 469
+        }
+      ]
+    }
+  ]
+}

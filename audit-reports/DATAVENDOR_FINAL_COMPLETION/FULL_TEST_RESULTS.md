@@ -1,5 +1,7 @@
 # Full test results
 
+Historical results from 20 October. See [21 October verification](../FINAL_VERIFICATION_2026-10-21/REPORT.md) for current evidence: unit/EJS checks pass, but unmodified browser login fails and npm audit now reports a production high vulnerability.
+
 Executed locally without submitting credentials or contacting payment, messaging, AI, or production services.
 
 | Command | Result |

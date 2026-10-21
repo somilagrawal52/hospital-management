@@ -1,0 +1,178 @@
+{
+  "mode": "NODE_ENV=production, in-memory model doubles, real routes/controllers/EJS/bcrypt/JWT, no database persistence",
+  "diagnosticPolicy": false,
+  "builtCss": false,
+  "results": [
+    {
+      "label": "Production-mode liveness",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /about",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /contact",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /login",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /register",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /admin/login",
+      "result": "PASS"
+    },
+    {
+      "label": "Unauthenticated GET /doctorlogin",
+      "result": "PASS"
+    },
+    {
+      "label": "Login client required-field validation",
+      "result": "PASS"
+    },
+    {
+      "label": "Mobile navigation opens and closes",
+      "result": "PASS"
+    },
+    {
+      "label": "ADMIN browser form login must redirect",
+      "result": "FAIL",
+      "error": "Login form returned HTTP 403\n\n403 !== 302\n"
+    },
+    {
+      "label": "DOCTOR browser form login must redirect",
+      "result": "FAIL",
+      "error": "Login form returned HTTP 403\n\n403 !== 302\n"
+    },
+    {
+      "label": "NORMAL browser form login must redirect",
+      "result": "FAIL",
+      "error": "Login form returned HTTP 403\n\n403 !== 302\n"
+    },
+    {
+      "label": "Referenced browser assets return successful responses",
+      "result": "PASS"
+    },
+    {
+      "label": "Browser pages produce no JavaScript errors",
+      "result": "PASS"
+    }
+  ],
+  "passed": 12,
+  "failed": 3,
+  "attemptedExternal": [],
+  "failedAssets": [],
+  "browserErrors": [],
+  "layouts": [
+    {
+      "width": 1440,
+      "route": "/",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": [],
+      "overflowingElements": []
+    },
+    {
+      "width": 1440,
+      "route": "/admin/login",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": [],
+      "overflowingElements": []
+    },
+    {
+      "width": 1440,
+      "route": "/doctorlogin",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": [],
+      "overflowingElements": []
+    },
+    {
+      "width": 1440,
+      "route": "/login",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": [],
+      "overflowingElements": []
+    },
+    {
+      "width": 390,
+      "route": "/",
+      "viewport": 390,
+      "scrollWidth": 469,
+      "brokenImages": [],
+      "overflowingElements": [
+        {
+          "tag": "A",
+          "class": "flex flex-col items-center text-xs cursor-pointer flex-shrink-0 hover:translate-y-[-10px] transition-all duration-500",
+          "right": 448
+        },
+        {
+          "tag": "IMG",
+          "class": "mb-2 w-16 sm:w-24",
+          "right": 448
+        },
+        {
+          "tag": "P",
+          "class": "",
+          "right": 447
+        },
+        {
+          "tag": "A",
+          "class": "flex flex-col items-center text-xs cursor-pointer flex-shrink-0 hover:translate-y-[-10px] transition-all duration-500",
+          "right": 561
+        },
+        {
+          "tag": "IMG",
+          "class": "mb-2 w-16 sm:w-24",
+          "right": 545
+        },
+        {
+          "tag": "P",
+          "class": "",
+          "right": 561
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "route": "/admin/login",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": [],
+      "overflowingElements": []
+    },
+    {
+      "width": 390,
+      "route": "/doctorlogin",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": [],
+      "overflowingElements": []
+    },
+    {
+      "width": 390,
+      "route": "/login",
+      "viewport": 390,
+      "scrollWidth": 469,
+      "brokenImages": [],
+      "overflowingElements": [
+        {
+          "tag": "SPAN",
+          "class": "text-2xl font-bold",
+          "right": 469
+        }
+      ]
+    }
+  ]
+}

@@ -15,8 +15,11 @@ The GPL-3.0 `country-state-city` package was removed. The same three public rout
 
 - Use: country, state, and city lookup only; no patient information is supplied to the package or a remote service.
 - Data attribution: `Data by Countries States Cities Database — https://github.com/dr5hn/countries-states-cities-database — ODbL v1.0`.
+- Package attribution requested by the shipped LICENSE: `@countrystatecity/countries — https://github.com/dr5hn/countrystatecity-npm`.
+- License references: [ODbL 1.0 legal text](https://opendatacommons.org/licenses/odbl/1-0/) and [Database Contents License](https://opendatacommons.org/licenses/dbcl/1-0/). Preserve upstream notices and include the license or its URI in data and relevant documentation. Public output also requires appropriate attribution; a private source notice alone does not establish compliance for public APIs.
 - Important: ODbL allows commercial use, modification, and redistribution, but it requires attribution and may require share-alike/open-database obligations when a public derivative database is distributed. It is not a permissive-code license. Keep this notice and obtain legal review before commercial distribution of a package that includes the data.
 - The OneLife application code and this geographic dataset must remain separately identified in any DataVendor export. No legal clearance is asserted here.
+- The package's LICENSE describes the package and data together as ODbL, while ODbL section 2.3(a) excludes computer programs from its scope. A separate, adequate license/permission for the package's executable code has not been verified. Owner/counsel must resolve this and DataVendor's AI-training/sublicensing terms before calling the replacement legally cleared. ODbL section 4.8 does not allow sublicensing the database as proprietary OneLife material.
 
 ## Asset provenance
 

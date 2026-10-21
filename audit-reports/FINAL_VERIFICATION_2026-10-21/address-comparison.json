@@ -1,0 +1,184 @@
+{
+  "comparedPackages": [
+    "country-state-city@3.2.1",
+    "@countrystatecity/countries@2.0.0"
+  ],
+  "dataVersion": {
+    "dataVersion": "v4.0-export.50-2026.10.12",
+    "sourceRelease": "v4.0-export.50",
+    "updatedAt": "2026-10-12T08:07:50.000Z",
+    "recordCounts": {
+      "countries": 250,
+      "states": 5328,
+      "cities": 152152
+    }
+  },
+  "countries": {
+    "previousRows": 250,
+    "currentRows": 250,
+    "previousFields": [
+      "currency",
+      "flag",
+      "isoCode",
+      "latitude",
+      "longitude",
+      "name",
+      "phonecode",
+      "timezones"
+    ],
+    "currentFields": [
+      "capital",
+      "currency",
+      "currency_name",
+      "currency_symbol",
+      "emoji",
+      "emojiU",
+      "gdp",
+      "id",
+      "iso2",
+      "iso3",
+      "latitude",
+      "longitude",
+      "name",
+      "nationality",
+      "native",
+      "numeric_code",
+      "phonecode",
+      "population",
+      "region",
+      "region_id",
+      "subregion",
+      "subregion_id",
+      "tld"
+    ],
+    "removedDistinctKeys": 0,
+    "addedDistinctKeys": 0,
+    "removedExamples": [],
+    "addedExamples": []
+  },
+  "states": {
+    "previousRows": 4963,
+    "currentRows": 5328,
+    "previousFields": [
+      "countryCode",
+      "isoCode",
+      "latitude",
+      "longitude",
+      "name"
+    ],
+    "currentFields": [
+      "country_code",
+      "country_id",
+      "fips_code",
+      "id",
+      "iso2",
+      "iso3166_2",
+      "latitude",
+      "longitude",
+      "name",
+      "native",
+      "timezone",
+      "translations",
+      "type"
+    ],
+    "removedDistinctKeys": 474,
+    "addedDistinctKeys": 839,
+    "removedExamples": [
+      "AL/BR",
+      "AL/BU",
+      "AL/DI",
+      "AL/DL",
+      "AL/DR",
+      "AL/DV",
+      "AL/ER",
+      "AL/FR",
+      "AL/GJ",
+      "AL/GR",
+      "AL/HA",
+      "AL/KA"
+    ],
+    "addedExamples": [
+      "AF/WAR",
+      "AX/12",
+      "AX/08",
+      "AX/03",
+      "AX/09",
+      "AX/10",
+      "AX/06",
+      "AX/02",
+      "AX/15",
+      "AX/14",
+      "AX/04",
+      "AX/13"
+    ]
+  },
+  "cities": {
+    "previousRows": 148038,
+    "currentRows": 152152,
+    "previousFields": [
+      "countryCode",
+      "latitude",
+      "longitude",
+      "name",
+      "stateCode"
+    ],
+    "currentFields": [
+      "country_code",
+      "country_id",
+      "id",
+      "latitude",
+      "longitude",
+      "name",
+      "native",
+      "population",
+      "state_code",
+      "state_id",
+      "timezone",
+      "translations",
+      "type",
+      "wikiDataId"
+    ],
+    "removedDistinctKeys": 56166,
+    "addedDistinctKeys": 57211,
+    "removedExamples": [
+      "AE/AJ/Ajman City",
+      "AE/AJ/Masfout",
+      "AE/AZ/Abu Dhabi Island and Internal Islands City",
+      "AE/AZ/Abu Dhabi Municipality",
+      "AE/AZ/Al Ain Municipality",
+      "AE/AZ/Al Shamkhah City",
+      "AE/AZ/Ar Ruways",
+      "AE/AZ/Khalifah A City",
+      "AE/AZ/Musaffah",
+      "AE/FU/Al Fujairah City",
+      "AE/FU/Al Fujairah Municipality",
+      "AE/FU/Dibba Al Fujairah Municipality"
+    ],
+    "addedExamples": [
+      "AF/BDS/Ghurayd Gharamē",
+      "AF/BDS/Kuran wa Munjan",
+      "AF/BDS/Māymay",
+      "AF/BDS/Nūsay",
+      "AF/BDS/Zaybāk",
+      "AF/BDG/Bala Murghab",
+      "AF/BDG/Jawand",
+      "AF/BDG/Qādis",
+      "AF/BGL/Banū",
+      "AF/BGL/Bāzār-e Tālah",
+      "AF/BGL/Dōshī",
+      "AF/BGL/Khinjān"
+    ]
+  },
+  "india": {
+    "previousStates": 36,
+    "currentStates": 36,
+    "removedStateCodes": [
+      "UT"
+    ],
+    "addedStateCodes": [
+      "UK"
+    ],
+    "previousMaharashtraCities": 574,
+    "currentMaharashtraCities": 547
+  }
+}
