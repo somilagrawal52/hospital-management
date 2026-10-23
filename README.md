@@ -37,6 +37,8 @@ The Admin and Doctor consoles are independently authored EJS/CSS/JavaScript. The
 
 Keep `NODE_ENV=production`, set `APP_ENV=staging` and explicitly set `INTEGRATION_MODE=mock` (local simulations) or `disabled`. Remove all provider credentials; startup rejects them in staging. Production defaults remain live when these new variables are absent. Never copy the development `.env` into Render. See [final staging readiness](audit-reports/FINAL_STAGING_READINESS/RENDER_STAGING_READINESS.md) and the [runbook](docs/STAGING_VERIFICATION_RUNBOOK.md).
 
+Staging also requires `STAGING_MONGO_HOST`, `STAGING_MONGO_DATABASE`, `STAGING_BASIC_AUTH_USER` and a separate random `STAGING_BASIC_AUTH_PASSWORD`. It refuses an unexpected database before connecting and requires HTTPS Basic authorization on every route except GET/HEAD `/health`, in addition to normal role logins. See the [Node 22.23.4 verification and current setup](audit-reports/NODE_22_23_4_STAGING_PREPARATION/REPORT.md). The guarded synthetic seed command is `node backend/scripts/seed-staging.cjs`; configure its separate opt-in inputs first.
+
 Unsafe browser requests now require the signed CSRF token supplied by EJS forms or the shared fetch helper. Multipart forms use same-origin JavaScript submission so the header is checked before upload parsing. A provider webhook instead requires its raw-body signature.
 
 ## DataVendor source-package note

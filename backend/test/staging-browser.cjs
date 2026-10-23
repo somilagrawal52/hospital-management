@@ -9,6 +9,7 @@ const parsed = uri && new URL(uri);
 if (!parsed || parsed.protocol !== 'mongodb:' || parsed.hostname !== '127.0.0.1' || !/^\/onelife_test_[a-z0-9_]+$/.test(parsed.pathname)) throw new Error('Only an explicitly supplied, loopback onelife_test_* MongoDB is allowed.');
 for (const key of Object.keys(process.env)) if (/^(RAZORPAY_|GEMINI_|OPENAI_|TWILIO_|MAIL_|mail_|DATABASE_URL$|database_url$|JWT_SECRET$|secret$)/.test(key)) delete process.env[key];
 Object.assign(process.env, { NODE_ENV: 'production', APP_ENV: 'staging', INTEGRATION_MODE: 'mock', DATABASE_URL: uri, JWT_SECRET: crypto.randomBytes(48).toString('hex'), MOCK_WEBHOOK_SECRET: crypto.randomBytes(48).toString('hex'), PORT: '0' });
+Object.assign(process.env, { STAGING_MONGO_HOST: parsed.hostname, STAGING_MONGO_DATABASE: parsed.pathname.slice(1), STAGING_BASIC_AUTH_USER: 'synthetic-reviewer', STAGING_BASIC_AUTH_PASSWORD: crypto.randomBytes(48).toString('hex') });
 const results = [], outbound = [], errors = [], assets = [], layouts = [], createdFiles = [];
 let server, browser;
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'onelife-browser-test-'));
@@ -49,11 +50,12 @@ const post = async (context, page, url, data = {}, headers = {}) => context.requ
   browser = await chromium.launch({ executablePath: process.env.ONELIFE_BROWSER_EXECUTABLE || 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe', headless: true });
   const cache = new Map();
   async function contextFor() {
-    const context = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: 1440, height: 1000 } });
+    const context = await browser.newContext({ ignoreHTTPSErrors: true, viewport: { width: 1440, height: 1000 }, httpCredentials: { username: process.env.STAGING_BASIC_AUTH_USER, password: process.env.STAGING_BASIC_AUTH_PASSWORD, origin: base, send: 'always' } });
     await context.route('**/*', async route => { const url = new URL(route.request().url()); if (url.origin !== base) { outbound.push(url.origin); return route.abort(); } if (/^\/(assets|console-assets|admin-assets|doctor-assets)\//.test(url.pathname)) { if (!cache.has(url.pathname)) { const response = await route.fetch(); cache.set(url.pathname, { status: response.status(), contentType: response.headers()['content-type'], body: await response.body() }); if (response.status() !== 200) assets.push(url.pathname); } return route.fulfill(cache.get(url.pathname)); } return route.continue(); });
     const page = await context.newPage(); page.setDefaultTimeout(8000); page.setDefaultNavigationTimeout(12000); page.on('pageerror', e => errors.push(e.stack || e.message));
     return { context, page };
   }
+  await check('Anonymous staging access is denied except the minimal health endpoint', async () => { const anonymous=await browser.newContext({ignoreHTTPSErrors:true});try { assert.equal((await anonymous.request.get(base+'/health')).status(),200);for(const route of ['/','/login','/admin/login','/doctorlogin','/countries','/assets/onelife-mark.svg','/admin/doctors-detail']) assert.equal((await anonymous.request.get(base+route)).status(),401);assert.equal((await anonymous.request.post(base+'/webhooks/razorpay',{data:{}})).status(),401);assert.equal((await anonymous.request.get(base+'/',{headers:{Authorization:'Basic '+Buffer.from('reviewer:wrong').toString('base64')}})).status(),401);}finally{await anonymous.close();} });
   const publicView = await contextFor();
   for (const route of ['/', '/about', '/contact', '/login', '/register', '/admin/login', '/doctorlogin']) await check(`Public GET ${route}`, async () => assert.equal((await publicView.page.goto(base + route)).status(), 200));
   await check('Empty login fields are invalid without sending a request', async () => { await publicView.page.goto(base + '/admin/login'); assert.equal(await publicView.page.locator('form').evaluate(f => f.checkValidity()), false); });

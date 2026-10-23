@@ -1,6 +1,6 @@
 # OneLife isolated Render staging runbook
 
-Updated 21 October 2026. This is a configuration and manual procedure, not authorization to push or deploy. See [current local results](../audit-reports/FINAL_STAGING_READINESS/FULL_REGRESSION_RESULTS.md): 31 backend tests and 49 isolated MongoDB browser checks pass. Earlier model-double diagnostics are superseded, not deleted. Review remaining build-tool audit and licensing risks before approval.
+Updated 23 October 2026. This is a configuration and manual procedure, not authorization to deploy. See [current Node 22.23.4 results and safety gates](../audit-reports/NODE_22_23_4_STAGING_PREPARATION/REPORT.md): 40 backend tests and 50 isolated MongoDB browser checks pass with staging access/database guards. The previously approved branch push reached 8b6e31e; the new guard commit needs separate push approval. Earlier reports remain historical. Plans/provisioning/deployment remain unapproved.
 
 ## Exact service settings
 
@@ -14,7 +14,9 @@ Updated 21 October 2026. This is a configuration and manual procedure, not autho
 | Start command | `npm --prefix backend start` |
 | Health check path | `/health` |
 | Auto-Deploy | Off for this new staging service; manual, approved deploys only |
-| Node runtime | `NODE_VERSION=22.17.0` reproduces the tested version, not necessarily the latest secure patch. Retest a supported newer Node 22 patch before adopting it. |
+| Node runtime | `NODE_VERSION=22.23.4`, tested using the official SHA-256-verified isolated runtime |
+| Staging access | Separate HTTPS Basic credentials before all pages/assets/APIs/webhooks; GET/HEAD /health only is public |
+| Proposed plans | Separate Render staging workspace/quotas, Free web service; separate Atlas project/Free cluster. Verify actual account availability/spending limits before approval; no automatic paid fallback. |
 | Environment groups | None; do not attach production groups |
 | Custom domains | Use only the new staging hostname; leave production domains/DNS unchanged |
 
@@ -27,12 +29,16 @@ The Tailwind command is a one-time build; `build:css` is now also one-time, whil
 | Name | Staging configuration |
 | --- | --- |
 | `NODE_ENV` | `production` |
-| `NODE_VERSION` | `22.17.0` for exact reproduction; retest a newer supported security patch separately |
+| `NODE_VERSION` | `22.23.4` |
 | `APP_ENV` | `staging` (required isolation marker while retaining production behavior) |
 | `INTEGRATION_MODE` | Explicit `mock`; `disabled` is suitable only if provider workflows are intentionally unavailable |
 | `PUBLIC_BASE_URL` | Exact HTTPS staging origin; never the production hostname |
 | `PORT` | Allow Render to supply it |
 | `DATABASE_URL` | URI for a new staging-only MongoDB deployment/database named `onelife_staging`, using a new user with `readWrite` permission only on that database |
+| `STAGING_MONGO_HOST` | Independently verified staging SRV/cluster hostname only, without scheme, credentials or port |
+| `STAGING_MONGO_DATABASE` | `onelife_staging`; URI path must match, and database override query parameters are rejected |
+| `STAGING_BASIC_AUTH_USER` | New staging-only username, 3-64 safe ASCII characters |
+| `STAGING_BASIC_AUTH_PASSWORD` | Separate random secret, at least 32 characters, not the JWT secret or an application account password |
 | `JWT_SECRET` | New random staging-only secret, at least 32 characters; 48 random bytes encoded as hex is suitable. Store privately, never in Git or this document. |
 | `VIDEO_MEETING_BASE_URL` | Omit; mock mode creates local simulated video URLs and never navigates to Jitsi |
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET` | Omit; mock checkout and verification are local. Staging refuses these variables. Optional `MOCK_WEBHOOK_SECRET` must be independently generated for synthetic signed webhook tests only. |
@@ -52,38 +58,16 @@ After separate provisioning approval, create a staging-only MongoDB cluster/depl
 
 Seed via the actual `User` model, whose pre-save hook hashes passwords with bcrypt. Do not insert a plaintext password directly with `insertMany`/raw MongoDB, and do not use registration controllers to seed because they trigger notifications. The app's real role names are `ADMIN`, `DOCTOR`, and `NORMAL` for Patient.
 
-The following manual PowerShell recipe is prepared only; it was not executed against any database. Run from `backend` on a trusted machine after privately setting `ONELIFE_STAGING_DATABASE_URL`, `ONELIFE_STAGING_MONGO_HOST`, `ONELIFE_SEED_PASSWORD`, and `ONELIFE_SEED_CONFIRM`. Require a new staging-only password (at least 16 characters). Set the confirmation to `onelife-staging-synthetic-only`. Populate these values through a secret manager or private shell input; do not paste credentials into chat, source, or shell command history. The script does not load `.env` or read the application's `DATABASE_URL`.
+The guarded script `backend/scripts/seed-staging.cjs` supersedes the old inline seed recipe. It was tested against a new isolated loopback MongoDB database using Node 22.23.4. Privately supply `ONELIFE_STAGING_DATABASE_URL` (URI path exactly `/onelife_staging`), `ONELIFE_STAGING_MONGO_HOST`, and three different random passwords (at least 16 characters each): `ONELIFE_SEED_ADMIN_PASSWORD`, `ONELIFE_SEED_DOCTOR_PASSWORD`, `ONELIFE_SEED_PATIENT_PASSWORD`. Set `ONELIFE_SEED_CONFIRM=onelife-staging-synthetic-only`. Do not put these seed-only secrets into Render or Git.
+
+After database provisioning/seeding approval, run from the repository root:
 
 ```powershell
-@'
-const mongoose = require('mongoose');
-const User = require('./models/user');
-(async () => {
-  const uri = process.env.ONELIFE_STAGING_DATABASE_URL;
-  const expectedHost = process.env.ONELIFE_STAGING_MONGO_HOST;
-  const password = process.env.ONELIFE_SEED_PASSWORD;
-  if (process.env.ONELIFE_SEED_CONFIRM !== 'onelife-staging-synthetic-only') throw new Error('Missing staging-only confirmation.');
-  if (!uri || !expectedHost || !password || password.length < 16) throw new Error('Missing staging-only inputs.');
-  const parsed = new URL(uri);
-  if (!['mongodb:', 'mongodb+srv:'].includes(parsed.protocol) || parsed.hostname !== expectedHost || parsed.pathname !== '/onelife_staging') throw new Error('Staging host/database mismatch.');
-  mongoose.set('autoIndex', false);
-  await mongoose.connect(uri, { serverSelectionTimeoutMS: 5000 });
-  if (mongoose.connection.name !== 'onelife_staging') throw new Error('Connected database mismatch.');
-  const accounts = [
-    { fullname: 'Synthetic Staging Admin', email: 'admin@onelife.example.test', role: 'ADMIN' },
-    { fullname: 'Synthetic Staging Doctor', email: 'doctor@onelife.example.test', role: 'DOCTOR', speciality: 'General physician', degree: 'MBBS', experience: '4', fees: 500, available: true },
-    { fullname: 'Synthetic Staging Doctor Paused', email: 'doctor-paused@onelife.example.test', role: 'DOCTOR', speciality: 'General physician', degree: 'MBBS', experience: '4', fees: 500, available: false },
-    { fullname: 'Synthetic Staging Patient A', email: 'patient-a@onelife.example.test', role: 'NORMAL' },
-    { fullname: 'Synthetic Staging Patient B', email: 'patient-b@onelife.example.test', role: 'NORMAL' },
-  ];
-  if (await User.exists({ email: { $in: accounts.map(a => a.email) } })) throw new Error('Synthetic accounts already exist; no accounts were overwritten.');
-  for (const account of accounts) await User.create({ ...account, password, number: '', address: { line1: 'Synthetic clinic', line2: 'Test records only' }, image: '/assets/onelife-avatar.svg' });
-  console.log('Created five synthetic staging accounts; no credentials printed.');
-})().catch(() => { console.error('Staging seed failed; inspect privately without printing connection credentials.'); process.exitCode = 1; }).finally(async () => { await mongoose.disconnect(); });
-'@ | node -
+node --version
+node backend/scripts/seed-staging.cjs
 ```
 
-The same `User.create`/bcrypt model path was exercised with five synthetic accounts in a fresh loopback MongoDB 8.0.17 database; this remote-host recipe itself has not been executed. A partial create is possible on connection failure; inspect synthetic records and resume deliberately. No destructive reset/migration is prescribed. Clear seed-only variables after use. Reserved addresses and empty phone numbers do not replace isolation.
+The script never loads .env, never imports provider controllers, refuses the wrong destination or a nonempty user collection, and calls `User.create` for bcrypt hashing. It creates one Admin, two Doctors (one paused), and two Patients with reserved example.test emails and empty phone numbers. Missing confirmation, wrong destination and duplicate runs were tested and rejected; passwords were verified against stored hashes. There is no delete/reset or overwrite. A partial create is possible on connection failure; inspect synthetic records privately before retrying. Clear seed-only secrets afterward. Create appointment/support test records through the mock-only UI rather than importing production data.
 
 ## Authenticated acceptance checklist
 
@@ -105,9 +89,11 @@ Record expected/actual status, role, synthetic identifier, commit SHA and redact
 | Support | Thread creation/reply/assignment/priority/resolution and cross-patient access denial; persist and reload. Mock any notifications. |
 | Responsive/accessibility | 390, 768, 1440px; no horizontal page overflow; navigation opens/closes; keyboard access/focus, labels/errors, dialogs, tables and forms; images remain sized consistently. |
 
-Only underlying unit/schema/signature checks and limited UI/route diagnostics have passed locally. Persistence, uploads, transactions/webhook reconciliation and cross-record authorization need the real isolated database plus mocks. Do not treat a visible page, HTTP 200 or `/health` alone as acceptance.
+Current local evidence includes real synthetic MongoDB persistence, role logins, uploaded doctor registration, booking/payment simulation/invoice, cross-patient access denial, availability, rescheduling, waitlist, support and video simulation, plus anonymous staging denial. The complete checklist is broader than those 50 browser checks; repeat it on Render. Live provider behavior, concurrency/load and every malformed-input case remain unverified. Do not treat /health alone as acceptance.
 
-## Branch-only push — prepared, not executed
+## Branch-only push status and next approval
+
+The owner-approved push of 8b6e31e completed on 22 October 2026; remote master remained 30c4d3e and no other refs changed. The staging-only guards approved on 23 October create a local successor commit; do not deploy the old remote SHA without them. Review and separately approve pushing that successor. The explicit branch-only command below is for that next approved push, not an automatic action.
 
 Before approving any push, review tracked/staged changes and historical secret/rights findings. This branch includes all original ancestor commits; a GitHub push is not the sanitized DataVendor artifact. Confirm repository visibility privately before publishing branch contents; public/private status was not reverified. The production service is user-confirmed to follow `master` with On Commit; its live settings and any custom webhooks/GitHub Actions were not inspected in this phase. Verify no external automation deploys development-branch pushes to production.
 

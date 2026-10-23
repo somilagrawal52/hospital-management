@@ -12,6 +12,7 @@ function isUsableProductionSecret(secret) {
 
 function validationErrors(env = process.env) {
   const errors = require("./integrations").integrationErrors(env);
+  errors.push(...require("./staging-safety").stagingSafetyErrors(env));
   if (env.NODE_ENV !== "production") return errors;
   if (!env.DATABASE_URL && !env.database_url) errors.push("DATABASE_URL is required in production.");
   if (!isUsableProductionSecret(configuredJwtSecret(env))) {

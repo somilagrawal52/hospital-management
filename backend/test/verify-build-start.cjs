@@ -12,6 +12,7 @@ const env = { ...process.env };
 for (const key of Object.keys(env)) if (/^(RAZORPAY_|GEMINI_|OPENAI_|TWILIO_|MAIL_|mail_|DATABASE_URL$|database_url$|JWT_SECRET$|secret$)/.test(key)) delete env[key];
 const port = execFileSync(process.execPath, ['-e', "const s=require('node:net').createServer();s.listen(0,()=>{console.log(s.address().port);s.close();});"], { encoding: 'utf8' }).trim();
 Object.assign(env, { NODE_ENV: 'production', APP_ENV: 'staging', INTEGRATION_MODE: 'mock', DATABASE_URL: uri, JWT_SECRET: crypto.randomBytes(48).toString('hex'), PORT: port });
+Object.assign(env, { STAGING_MONGO_HOST: db.hostname, STAGING_MONGO_DATABASE: db.pathname.slice(1), STAGING_BASIC_AUTH_USER: 'synthetic-reviewer', STAGING_BASIC_AUTH_PASSWORD: crypto.randomBytes(48).toString('hex') });
 const npmCli = path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js');
 const child = spawn(process.execPath, [npmCli, '--prefix', 'backend', 'start'], { cwd: root, env, windowsHide: true });
 let output = '';

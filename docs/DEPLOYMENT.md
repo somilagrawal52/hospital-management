@@ -1,6 +1,6 @@
 # Render staging and deployment guide
 
-Updated 21 October 2026. Use the detailed [staging verification runbook](STAGING_VERIFICATION_RUNBOOK.md) and [remediation results](../audit-reports/FINAL_STAGING_READINESS/FULL_REGRESSION_RESULTS.md). Local verification now passes; external deployment remains unapproved. Earlier verification reports are historical, not the current result.
+Updated 23 October 2026. Use the detailed [staging verification runbook](STAGING_VERIFICATION_RUNBOOK.md) and [Node 22.23.4 verification and current configuration](../audit-reports/NODE_22_23_4_STAGING_PREPARATION/REPORT.md). Local verification now passes with the approved staging access/database guards; their successor commit must be reviewed and pushed before deploying. The remote baseline remains 8b6e31e. External deployment and plans remain unapproved. Earlier reports are historical.
 
 ## Safe staging configuration
 
@@ -16,7 +16,9 @@ Use an isolated MongoDB database containing synthetic records. Configure `NODE_E
 
 ## Required environment names
 
-`PORT` is provided by Render. Set `NODE_VERSION=22.17.0` to reproduce the locally tested runtime (not a claim that this old patch is the latest security release), `NODE_ENV=production`, `APP_ENV=staging`, `INTEGRATION_MODE=mock`, `DATABASE_URL`, `JWT_SECRET`, and `PUBLIC_BASE_URL` to the staging HTTPS origin. Test a newer supported Node 22 patch separately before selecting it.
+`PORT` is provided by Render. Set tested `NODE_VERSION=22.23.4`, `NODE_ENV=production`, `APP_ENV=staging`, `INTEGRATION_MODE=mock`, `DATABASE_URL`, `JWT_SECRET`, and `PUBLIC_BASE_URL` to the staging HTTPS origin. Also set `STAGING_MONGO_HOST` to the independently verified isolated cluster hostname, `STAGING_MONGO_DATABASE=onelife_staging`, `STAGING_BASIC_AUTH_USER` and a distinct random `STAGING_BASIC_AUTH_PASSWORD` of at least 32 characters. Startup refuses missing guards; HTTPS access requires Basic credentials before normal application login. Only GET/HEAD `/health` is public.
+
+Do not add staging load to production's shared Free-service quotas. Proposed plans (not provisioned or approved): a separate Render staging workspace with verified independent usage/billing and a Free web service; a separate Atlas project with a Free cluster (formerly M0). Check availability, spending controls and shared billing first; stop instead of silently selecting a paid plan. Ephemeral invoices/uploads and cold starts are acceptable only for disposable synthetic staging.
 
 Do not copy values from production. Omit all Razorpay, AI, mail and Twilio credentials; staging startup rejects configured credentials. Mock mode supplies local checkout, non-delivering notifications, AI/WHO simulation and local video navigation. Disabled mode fails closed. `/health` is liveness only; independently verify database-backed login. See the runbook for the complete matrix and synthetic-account recipe. Review the documented frontend build-tool audit exception before deployment.
 

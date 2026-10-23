@@ -1,0 +1,527 @@
+{
+  "mode": "real isolated loopback MongoDB, NODE_ENV=production, APP_ENV=staging, INTEGRATION_MODE=mock, unmodified application security headers and actual built CSS",
+  "mongoVersion": "8.0.17",
+  "nodeVersion": "v22.23.4",
+  "passed": 50,
+  "failed": 0,
+  "results": [
+    {
+      "label": "Anonymous staging access is denied except the minimal health endpoint",
+      "passed": true
+    },
+    {
+      "label": "Public GET /",
+      "passed": true
+    },
+    {
+      "label": "Public GET /about",
+      "passed": true
+    },
+    {
+      "label": "Public GET /contact",
+      "passed": true
+    },
+    {
+      "label": "Public GET /login",
+      "passed": true
+    },
+    {
+      "label": "Public GET /register",
+      "passed": true
+    },
+    {
+      "label": "Public GET /admin/login",
+      "passed": true
+    },
+    {
+      "label": "Public GET /doctorlogin",
+      "passed": true
+    },
+    {
+      "label": "Empty login fields are invalid without sending a request",
+      "passed": true
+    },
+    {
+      "label": "Admin wrong-password feedback with CSRF",
+      "passed": true
+    },
+    {
+      "label": "Admin login, redirect and production cookies using actual MongoDB",
+      "passed": true
+    },
+    {
+      "label": "Admin authenticated /admin",
+      "passed": true
+    },
+    {
+      "label": "Admin authenticated /doctors-registration",
+      "passed": true
+    },
+    {
+      "label": "Admin authenticated /doctors-detail",
+      "passed": true
+    },
+    {
+      "label": "Admin authenticated /showmsg",
+      "passed": true
+    },
+    {
+      "label": "Admin authenticated /profile",
+      "passed": true
+    },
+    {
+      "label": "Doctor wrong-password feedback with CSRF",
+      "passed": true
+    },
+    {
+      "label": "Doctor login, redirect and production cookies using actual MongoDB",
+      "passed": true
+    },
+    {
+      "label": "Doctor authenticated /doctor",
+      "passed": true
+    },
+    {
+      "label": "Doctor authenticated /showdocmsg",
+      "passed": true
+    },
+    {
+      "label": "Doctor authenticated /doctor/availability",
+      "passed": true
+    },
+    {
+      "label": "Patient wrong-password feedback with CSRF",
+      "passed": true
+    },
+    {
+      "label": "Patient login, redirect and production cookies using actual MongoDB",
+      "passed": true
+    },
+    {
+      "label": "Patient authenticated /doctors",
+      "passed": true
+    },
+    {
+      "label": "Patient authenticated /my-profile",
+      "passed": true
+    },
+    {
+      "label": "Patient authenticated /my-appointment",
+      "passed": true
+    },
+    {
+      "label": "Patient authenticated /messages",
+      "passed": true
+    },
+    {
+      "label": "CSRF rejects missing token, invalid token and hostile origin",
+      "passed": true
+    },
+    {
+      "label": "Valid CSRF token works without Origin or Referer",
+      "passed": true
+    },
+    {
+      "label": "Cross-role APIs deny a Patient",
+      "passed": true
+    },
+    {
+      "label": "Admin API never returns password hashes/salts",
+      "passed": true
+    },
+    {
+      "label": "Doctor table search, sort and pagination",
+      "passed": true
+    },
+    {
+      "label": "Availability UI saves seven-day calendar to MongoDB",
+      "passed": true
+    },
+    {
+      "label": "Multipart doctor registration carries CSRF before upload",
+      "passed": true
+    },
+    {
+      "label": "Patient profile update persists with CSRF",
+      "passed": true
+    },
+    {
+      "label": "Patient support form persists and appears in Admin inbox",
+      "passed": true
+    },
+    {
+      "label": "Mock booking and checkout persist confirmation and invoice",
+      "passed": true
+    },
+    {
+      "label": "Invoice owner can download; another patient cannot",
+      "passed": true
+    },
+    {
+      "label": "Rescheduling persists new slot and history",
+      "passed": true
+    },
+    {
+      "label": "Waitlist join, duplicate and cancellation persist",
+      "passed": true
+    },
+    {
+      "label": "Online request, Doctor accept, local video join and calendar",
+      "passed": true
+    },
+    {
+      "label": "Assigned Doctor and Admin status updates persist",
+      "passed": true
+    },
+    {
+      "label": "AI, disease lookup and checkout remain local mocks",
+      "passed": true
+    },
+    {
+      "label": "Webhook bypasses browser CSRF but rejects bad signatures",
+      "passed": true
+    },
+    {
+      "label": "Legacy address API fields and Uttarakhand alias work over HTTP",
+      "passed": true
+    },
+    {
+      "label": "Responsive entry pages and mobile navigation",
+      "passed": true
+    },
+    {
+      "label": "Authenticated dashboards and forms fit mobile, tablet and desktop",
+      "passed": true
+    },
+    {
+      "label": "Disabled AI, WHO, payment and video routes return safe errors without providers",
+      "passed": true
+    },
+    {
+      "label": "Patient logout removes authenticated access",
+      "passed": true
+    },
+    {
+      "label": "No external sockets/assets or browser JavaScript failures",
+      "passed": true
+    }
+  ],
+  "outboundAttempts": [],
+  "layouts": [
+    {
+      "width": 390,
+      "route": "/",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/login",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/admin/login",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/doctorlogin",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/login",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/admin/login",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/doctorlogin",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/login",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/admin/login",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/doctorlogin",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/admin",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/doctors-registration",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/doctors-detail",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/showmsg",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/doctor",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/doctor/availability",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/showdocmsg",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/doctors",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/my-profile",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/my-appointment",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 390,
+      "route": "/messages",
+      "viewport": 390,
+      "scrollWidth": 390,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/admin",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/doctors-registration",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/doctors-detail",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/showmsg",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/doctor",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/doctor/availability",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/showdocmsg",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/doctors",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/my-profile",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/my-appointment",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 768,
+      "route": "/messages",
+      "viewport": 768,
+      "scrollWidth": 768,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/admin",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/doctors-registration",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/doctors-detail",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/showmsg",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/doctor",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/doctor/availability",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/showdocmsg",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/doctors",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/my-profile",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/my-appointment",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    },
+    {
+      "width": 1440,
+      "route": "/messages",
+      "viewport": 1440,
+      "scrollWidth": 1440,
+      "brokenImages": 0
+    }
+  ]
+}

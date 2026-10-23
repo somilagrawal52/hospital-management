@@ -11,7 +11,8 @@ test("staging must explicitly isolate providers; production cannot silently disa
   assert.ok(validationErrors({ ...base, APP_ENV: "development", INTEGRATION_MODE: "mock" }).length);
   assert.ok(validationErrors({ ...base, INTEGRATION_MODE: "mock" }).length);
   assert.ok(validationErrors({ ...base, APP_ENV: "staging", INTEGRATION_MODE: "live" }).length);
-  assert.equal(validationErrors({ ...base, APP_ENV: "staging", INTEGRATION_MODE: "mock" }).length, 0);
+  const staging = { ...base, APP_ENV: "staging", INTEGRATION_MODE: "mock", STAGING_MONGO_HOST: "127.0.0.1", STAGING_MONGO_DATABASE: "onelife_staging", STAGING_BASIC_AUTH_USER: "reviewer", STAGING_BASIC_AUTH_PASSWORD: "b".repeat(48) };
+  assert.equal(validationErrors(staging).length, 0);
   assert.ok(validationErrors({ ...base, APP_ENV: "staging", INTEGRATION_MODE: "mock", RAZORPAY_KEY_SECRET: "synthetic-forbidden-credential" }).length);
 });
 

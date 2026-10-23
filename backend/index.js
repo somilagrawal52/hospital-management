@@ -1,4 +1,6 @@
 require("dotenv").config();
+const { assertRuntimeConfig } = require("./services/runtime-config");
+assertRuntimeConfig();
 const path = require("path");
 const express = require("express");
 const http = require("http");
@@ -15,12 +17,11 @@ const User = require("./models/user");
 const Appointment = require("./models/appointment");
 const { razorpayWebhook } = require("./controller/webhooks");
 const { notifyWaitlistForSlot } = require("./services/waitlist");
-const { assertRuntimeConfig } = require("./services/runtime-config");
+const { stagingAccess } = require("./middlewares/staging-access");
 
 const app = express();
 const server = http.createServer(app);
 app.set("trust proxy", 1);
-assertRuntimeConfig();
 // Keep compatibility with the project's existing .env keys while supporting
 // conventional uppercase deployment variables.
 const PORT = process.env.PORT || process.env.port || 8000;
@@ -56,6 +57,7 @@ app.use(
     legacyHeaders: false,
   }),
 );
+app.use(stagingAccess());
 // Razorpay signatures are calculated from the unparsed request body, so this
 // route must be registered before the JSON parser.
 app.post("/webhooks/razorpay", express.raw({ type: "application/json", limit: "100kb" }), razorpayWebhook);
