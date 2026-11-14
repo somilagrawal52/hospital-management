@@ -1,74 +1,117 @@
-<%- include('partials/page-start', { includeHeroHeader: false, pageTitle: 'Disease Search - OneLife' }) %>
+<%- include('partials/page-start', { includeHeroHeader: false, pageTitle: 'WHO Disease Knowledge Base - OneLife' }) %>
 <link rel="stylesheet" href="/assets/disease-search.css">
 
-<div class="container">
-  <div class="header">
-    <h1>OneLife Disease Information System</h1>
-    <p>Get comprehensive disease information from the World Health Organization</p>
-    <p class="mt-3 text-sm">Information is educational and may not apply to your situation. Consult a qualified clinician for medical advice.</p>
+<div class="py-8 max-w-5xl mx-auto">
+  <!-- Knowledge Base Header -->
+  <div class="text-center max-w-2xl mx-auto mb-10">
+    <span class="inline-block rounded-full bg-teal-50 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-teal-800">Global Health Knowledge</span>
+    <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 mt-2">OneLife Clinical Disease Guide</h1>
+    <p class="text-xs sm:text-sm text-slate-600 mt-2">Direct access to verified clinical health topics, symptoms, prevention, and treatments from the World Health Organization (WHO).</p>
+    <div class="mt-3 inline-block rounded-full bg-slate-100 px-3.5 py-1 text-[11px] text-slate-500 font-medium">
+      Educational reference only · Consult your physician for medical advice
+    </div>
   </div>
 
-  <div class="search-section">
-    <form class="search-form" id="searchForm"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
-      <input
-        type="text"
-        class="search-input"
-        id="diseaseInput"
-        placeholder="Enter disease name (e.g., diabetes, malaria, covid-19)"
-        required
+  <!-- Search Card -->
+  <div class="rounded-3xl border border-slate-200 bg-white p-6 sm:p-10 shadow-lg">
+    <form class="search-form flex flex-col sm:flex-row gap-3" id="searchForm">
+      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+      <div class="relative flex-1">
+        <input
+          type="text"
+          class="search-input w-full rounded-2xl border border-slate-300 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm"
+          id="diseaseInput"
+          placeholder="Enter a condition or disease (e.g. malaria, diabetes, asthma, dengue, covid-19)"
+          required
+        />
+        <span class="absolute left-4 top-3.5 text-slate-400 text-base" aria-hidden="true">🔍</span>
+      </div>
+      <button
+        type="submit"
+        class="search-btn rounded-2xl bg-primary px-8 py-3.5 text-sm font-bold text-white shadow-md shadow-primary/25 hover:bg-indigo-600 hover:shadow-lg transition shrink-0"
       >
-      <button type="submit" class="search-btn">Search</button>
+        Search WHO Database
+      </button>
     </form>
 
-    <div class="examples">
-      <h3>Try these examples:</h3>
-      <div class="example-tags">
-        <button type="button" class="example-tag" data-disease="diabetes">Diabetes</button>
-        <button type="button" class="example-tag" data-disease="malaria">Malaria</button>
-        <button type="button" class="example-tag" data-disease="tuberculosis">Tuberculosis</button>
-        <button type="button" class="example-tag" data-disease="dengue">Dengue</button>
-        <button type="button" class="example-tag" data-disease="hepatitis">Hepatitis</button>
-      </div>
+    <!-- Example Tags -->
+    <div class="mt-5 flex flex-wrap items-center gap-2 text-xs">
+      <span class="font-bold text-slate-500">Popular topics:</span>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition" data-disease="diabetes">Diabetes</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition" data-disease="malaria">Malaria</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition" data-disease="tuberculosis">Tuberculosis</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition" data-disease="dengue">Dengue</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition" data-disease="hepatitis">Hepatitis</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition" data-disease="hypertension">Hypertension</button>
     </div>
 
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>Fetching disease information from WHO...</p>
+    <!-- Loading State -->
+    <div class="loading hidden my-10 text-center" id="loading">
+      <div class="spinner mx-auto mb-3"></div>
+      <p class="text-sm font-semibold text-slate-700">Querying World Health Organization health topics…</p>
+      <p class="text-xs text-slate-400 mt-1">Extracting clinical facts, symptoms, and prevention guidance.</p>
     </div>
 
-    <div class="error" id="error"></div>
+    <!-- Error State -->
+    <div class="error hidden my-6 rounded-2xl border border-rose-300 bg-rose-50 p-4 text-center text-xs sm:text-sm font-semibold text-rose-800" id="error"></div>
 
-    <div class="results" id="results">
-      <div class="disease-card">
-        <h2 class="disease-title" id="diseaseTitle"></h2>
-
-        <div class="info-section" id="introSection">
-          <h4>Overview</h4>
-          <div class="info-content" id="introContent"></div>
+    <!-- Results Display -->
+    <div class="results hidden mt-10 space-y-6" id="results">
+      <div class="disease-card rounded-2xl border border-slate-200 bg-slate-50/50 p-6 sm:p-8 space-y-6">
+        <div class="border-b border-slate-200 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <span class="text-[11px] font-bold uppercase tracking-wider text-primary">WHO Official Topic</span>
+            <h2 class="disease-title text-2xl font-extrabold text-slate-900 mt-1 capitalize" id="diseaseTitle"></h2>
+          </div>
+          <a href="/doctors" class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-600 transition">
+            <span>Consult a Specialist</span> &rarr;
+          </a>
         </div>
 
-        <div class="info-section" id="factsSection">
-          <h4>Key Facts</h4>
-          <ul class="info-list" id="factsList"></ul>
+        <!-- Overview -->
+        <div class="info-section rounded-2xl bg-white p-5 border border-slate-200 shadow-sm" id="introSection">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 mb-2 flex items-center gap-1.5">
+            <span>📋</span> Overview
+          </h4>
+          <div class="info-content text-xs sm:text-sm text-slate-700 leading-relaxed" id="introContent"></div>
         </div>
 
-        <div class="info-section" id="symptomsSection">
-          <h4>Symptoms & Signs</h4>
-          <ul class="info-list" id="symptomsList"></ul>
+        <!-- Key Facts -->
+        <div class="info-section rounded-2xl bg-white p-5 border border-slate-200 shadow-sm" id="factsSection">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-700 mb-2 flex items-center gap-1.5">
+            <span>💡</span> Key Statistical Facts
+          </h4>
+          <ul class="info-list space-y-2 text-xs sm:text-sm text-slate-700" id="factsList"></ul>
         </div>
 
-        <div class="info-section" id="treatmentSection">
-          <h4>Treatment</h4>
-          <ul class="info-list" id="treatmentList"></ul>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Symptoms & Signs -->
+          <div class="info-section rounded-2xl bg-white p-5 border border-slate-200 shadow-sm" id="symptomsSection">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-rose-700 mb-2 flex items-center gap-1.5">
+              <span>🩺</span> Symptoms &amp; Clinical Signs
+            </h4>
+            <ul class="info-list space-y-2 text-xs sm:text-sm text-slate-700" id="symptomsList"></ul>
+          </div>
+
+          <!-- Treatment -->
+          <div class="info-section rounded-2xl bg-white p-5 border border-slate-200 shadow-sm" id="treatmentSection">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-2 flex items-center gap-1.5">
+              <span>💊</span> Treatment &amp; Therapies
+            </h4>
+            <ul class="info-list space-y-2 text-xs sm:text-sm text-slate-700" id="treatmentList"></ul>
+          </div>
         </div>
 
-        <div class="info-section" id="preventionSection">
-          <h4>Prevention</h4>
-          <ul class="info-list" id="preventionList"></ul>
+        <!-- Prevention -->
+        <div class="info-section rounded-2xl bg-white p-5 border border-slate-200 shadow-sm" id="preventionSection">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-teal-700 mb-2 flex items-center gap-1.5">
+            <span>🛡️</span> Prevention &amp; Control
+          </h4>
+          <ul class="info-list space-y-2 text-xs sm:text-sm text-slate-700" id="preventionList"></ul>
         </div>
 
-        <div class="source-info">
-          <small>Information scraped from WHO health topics</small>
+        <div class="source-info pt-4 border-t border-slate-200 text-center text-xs text-slate-400">
+          Verified source: World Health Organization (WHO) Health Topics Dataset.
         </div>
       </div>
     </div>

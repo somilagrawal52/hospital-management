@@ -1,24 +1,167 @@
-<%- include('partials/page-start', { includeHeroHeader: true, pageTitle: 'OneLife Home' }) %>
-    <div class='flex flex-col items-center gap-4 py-16 text-gray-800' id='speciality'>
-        <h1 class='text-3xl font-medium'>Find by speciality</h1>
-        <p class='text-sm text-center sm:w-1/3'>Simply browse through our extensive list of trusted doctors, schedule your appointment hassle-free</p>
-        <div class='flex w-full gap-4 pt-5 overflow-scroll sm:justify-center'>
-            <% if (specialityData && specialityData.length > 0) { %>
-                <% specialityData.forEach((item, index) => { %>
-                  <a class='flex flex-col items-center text-xs cursor-pointer flex-shrink-0 hover:translate-y-[-10px] transition-all duration-500' key="<%= index %>" href="/doctors/<%= item.speciality %>">
-                      <img class='mb-2 w-16 sm:w-24' src="<%= item.image %>" alt="" />
-                      <p><%= item.speciality %></p>
-                  </a>
-                <% }) %>
-              <% } else { %>
-                <p>No specialities available.</p>
-              <% } %>
-        </div>
+<%- include('partials/page-start', { includeHeroHeader: true, pageTitle: 'OneLife - Modern Hospital & Telehealth Platform' }) %>
+
+<!-- Commercial Sales Demo Quick Access Bar (Collapsible / Non-intrusive) -->
+<div class="mb-12 rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-50 via-white to-blue-50 p-5 shadow-sm">
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="flex items-start gap-3">
+      <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-white text-base">⚡</span>
+      <div>
+        <h2 class="text-sm font-bold text-slate-900">Commercial Evaluation &amp; Demo Access</h2>
+        <p class="text-xs text-slate-600">Testing this platform for acquisition or enterprise hospital deployment? Instant demo roles are pre-configured:</p>
       </div>
-      <div class="fixed z-50 bottom-[40px] right-[40px]">
-        <a href="/chats" class="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-sm font-semibold text-white shadow-lg transition hover:scale-110" aria-label="Open support chat">
-          Chat
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <a href="/admin/login" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-sm hover:border-primary hover:text-primary transition">
+        <span>⚙️ Admin Portal</span>
+      </a>
+      <a href="/doctorlogin" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-sm hover:border-emerald-600 hover:text-emerald-700 transition">
+        <span>🩺 Doctor Portal</span>
+      </a>
+      <a href="/login" class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-600 transition">
+        <span>👤 Patient Portal</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Specialities Section -->
+<section class="py-6" id="speciality">
+  <div class="text-center max-w-2xl mx-auto mb-10">
+    <span class="inline-block rounded-full bg-primary/10 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-primary">Department Specialties</span>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">Find Doctors by Clinical Department</h2>
+    <p class="text-sm text-slate-600 mt-2">Select a specialty to browse dedicated specialists, verify credentials, and schedule an appointment.</p>
+  </div>
+
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
+    <% if (specialityData && specialityData.length > 0) { %>
+      <% specialityData.forEach((item, index) => { %>
+        <a
+          href="/doctors/<%= encodeURIComponent(item.speciality) %>"
+          class="group flex flex-col items-center text-center p-5 rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:border-primary hover:-translate-y-1.5"
+          key="<%= index %>"
+        >
+          <div class="h-20 w-20 rounded-2xl bg-indigo-50/80 p-3 mb-3 flex items-center justify-center transition-all duration-300 group-hover:bg-primary group-hover:scale-110">
+            <img class="h-14 w-14 object-contain transition-all duration-300 group-hover:brightness-0 group-hover:invert" src="<%= item.image %>" alt="<%= item.speciality %>" />
+          </div>
+          <h3 class="text-sm font-bold text-slate-900 group-hover:text-primary transition-colors"><%= item.speciality %></h3>
+          <p class="text-[11px] text-slate-500 mt-1 line-clamp-2"><%= item.description || 'Specialist consultations & care' %></p>
         </a>
+      <% }) %>
+    <% } else { %>
+      <p class="col-span-full text-center text-sm text-slate-500">No specialties found.</p>
+    <% } %>
+  </div>
+</section>
+
+<!-- Top Clinicians Showcase -->
+<section class="py-14">
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
+    <div>
+      <span class="inline-block rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold uppercase tracking-wider text-emerald-700">Certified Clinicians</span>
+      <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">Available Doctors</h2>
+      <p class="text-sm text-slate-600 mt-1">Book in-clinic appointments or online consultations with our top medical professionals.</p>
+    </div>
+    <a href="/doctors" class="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:text-indigo-700 transition">
+      <span>View All Clinicians</span>
+      <span aria-hidden="true">&rarr;</span>
+    </a>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <% if (locals.doctors && doctors.length > 0) { %>
+      <% doctors.forEach((doc) => { %>
+        <article class="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:border-primary/50 hover:-translate-y-1">
+          <!-- Doctor Photo Header -->
+          <div class="relative bg-gradient-to-b from-indigo-50 to-slate-100 p-4 text-center">
+            <span class="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold <%= doc.available ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700' %>">
+              <span class="h-1.5 w-1.5 rounded-full <%= doc.available ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400' %>"></span>
+              <%= doc.available ? 'Available' : 'Paused' %>
+            </span>
+            <img
+              class="mx-auto h-36 w-36 rounded-full object-cover border-4 border-white shadow-md"
+              src="<%= doc.image || '/assets/onelife-clinician-generated.png' %>"
+              alt="Dr. <%= doc.fullname %>"
+            />
+          </div>
+
+          <!-- Doctor Body -->
+          <div class="flex flex-1 flex-col p-5">
+            <div class="flex items-center gap-1.5">
+              <h3 class="text-base font-bold text-slate-900">Dr. <%= doc.fullname %></h3>
+              <span class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white font-bold" title="Verified Clinician">✓</span>
+            </div>
+            <p class="text-xs font-semibold text-primary mt-0.5"><%= doc.speciality %></p>
+            <p class="text-xs text-slate-500 mt-0.5"><%= doc.degree || 'MBBS' %> · <%= doc.experience ? `${doc.experience} Years Exp.` : 'Experienced' %></p>
+            
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+              <span class="text-slate-500">Consultation Fee</span>
+              <span class="text-sm font-extrabold text-slate-900">₹<%= doc.fees || 500 %></span>
+            </div>
+
+            <a
+              href="/appointment/<%= doc._id %>"
+              class="mt-4 block w-full rounded-xl bg-slate-900 py-2.5 text-center text-xs font-semibold text-white transition hover:bg-primary"
+            >
+              Book Consultation &rarr;
+            </a>
+          </div>
+        </article>
+      <% }); %>
+    <% } else { %>
+      <div class="col-span-full rounded-2xl border border-dashed border-slate-300 p-8 text-center text-sm text-slate-500">
+        Clinicians are currently loading. Browse all clinicians via the directory.
       </div>
-        <%- include('banner') %>
+    <% } %>
+  </div>
+</section>
+
+<!-- Why Choose OneLife: Core Platform Capabilities -->
+<section class="py-12 bg-slate-50/80 rounded-3xl p-6 sm:p-10 my-10 border border-slate-200/60">
+  <div class="text-center max-w-2xl mx-auto mb-12">
+    <span class="inline-block rounded-full bg-indigo-100 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-indigo-700">Enterprise Healthcare Architecture</span>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">Engineered for Clinical Excellence</h2>
+    <p class="text-sm text-slate-600 mt-2">Every feature is designed to reduce wait times, increase patient satisfaction, and ensure hospital operational continuity.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+      <div class="h-12 w-12 rounded-xl bg-indigo-50 text-primary flex items-center justify-center text-2xl mb-4">📹</div>
+      <h3 class="text-base font-bold text-slate-900">HD Video Consultations</h3>
+      <p class="text-xs text-slate-600 mt-2 leading-relaxed">Integrated, zero-download virtual consultations powered by Jitsi WebRTC with end-to-end security and iCalendar synchronization.</p>
+    </div>
+
+    <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+      <div class="h-12 w-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center text-2xl mb-4">🤖</div>
+      <h3 class="text-base font-bold text-slate-900">Clinical AI Assistant</h3>
+      <p class="text-xs text-slate-600 mt-2 leading-relaxed">24/7 intelligent patient query triage with automatic emergency escalation and verified WHO/CDC health information citations.</p>
+    </div>
+
+    <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+      <div class="h-12 w-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-2xl mb-4">📅</div>
+      <h3 class="text-base font-bold text-slate-900">Dynamic Slot Calendar &amp; Waitlist</h3>
+      <p class="text-xs text-slate-600 mt-2 leading-relaxed">Real-time slot availability, instant patient rescheduling, and automatic waitlist notification when reserved slots open up.</p>
+    </div>
+
+    <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-200">
+      <div class="h-12 w-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl mb-4">💳</div>
+      <h3 class="text-base font-bold text-slate-900">Razorpay &amp; Automated Invoicing</h3>
+      <p class="text-xs text-slate-600 mt-2 leading-relaxed">Bank-grade payment processing with HMAC webhook reconciliation, immediate PDF invoice generation, and automated receipts.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Floating AI Assistant Action Button -->
+<div class="fixed z-50 bottom-6 right-6">
+  <a
+    href="/chats"
+    class="group relative flex h-14 items-center gap-2.5 rounded-full bg-gradient-to-r from-primary to-indigo-600 px-5 text-sm font-bold text-white shadow-xl shadow-primary/30 transition-all duration-300 hover:scale-105 hover:shadow-2xl"
+    aria-label="Open AI Health Assistant"
+  >
+    <span class="flex h-3 w-3 rounded-full bg-emerald-400 animate-ping"></span>
+    <span class="text-lg">🤖</span>
+    <span>Ask AI Assistant</span>
+  </a>
+</div>
+
+<%- include('banner') %>
 <%- include('partials/page-end') %>

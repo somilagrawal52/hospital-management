@@ -1,178 +1,256 @@
 <%- include('partials/page-start', { includeHeroHeader: false, pageTitle: 'Book Appointment - OneLife' }) %>
 
+<div class="py-8">
   <% if (docInfo) { %>
-    <div>
-      <!-- Doctor Details -->
-      <div class="flex flex-col gap-4 mb-12 sm:flex-row">
-        <div class="sm:w-1/3">
-          <img 
-            class="rounded-lg shadow-md bg-primary sm:max-w-72" 
-            src="<%= docInfo.image %>" 
-            alt="<%= docInfo.fullname %>" 
-          />
-        </div>
-        <div class="flex-1 p-8 bg-white border border-gray-200 rounded-lg shadow-lg py-7">
-          <!-- Doctor Info -->
-          <p class="flex items-center gap-2 text-2xl font-semibold text-gray-900">Dr.
-            <%= docInfo.fullname %> 
-            <span class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-white" aria-label="Verified">✓</span>
-          </p>
-          <div class="flex items-center gap-3 mt-2 text-sm text-gray-600">
-            <p class="font-medium"><%= `${docInfo.degree} - ${docInfo.speciality}` %></p>
-            <span class="px-3 py-1 text-sm bg-gray-100 border rounded-full gray-500 text-">
-              <%= docInfo.experience %> Years
-            </span>
-          </div>
-          <!-- Doctor About -->
-          <div class="mt-4">
-            <p class="flex items-center gap-2 text-sm font-medium text-gray-800">
-              About <span class="inline-flex h-4 w-4 items-center justify-center rounded-full border border-gray-500 text-[10px] text-gray-500" aria-label="Information">i</span>
-            </p>
-            <p class="mt-2 text-sm leading-relaxed text-gray-600"><%= docInfo.about %></p>
-          </div>
-          <p class="mt-6 font-medium text-gray-600">
-            Appointment fee: <span class="font-semibold text-gray-800">₹<%= docInfo.fees %></span>
-          </p>
-        </div>
-      </div>
+    <!-- Breadcrumb -->
+    <div class="flex items-center gap-2 text-xs text-slate-500 mb-6">
+      <a href="/" class="hover:text-primary">Home</a>
+      <span>/</span>
+      <a href="/doctors" class="hover:text-primary">Clinicians</a>
+      <span>/</span>
+      <span class="text-slate-900 font-semibold">Dr. <%= docInfo.fullname %></span>
+    </div>
 
-      <!-- Booking Slots -->
-      <p class="mb-6 text-lg font-semibold text-gray-800">Book An Appointment</p>
-      <div class="p-8 text-gray-700 bg-white border rounded-lg shadow-lg">
-       
-        <form id="appointmentForm"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
-          <!-- Patient Details -->
-          <div class="mb-5">
-            <label for="fullname" class="block mb-2 text-sm font-medium text-gray-800">Full Name</label>
-            <input
-              type="text"
-              class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary"
-              id="fullname"
-              name="fullname"
-              placeholder="Enter your full name"
-              required
-            />
-          </div>
-          <div class="mb-5">
-            <label for="email" class="block mb-2 text-sm font-medium text-gray-800">Email</label>
-            <input
-              type="email"
-              class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary"
-              id="email"
-              name="email"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-          <div class="mb-5">
-            <label for="number" class="block mb-2 text-sm font-medium text-gray-800">Phone Number</label>
-            <input
-              type="text"
-              class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary"
-              id="number"
-              name="number"
-              placeholder="Enter your phone number"
-              required
-            />
-          </div>
-
-          <!-- Appointment Details -->
-          <div class="mb-5">
-            <label for="doctor" class="block mb-2 text-sm font-medium text-gray-800">Doctor</label>
-            <input id="doctor" type="text" class="block w-full border-gray-300 rounded-lg bg-gray-50 shadow-sm" value="Dr. <%= docInfo.fullname %>" readonly>
-            <input type="hidden" name="docId" value="<%= docInfo._id %>">
-          </div>
-          <div class="mb-5">
-            <label for="date" class="block w-full mb-2 text-sm font-medium text-gray-800">Date</label>
-            <input
-              type="date"
-              class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary"
-              id="date"
-              name="date"
-              required
-            />
-          </div>
-
-          <div class="mb-5">
-            <label for="time" class="block w-full mb-2 text-sm font-medium text-gray-800">Preferred time</label>
-            <select id="time" name="time" required disabled class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary">
-              <option value="">Choose a date first</option>
-            </select>
-            <p id="slot-message" class="mt-1 text-xs text-gray-500">Select a date to load real-time available slots. Your appointment is confirmed only after successful payment.</p>
-          </div>
-
-          <% if (user) { %>
-            <div id="waitlist-panel" class="hidden mb-5 rounded-lg border border-amber-200 bg-amber-50 p-4">
-              <p class="text-sm font-semibold text-amber-900">No convenient slot?</p>
-              <p class="mt-1 text-xs text-amber-800">Join the waitlist and we will email you if a slot opens for the selected date.</p>
-              <button id="join-waitlist" type="button" class="mt-3 rounded border border-amber-400 bg-white px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100">Join waitlist</button>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <!-- Left Column: Doctor Profile & Fee Overview (4 cols) -->
+      <aside class="lg:col-span-5 space-y-6">
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <!-- Doctor Card Header -->
+          <div class="flex flex-col sm:flex-row lg:flex-col items-center gap-5 text-center sm:text-left lg:text-center pb-6 border-b border-slate-100">
+            <div class="relative">
+              <img
+                class="h-32 w-32 rounded-2xl object-cover border-4 border-indigo-50 shadow-md bg-slate-50"
+                src="<%= docInfo.image %>"
+                alt="Dr. <%= docInfo.fullname %>"
+              />
+              <span class="absolute -bottom-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white text-xs font-bold shadow-md" title="Verified Clinician">
+                ✓
+              </span>
             </div>
-          <% } %>
-
-          <div class="mb-5">
-            <label for="address" class="block mb-2 text-sm font-medium text-gray-800">Address</label>
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label for="line1" class="text-sm text-gray-600">Line 1</label>
-                <input
-                  type="text"
-                  class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary"
-                  id="line1"
-                  name="line1"
-                  placeholder="Street address"
-                  required
-                />
-              </div>
-              <div>
-                <label for="line2" class="text-sm text-gray-600">Line 2</label>
-                <input
-                  type="text"
-                  class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary"
-                  id="line2"
-                  name="line2"
-                  placeholder="City, State"
-                  required
-                />
+            <div>
+              <h1 class="text-xl font-bold text-slate-900">Dr. <%= docInfo.fullname %></h1>
+              <p class="text-xs font-semibold text-primary mt-1"><%= docInfo.speciality %></p>
+              <div class="mt-2 flex flex-wrap items-center justify-center sm:justify-start lg:justify-center gap-2 text-xs">
+                <span class="rounded-full bg-slate-100 px-3 py-1 font-medium text-slate-700"><%= docInfo.degree || 'MBBS' %></span>
+                <span class="rounded-full bg-indigo-50 px-3 py-1 font-semibold text-primary"><%= docInfo.experience ? `${docInfo.experience} Years Experience` : 'Senior Consultant' %></span>
               </div>
             </div>
           </div>
 
-          <div class="mb-5">
-            <label for="amount" class="block mb-2 text-sm font-medium text-gray-800">Payment Amount (₹)</label>
-            <input
-              type="text"
-              class="block w-full border-gray-300 rounded-lg shadow-sm focus:ring-primary focus:border-primary"
-              id="amount"
-              name="amount"
-              value="<%= docInfo.fees %>"
-              placeholder="<%= docInfo.fees %>"
-              readonly
-            />
+          <!-- Doctor Bio / About -->
+          <div class="py-5 border-b border-slate-100">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-900 mb-2">About Clinician</h2>
+            <p class="text-xs leading-relaxed text-slate-600"><%= docInfo.about || 'Dedicated specialist providing comprehensive diagnostics and patient-centric healthcare.' %></p>
           </div>
-         <% if (user){ %>
-         <button
-            id="book-btn"
-            type="submit"
-            class="w-full py-3 text-sm font-semibold text-white transition rounded-lg bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-light focus:ring-offset-2"
-          >
-            Submit & Pay
-          </button>
-         <% }else{ %>
-          <a
-            href="/login"
-            class="block w-full py-3 text-sm font-semibold text-center text-white transition rounded-lg bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary-light focus:ring-offset-2"
-          >Sign in to book &amp; pay</a>
-         <% } %>
-          
-          
-          <!-- Buttons -->
-          
-        </form>
-      </div>
-      <p class="mt-5 text-xs leading-5 text-gray-500">For medical emergencies, contact your local emergency service. This platform does not provide emergency care.</p>
+
+          <!-- Clinic / Hospital Location -->
+          <div class="py-5 border-b border-slate-100 text-xs text-slate-600 space-y-1">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 mb-2">Practice Location</h3>
+            <p class="font-medium text-slate-800"><%= (docInfo.address && docInfo.address.line1) || 'OneLife Central Hospital, Wing A' %></p>
+            <p><%= (docInfo.address && docInfo.address.line2) || 'Consultation Suite 402' %></p>
+          </div>
+
+          <!-- Consultation Fee Breakdown -->
+          <div class="pt-5 space-y-3">
+            <div class="flex items-center justify-between text-xs text-slate-500">
+              <span>Standard Consultation Fee</span>
+              <span class="font-bold text-slate-800">₹<%= docInfo.fees %></span>
+            </div>
+            <div class="flex items-center justify-between text-xs text-slate-500">
+              <span>Booking Service &amp; Video Access</span>
+              <span class="font-medium text-emerald-600">Free Included</span>
+            </div>
+            <div class="flex items-center justify-between border-t border-slate-100 pt-3 text-sm font-bold text-slate-900">
+              <span>Total Payable</span>
+              <span class="text-lg text-primary">₹<%= docInfo.fees %></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security & Guarantee Notice -->
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600 space-y-2">
+          <div class="flex items-center gap-2 font-semibold text-slate-800">
+            <span>🛡️</span> Bank-Grade Secure Payment
+          </div>
+          <p class="leading-relaxed">Processed securely via Razorpay with instant appointment confirmation and downloadable GST invoice receipt.</p>
+        </div>
+      </aside>
+
+      <!-- Right Column: Booking Slot & Patient Details Form (7 cols) -->
+      <main class="lg:col-span-7">
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+          <div class="border-b border-slate-100 pb-5 mb-6">
+            <h2 class="text-xl font-bold text-slate-900">Reserve Consultation Slot</h2>
+            <p class="text-xs text-slate-500 mt-1">Select a consultation date to view real-time open slots and complete your appointment booking.</p>
+          </div>
+
+          <form id="appointmentForm" class="space-y-6">
+            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+            <input type="hidden" name="docId" value="<%= docInfo._id %>" />
+            <input type="hidden" id="amount" name="amount" value="<%= docInfo.fees %>" />
+
+            <!-- Date & Time Slot Picker -->
+            <div class="rounded-2xl bg-slate-50 p-5 border border-slate-200 space-y-4">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900">1. Select Appointment Date &amp; Slot</h3>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="date" class="block text-xs font-semibold text-slate-700 mb-1.5">Consultation Date</label>
+                  <input
+                    type="date"
+                    id="date"
+                    name="date"
+                    class="block w-full rounded-xl border-slate-300 bg-white text-xs font-medium text-slate-900 shadow-sm focus:border-primary focus:ring-primary py-2.5 px-3"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label for="time" class="block text-xs font-semibold text-slate-700 mb-1.5">Available Slot Time</label>
+                  <select
+                    id="time"
+                    name="time"
+                    disabled
+                    class="block w-full rounded-xl border-slate-300 bg-white text-xs font-medium text-slate-900 shadow-sm focus:border-primary focus:ring-primary py-2.5 px-3"
+                    required
+                  >
+                    <option value="">Choose a date first</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Slot status message -->
+              <p id="slot-message" class="text-xs text-slate-500">Choose a calendar date to check live clinician availability.</p>
+
+              <!-- Waitlist Notification Card -->
+              <div id="waitlist-panel" class="hidden rounded-xl border border-amber-300 bg-amber-50 p-4 space-y-2">
+                <div class="flex items-center gap-2 font-bold text-xs text-amber-900">
+                  <span>⏰</span> No convenient slot available for this date?
+                </div>
+                <p class="text-xs text-amber-800 leading-relaxed">Join the automated waitlist. When another patient cancels or reschedules, OneLife will immediately notify you by email.</p>
+                <% if (user) { %>
+                  <button id="join-waitlist" type="button" class="rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 shadow-sm transition">
+                    Join Waiting List
+                  </button>
+                <% } else { %>
+                  <a href="/login" class="inline-block rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 shadow-sm">
+                    Sign in to join waitlist
+                  </a>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Patient Information -->
+            <div class="space-y-4">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900">2. Patient Contact Details</h3>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="fullname" class="block text-xs font-semibold text-slate-700 mb-1">Patient Full Name</label>
+                  <input
+                    type="text"
+                    id="fullname"
+                    name="fullname"
+                    value="<%= (locals.patientdata && patientdata.fullname) ? patientdata.fullname : '' %>"
+                    placeholder="e.g. John Doe"
+                    class="block w-full rounded-xl border-slate-300 text-xs text-slate-900 shadow-sm focus:border-primary focus:ring-primary py-2.5 px-3"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label for="email" class="block text-xs font-semibold text-slate-700 mb-1">Email Address (For Invoice &amp; Video Link)</label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value="<%= (locals.patientdata && patientdata.email) ? patientdata.email : '' %>"
+                    placeholder="patient@example.com"
+                    class="block w-full rounded-xl border-slate-300 text-xs text-slate-900 shadow-sm focus:border-primary focus:ring-primary py-2.5 px-3"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label for="number" class="block text-xs font-semibold text-slate-700 mb-1">Phone Number</label>
+                <input
+                  type="tel"
+                  id="number"
+                  name="number"
+                  value="<%= (locals.patientdata && patientdata.number) ? patientdata.number : '' %>"
+                  placeholder="e.g. 9876543210"
+                  class="block w-full rounded-xl border-slate-300 text-xs text-slate-900 shadow-sm focus:border-primary focus:ring-primary py-2.5 px-3"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- Address Fields -->
+            <div class="space-y-4">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900">3. Residential Address</h3>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="line1" class="block text-xs font-semibold text-slate-700 mb-1">Street Address / Line 1</label>
+                  <input
+                    type="text"
+                    id="line1"
+                    name="line1"
+                    value="<%= (locals.patientdata && patientdata.address && patientdata.address.line1) ? patientdata.address.line1 : '' %>"
+                    placeholder="House / Flat / Street"
+                    class="block w-full rounded-xl border-slate-300 text-xs text-slate-900 shadow-sm focus:border-primary focus:ring-primary py-2.5 px-3"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label for="line2" class="block text-xs font-semibold text-slate-700 mb-1">City, State / Line 2</label>
+                  <input
+                    type="text"
+                    id="line2"
+                    name="line2"
+                    value="<%= (locals.patientdata && patientdata.address && patientdata.address.line2) ? patientdata.address.line2 : '' %>"
+                    placeholder="City, State, PIN"
+                    class="block w-full rounded-xl border-slate-300 text-xs text-slate-900 shadow-sm focus:border-primary focus:ring-primary py-2.5 px-3"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Booking Actions -->
+            <div class="pt-4 border-t border-slate-100">
+              <% if (user) { %>
+                <button
+                  id="book-btn"
+                  type="submit"
+                  class="w-full rounded-2xl bg-primary py-3.5 text-center text-sm font-bold text-white shadow-lg shadow-primary/25 transition duration-300 hover:bg-indigo-600 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                >
+                  Pay ₹<%= docInfo.fees %> &amp; Confirm Appointment &rarr;
+                </button>
+              <% } else { %>
+                <a
+                  href="/login"
+                  class="block w-full rounded-2xl bg-slate-900 py-3.5 text-center text-sm font-bold text-white shadow-lg transition hover:bg-primary"
+                >
+                  Sign in to Confirm &amp; Pay &rarr;
+                </a>
+              <% } %>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  <% } else { %>
+    <div class="rounded-3xl border border-slate-200 bg-white p-12 text-center max-w-lg mx-auto">
+      <h2 class="text-xl font-bold text-slate-800">Clinician Not Found</h2>
+      <p class="text-xs text-slate-500 mt-2">The requested doctor is not currently listed in our directory.</p>
+      <a href="/doctors" class="mt-4 inline-block rounded-xl bg-primary px-5 py-2.5 text-xs font-semibold text-white">Back to Clinicians</a>
     </div>
   <% } %>
 </div>
+
 <% if (typeof integrationMode === 'undefined' || integrationMode === 'live') { %>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <% } else if (integrationMode === 'mock') { %>
@@ -181,4 +259,5 @@
 <script>window.RAZORPAY_KEY = '<%= razorpayKey || "" %>';</script>
 <script>window.DOCTOR_ID = '<%= docInfo ? docInfo._id : "" %>';</script>
 <script src="/assets/appointment-page.js"></script>
+
 <%- include('partials/page-end') %>

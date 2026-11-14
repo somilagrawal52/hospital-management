@@ -1,72 +1,257 @@
 <%- include('partials/page-start', { includeHeroHeader: false, pageTitle: 'My Appointments - OneLife' }) %>
-    <div class="py-10">
-        <div class="flex flex-col gap-3 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
-          <div><p class="text-2xl font-semibold text-gray-800">My appointments</p><p class="mt-1 text-sm text-gray-500">Track your bookings, payment status, and online consultation requests.</p></div>
-          <div class="rounded-lg bg-primary/10 px-4 py-2 text-sm text-primary"><span class="font-semibold"><%= patientdata?.upcomingAppointmentsCount || 0 %></span> upcoming</div>
+
+<div class="py-8">
+  <!-- Heading & Overview -->
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b border-slate-200 pb-6 mb-8 gap-4">
+    <div>
+      <span class="inline-block rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">Patient Care Portal</span>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">My Appointments &amp; Consultations</h1>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">Manage scheduled clinic visits, join virtual telehealth sessions, reschedule slots, and download invoices.</p>
+    </div>
+    
+    <!-- Quick Stat Chips -->
+    <div class="flex items-center gap-3">
+      <div class="rounded-xl border border-indigo-100 bg-indigo-50/60 px-4 py-2 text-xs font-medium text-primary">
+        <span class="font-extrabold text-sm"><%= patientdata?.upcomingAppointmentsCount || 0 %></span> Upcoming
+      </div>
+      <% if (patientdata?.waitlist?.length) { %>
+        <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-800">
+          <span class="font-extrabold text-sm"><%= patientdata.waitlist.length %></span> On Waitlist
         </div>
-        <div class="mt-4 space-y-4">
-          <% if (patientdata && patientdata.appointments && patientdata.appointments.length > 0) { %>
-            <% patientdata.appointments.forEach((item, index) => { %>
-              <% const status = item.status || 'pending'; %>
-              <div class="flex flex-col gap-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:flex-row sm:items-start">
-                <div>
-                  <img class="h-28 w-28 rounded-lg bg-[#EAEFFF] object-cover" src="<%= item.doctordata?.image || '/assets/onelife-clinician-generated.png' %>" alt="Dr. <%= item.doctordata?.fullname || 'Doctor' %>">
-                </div>
-                <div class="flex-1 text-sm text-[#5E5E5E]">
-                  <p class="text-[#262626] text-base font-semibold">Dr. <%= item.doctordata.fullname %></p>
-                  <p><%= item.doctordata.speciality %></p>
-                  <p class="text-[#464646] font-medium mt-1">Address:</p>
-                  <p><%= item.address.line1 %></p>
-                  <p><%= item.address.line2 %></p>
-                  <p class="mt-1"><span class="text-sm text-[#faadad] font-medium">Date & Time: </span><%= item.formattedDate %></p>
-                  <p class="mt-2"><span class="rounded-full px-2.5 py-1 text-xs font-medium <%= status === 'cancelled' ? 'bg-red-100 text-red-700' : status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700' %>"><%= status.replace(/_/g, ' ') %></span></p>
-                </div>
-                <div class="flex flex-col justify-end gap-2 text-sm text-center sm:ml-auto sm:min-w-48">
-                  <% if (status !== 'cancelled' && status !== 'completed') { %>
-                  <button class="appointment-action text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300" data-action="cancel" data-appointment-id="<%= item._id %>">Cancel Appointment</button>
-                  <button class="appointment-action text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300" data-action="reschedule" data-appointment-id="<%= item._id %>">Reschedule</button>
-                  <% } %>
-                  <% if (!item.isOnline && status !== 'cancelled' && status !== 'completed') { %>
-                  <button class="appointment-action text-[#696969] sm:min-w-48 py-2 border rounded hover:bg-primary hover:text-white transition-all duration-300" data-action="online" data-appointment-id="<%= item._id %>">Book An Online Video Conference Instead</button>
-                  <% } %>
-                  <% if (item.video?.status === 'scheduled' || item.video?.status === 'in_progress') { %>
-                    <a class="sm:min-w-48 py-2 border rounded text-primary border-primary hover:bg-primary hover:text-white transition-all duration-300" href="/appointments/<%= item._id %>/video/join">Join video consultation</a>
-                    <a class="sm:min-w-48 py-2 border rounded text-[#696969] hover:bg-gray-100 transition-all duration-300" href="/appointments/<%= item._id %>/video/calendar">Add to calendar</a>
-                  <% } else if (item.video?.status === 'requested') { %>
-                    <p class="text-xs text-gray-500">Online consultation request pending doctor approval.</p>
-                  <% } %>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Appointments List -->
+  <div class="space-y-6">
+    <% if (patientdata && patientdata.appointments && patientdata.appointments.length > 0) { %>
+      <% patientdata.appointments.forEach((item, index) => { %>
+        <% 
+          const status = item.status || 'pending';
+          const isCancelled = status === 'cancelled';
+          const isCompleted = status === 'completed';
+          const isOnline = Boolean(item.isOnline);
+        %>
+        <article class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 bg-slate-50/60 px-6 py-3.5 gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-slate-500">Booking ID:</span>
+              <span class="font-mono text-xs font-semibold text-slate-800"><%= String(item._id).slice(-8).toUpperCase() %></span>
+              <% if (isOnline) { %>
+                <span class="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-primary">
+                  <span>📹</span> Telehealth
+                </span>
+              <% } %>
+            </div>
+
+            <!-- Status Pill Badge -->
+            <div>
+              <% if (status === 'confirmed') { %>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+                  <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Confirmed
+                </span>
+              <% } else if (status === 'completed') { %>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700">
+                  <span class="h-1.5 w-1.5 rounded-full bg-slate-500"></span> Completed
+                </span>
+              <% } else if (status === 'cancelled') { %>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-3 py-1 text-xs font-bold text-rose-800">
+                  <span class="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Cancelled
+                </span>
+              <% } else if (status === 'online_requested') { %>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
+                  <span class="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span> Video Request Pending
+                </span>
+              <% } else { %>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-xs font-bold text-blue-800">
+                  <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span> <%= status.replace(/_/g, ' ') %>
+                </span>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="p-6">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+              <!-- Doctor & Appointment Info -->
+              <div class="flex items-start gap-4">
+                <img
+                  class="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl object-cover border-2 border-indigo-50 bg-slate-100 shrink-0"
+                  src="<%= item.doctordata?.image || '/assets/onelife-clinician-generated.png' %>"
+                  alt="Dr. <%= item.doctordata?.fullname || item.doctor || 'Clinician' %>"
+                />
+                <div class="space-y-1">
+                  <h3 class="text-base sm:text-lg font-bold text-slate-900">Dr. <%= item.doctordata?.fullname || item.doctor %></h3>
+                  <p class="text-xs font-semibold text-primary"><%= item.doctordata?.speciality || 'Specialist' %></p>
+                  
+                  <div class="pt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
+                    <div class="flex items-center gap-1">
+                      <span class="text-slate-400">📅</span>
+                      <strong class="text-slate-900"><%= item.formattedDate %></strong>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <span class="text-slate-400">📍</span>
+                      <span><%= (item.address && item.address.line1) || 'Hospital Wing' %>, <%= (item.address && item.address.line2) || '' %></span>
+                    </div>
+                    <div class="flex items-center gap-1">
+                      <span class="text-slate-400">💵</span>
+                      <span>Paid ₹<%= item.amount || (item.payment && item.payment.amount) || '—' %></span>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <% if (status !== 'cancelled' && status !== 'completed') { %>
-                <div id="reschedule-<%= item._id %>" class="reschedule-panel hidden rounded-xl border border-primary/20 bg-primary/5 p-4" data-appointment-id="<%= item._id %>" data-doctor-id="<%= String(item.doctorId || item.docId) %>">
-                  <p class="text-sm font-semibold text-gray-800">Choose a new available slot</p>
-                  <form class="reschedule-form mt-3 grid gap-3 sm:grid-cols-3 sm:items-end"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
-                    <label class="text-xs text-gray-600">New date<input type="date" required class="reschedule-date mt-1 block w-full rounded border-gray-300 text-sm"></label>
-                    <label class="text-xs text-gray-600">Available time<select required disabled class="reschedule-time mt-1 block w-full rounded border-gray-300 text-sm"><option value="">Choose a date first</option></select></label>
-                    <button type="submit" class="rounded bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-dark">Save new time</button>
-                  </form>
-                  <p class="reschedule-message mt-2 text-xs text-gray-500">Select a date to load real-time available slots.</p>
-                </div>
-              <% } %>
-              
-            <% }) %>
-          <% } else { %>
-            <div class="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-8 text-center text-sm text-gray-500">No appointments yet. Browse doctors to book your first consultation.</div>
-          <% } %>
-        </div>
-        <% if (patientdata?.waitlist?.length) { %>
-          <section class="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-5">
-            <h2 class="text-base font-semibold text-amber-950">Your waitlist requests</h2>
-            <div class="mt-3 space-y-3">
-              <% patientdata.waitlist.forEach((entry) => { %>
-                <div class="flex flex-col gap-3 rounded-lg border border-amber-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div class="text-sm text-gray-700"><span class="font-semibold">Dr. <%= entry.doctorId?.fullname || 'Doctor' %></span><span class="mx-1">·</span><%= entry.slotDate %><span class="mx-1">·</span><span class="capitalize"><%= entry.status %></span></div>
-                  <button class="waitlist-cancel rounded border border-amber-400 px-3 py-1.5 text-xs font-medium text-amber-900 hover:bg-amber-100" data-waitlist-id="<%= entry._id %>">Leave waitlist</button>
-                </div>
-              <% }) %>
+
+              <!-- Action Buttons Row -->
+              <div class="flex flex-wrap lg:flex-col items-stretch gap-2.5 w-full lg:w-56 shrink-0">
+                <!-- Video Call Join -->
+                <% if (item.video?.status === 'scheduled' || item.video?.status === 'in_progress') { %>
+                  <a
+                    href="/appointments/<%= item._id %>/video/join"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-xs font-bold text-white shadow-md shadow-emerald-600/20 hover:from-emerald-700 hover:to-teal-700 transition"
+                  >
+                    <span>📹 Join Video Call</span>
+                  </a>
+                  <a
+                    href="/appointments/<%= item._id %>/video/calendar"
+                    class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  >
+                    <span>📅 Add to Calendar (.ics)</span>
+                  </a>
+                <% } else if (item.video?.status === 'requested') { %>
+                  <p class="rounded-xl border border-amber-200 bg-amber-50 p-2 text-center text-[11px] font-semibold text-amber-800">
+                    Online consultation request awaiting doctor confirmation
+                  </p>
+                <% } %>
+
+                <!-- Download Invoice PDF -->
+                <% if (item.invoiceFile || status === 'confirmed' || status === 'completed') { %>
+                  <% const invoiceFileName = item.invoiceFile || `invoice-${item._id}.pdf`; %>
+                  <a
+                    href="/download-pdf?file=<%= encodeURIComponent(invoiceFileName) %>"
+                    class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:border-primary hover:text-primary transition"
+                  >
+                    <span>📄 Download Invoice (PDF)</span>
+                  </a>
+                <% } %>
+
+                <!-- Interactive Booking Controls -->
+                <% if (!isCancelled && !isCompleted) { %>
+                  <% if (!item.isOnline) { %>
+                    <button
+                      type="button"
+                      class="appointment-action inline-flex items-center justify-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50/50 px-3 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-white transition"
+                      data-action="online"
+                      data-appointment-id="<%= item._id %>"
+                    >
+                      <span>📹 Switch to Video Visit</span>
+                    </button>
+                  <% } %>
+
+                  <button
+                    type="button"
+                    class="appointment-action inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition"
+                    data-action="reschedule"
+                    data-appointment-id="<%= item._id %>"
+                  >
+                    <span>🕒 Reschedule Slot</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="appointment-action inline-flex items-center justify-center gap-1.5 rounded-xl border border-rose-200 bg-white px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 transition"
+                    data-action="cancel"
+                    data-appointment-id="<%= item._id %>"
+                  >
+                    <span>✕ Cancel Booking</span>
+                  </button>
+                <% } %>
+              </div>
             </div>
-          </section>
-        <% } %>
+
+            <!-- Reschedule Accordion Panel -->
+            <% if (!isCancelled && !isCompleted) { %>
+              <div
+                id="reschedule-<%= item._id %>"
+                class="reschedule-panel hidden mt-6 rounded-2xl border border-primary/20 bg-indigo-50/40 p-5 transition-all"
+                data-appointment-id="<%= item._id %>"
+                data-doctor-id="<%= String(item.doctorId || item.docId) %>"
+              >
+                <div class="flex items-center gap-2 mb-3">
+                  <span class="text-primary font-bold text-sm">🕒</span>
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">Choose a New Available Consultation Slot</h4>
+                </div>
+                <form class="reschedule-form grid gap-4 sm:grid-cols-3 sm:items-end">
+                  <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">New Calendar Date</label>
+                    <input type="date" required class="reschedule-date block w-full rounded-xl border-slate-300 bg-white text-xs font-medium text-slate-900 shadow-sm focus:border-primary focus:ring-primary py-2 px-3" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Available Slot Time</label>
+                    <select required disabled class="reschedule-time block w-full rounded-xl border-slate-300 bg-white text-xs font-medium text-slate-900 shadow-sm focus:border-primary focus:ring-primary py-2 px-3">
+                      <option value="">Choose a date first</option>
+                    </select>
+                  </div>
+                  <button type="submit" class="rounded-xl bg-primary px-4 py-2.5 text-xs font-bold text-white shadow-md hover:bg-indigo-600 transition">
+                    Save New Appointment Time
+                  </button>
+                </form>
+                <p class="reschedule-message mt-2 text-xs text-slate-500">Select a date above to query the clinician’s real-time schedule.</p>
+              </div>
+            <% } %>
+          </div>
+        </article>
+      <% }) %>
+    <% } else { %>
+      <!-- Clean Empty State -->
+      <div class="rounded-3xl border border-dashed border-slate-300 bg-slate-50/50 p-14 text-center">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-100 text-2xl text-primary mb-4">
+          📅
+        </div>
+        <h3 class="text-lg font-bold text-slate-900">No Appointments Booked Yet</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">You do not have any scheduled appointments. Browse our certified doctors to book your first clinic or video consultation.</p>
+        <a href="/doctors" class="mt-5 inline-block rounded-xl bg-primary px-6 py-2.5 text-xs font-bold text-white shadow-md hover:bg-indigo-600 transition">
+          Find a Doctor &rarr;
+        </a>
       </div>
+    <% } %>
+  </div>
+
+  <!-- Waitlist Requests Section -->
+  <% if (patientdata?.waitlist?.length) { %>
+    <section class="mt-12 rounded-3xl border border-amber-200 bg-amber-50/60 p-6 sm:p-8">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="text-amber-700 font-bold text-lg">⏰</span>
+        <div>
+          <h2 class="text-base font-bold text-amber-950">Active Waitlist Requests</h2>
+          <p class="text-xs text-amber-800">You will receive an automated email notification as soon as a slot opens for these dates.</p>
+        </div>
+      </div>
+      <div class="space-y-3">
+        <% patientdata.waitlist.forEach((entry) => { %>
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between rounded-2xl border border-amber-200/80 bg-white p-4 shadow-sm gap-3">
+            <div class="text-xs text-slate-700">
+              <span class="font-bold text-slate-900 text-sm">Dr. <%= entry.doctorId?.fullname || 'Clinician' %></span>
+              <span class="mx-2 text-slate-300">|</span>
+              <span class="text-primary font-medium"><%= entry.doctorId?.speciality || 'Department' %></span>
+              <span class="mx-2 text-slate-300">|</span>
+              <span>Requested Date: <strong><%= entry.slotDate %></strong></span>
+              <span class="mx-2 text-slate-300">|</span>
+              <span class="capitalize font-semibold text-amber-700"><%= entry.status %></span>
+            </div>
+            <button
+              type="button"
+              class="waitlist-cancel rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition shadow-sm"
+              data-waitlist-id="<%= entry._id %>"
+            >
+              Leave Waitlist
+            </button>
+          </div>
+        <% }) %>
+      </div>
+    </section>
+  <% } %>
+</div>
+
 <script src="/assets/my-appointments-page.js"></script>
 <%- include('partials/page-end') %>

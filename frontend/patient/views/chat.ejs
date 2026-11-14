@@ -1,145 +1,225 @@
-<%- include('head') %>
-<main class="flex min-h-screen items-center justify-center bg-gray-200 p-4">
-    <div id="chat-container" class="flex w-full max-h-[80vh] max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
-        <!-- Header -->
-        <div class="bg-blue-600 px-6 py-4 text-center text-lg font-bold text-white">
-            OneLife Health Information
-        </div>
-        <p class="px-5 pt-4 text-xs leading-5 text-gray-500">General information only—not diagnosis or emergency care. For urgent symptoms, contact local emergency services.</p>
+<%- include('partials/page-start', { includeHeroHeader: false, pageTitle: 'AI Clinical Health Assistant - OneLife' }) %>
 
-        <!-- Messages Area -->
-        <div id="messages" role="log" aria-live="polite" aria-relevant="additions" class="flex flex-grow flex-col space-y-4 overflow-y-auto bg-gray-50 p-4">
-            <div class="flex justify-start">
-                <span class="inline-block max-w-[75%] break-words rounded-lg bg-gray-300 px-4 py-2 text-gray-800 shadow-md">Hello. Ask a health or medical-information question and I’ll do my best to help.</span>
-            </div>
+<div class="py-8 max-w-4xl mx-auto">
+  <!-- Header -->
+  <div class="border-b border-slate-200 pb-5 mb-6">
+    <div class="flex items-center gap-2.5">
+      <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-indigo-600 text-white shadow-md">
+        🤖
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900">OneLife AI Health Assistant</h1>
+          <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">Online 24/7</span>
         </div>
-
-        <!-- Message Input -->
-        <form action="#" id="send-msg" class="flex items-center w-full p-4 bg-white border-t border-gray-300"><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
-            <label for="message-input" class="sr-only">Your medical question</label>
-            <input 
-                type="text" 
-                id="message-input" 
-                placeholder="Ask a medical question..."
-                autocomplete="off"
-                class="flex-grow p-3 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button 
-                type="submit" 
-                id="send-btn" 
-                class="p-3 ml-1 text-white transition-colors bg-blue-600 rounded-r-lg hover:bg-blue-700"
-            >
-                <span id="send-label">Send</span>
-            </button>
-        </form>
+        <p class="text-xs text-slate-500 mt-0.5">Empowering patients with verified health information &amp; clinical triage guidance.</p>
+      </div>
     </div>
-</main>
+  </div>
+
+  <!-- Medical Safety & Emergency Notice -->
+  <div class="mb-6 rounded-2xl border border-rose-200 bg-rose-50/80 p-4 text-xs text-rose-900 flex items-start gap-3">
+    <span class="text-base leading-none">⚠️</span>
+    <div class="leading-relaxed">
+      <strong>Important Medical Advisory:</strong> This AI assistant provides general health information and does not replace professional clinical evaluation or emergency care. In acute emergencies, call <strong>112 / 911</strong> immediately.
+    </div>
+  </div>
+
+  <!-- Chat Container -->
+  <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl flex flex-col h-[650px]">
+    <!-- Chat Header Banner -->
+    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 px-6 py-4 text-white flex items-center justify-between">
+      <div class="flex items-center gap-2.5 text-xs font-semibold">
+        <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>Secure Health Consultation Session</span>
+      </div>
+      <span class="text-[11px] text-slate-400">Powered by OneLife Clinical Knowledge</span>
+    </div>
+
+    <!-- Messages Log Area -->
+    <div
+      id="messages"
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions"
+      class="flex-1 overflow-y-auto bg-slate-50/50 p-6 space-y-4"
+    >
+      <!-- Initial AI Greeting -->
+      <div class="flex items-start gap-3">
+        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-white text-xs font-bold shadow-sm">
+          AI
+        </div>
+        <div class="max-w-[85%] rounded-2xl bg-white border border-slate-200 p-4 text-xs sm:text-sm text-slate-800 shadow-sm leading-relaxed">
+          Hello! I'm your OneLife Clinical Assistant. You can ask me about symptoms, preventive care guidelines, common medications, or general health topics. How can I help you today?
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Suggestion Chips -->
+    <div class="border-t border-slate-100 bg-white px-6 py-2.5 overflow-x-auto flex items-center gap-2 text-xs">
+      <span class="font-bold text-slate-500 shrink-0">Popular queries:</span>
+      <button type="button" class="quick-chip shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition">
+        Managing chronic migraine
+      </button>
+      <button type="button" class="quick-chip shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition">
+        Early signs of diabetes
+      </button>
+      <button type="button" class="quick-chip shrink-0 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition">
+        When to visit a cardiologist
+      </button>
+    </div>
+
+    <!-- Input Form -->
+    <form id="send-msg" class="border-t border-slate-200 bg-white p-4 flex items-center gap-3">
+      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+      <label for="message-input" class="sr-only">Your medical question</label>
+      <input
+        type="text"
+        id="message-input"
+        placeholder="Type a health or symptom question here…"
+        autocomplete="off"
+        class="flex-1 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+      />
+      <button
+        type="submit"
+        id="send-btn"
+        class="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-primary/20 transition hover:bg-indigo-600 hover:shadow-lg disabled:opacity-50"
+      >
+        <span id="send-label">Send</span>
+        <span aria-hidden="true">&rarr;</span>
+      </button>
+    </form>
+  </div>
+</div>
+
 <script>
-    const sendMessage = async (message) => {
-  try {
-    const response = await fetch("/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ message }),
-    });
+  const sendMessage = async (message) => {
+    try {
+      const response = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message }),
+      });
 
-    if (!response.ok) {
-      throw new Error(`HTTP Error: ${response.status}`);
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        message: data.message || "I apologize, but I could not process your query at this moment.",
+        emergency: Boolean(data.emergency),
+        sources: Array.isArray(data.sources) ? data.sources : [],
+      };
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      return {
+        message: "I am temporarily unable to connect to the medical knowledge base. Please consult our hospital specialists or contact support.",
+        emergency: false,
+        sources: [],
+      };
     }
+  };
 
-    const data = await response.json();
-    return {
-      message: data.message || "Oops, I couldn't process your request.",
-      emergency: Boolean(data.emergency),
-      sources: Array.isArray(data.sources) ? data.sources : [],
-    };
-  } catch (error) {
-    console.error("Error fetching AI response:", error);
-    return { message: "Sorry, something went wrong.", emergency: false, sources: [] };
-  }
-};
-
-// Handling chat form submission
-const form = document.getElementById("send-msg");
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const message = document.getElementById("message-input").value.trim();
-
-  if (!message) return; // Skip sending if the input is empty
-
+  const form = document.getElementById("send-msg");
   const input = document.getElementById("message-input");
   const sendButton = document.getElementById("send-btn");
   const sendLabel = document.getElementById("send-label");
 
-  appendMessage(message, 'right');
-  input.value = '';
-  input.disabled = true;
-  sendButton.disabled = true;
-  sendLabel.textContent = 'Sending…';
-  document.getElementById("messages").setAttribute('aria-busy', 'true');
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const message = input.value.trim();
+    if (!message) return;
 
-  try {
-    const chatbotResponse = await sendMessage(message);
-    appendMessage(chatbotResponse.message, 'left', chatbotResponse.emergency);
-    appendSources(chatbotResponse.sources);
-  } finally {
-    input.disabled = false;
-    sendButton.disabled = false;
-    sendLabel.textContent = 'Send';
-    document.getElementById("messages").setAttribute('aria-busy', 'false');
-    input.focus();
-  }
-});
+    appendMessage(message, "right");
+    input.value = "";
+    input.disabled = true;
+    sendButton.disabled = true;
+    sendLabel.textContent = "Analyzing…";
+    document.getElementById("messages").setAttribute("aria-busy", "true");
 
-const appendMessage = (message, position, emergency = false) => {
-  const messages = document.getElementById("messages");
-  const messageElement = document.createElement("div");
-
-  // Create message text element
-  const textElement = document.createElement("span");
-  textElement.innerText = message;
-
-  // Apply classes based on the position (user's message or chatbot response)
-  const baseClasses = 'inline-block px-4 py-2 max-w-[75%] break-words rounded-lg shadow-md';
-  const leftClasses = emergency ? 'border border-red-300 bg-red-50 text-red-900' : 'bg-gray-300 text-gray-800';
-  const rightClasses = 'bg-blue-500 text-white'; // User's messages
-  textElement.className = `${baseClasses} ${position === 'right' ? rightClasses : leftClasses}`;
-
-  messageElement.className = `flex ${position === 'right' ? 'justify-end' : 'justify-start'} mb-2`;
-  messageElement.appendChild(textElement);
-
-  // Append message to the chat
-  messages.append(messageElement);
-
-  // Auto-scroll to the bottom
-  messages.scrollTop = messages.scrollHeight;
-};
-
-const appendSources = (sources) => {
-  if (!sources.length) return;
-  const messages = document.getElementById("messages");
-  const sourceElement = document.createElement("div");
-  const label = document.createElement("span");
-  label.className = "mr-2 font-semibold text-gray-700";
-  label.textContent = "Health resources:";
-  sourceElement.className = "flex flex-wrap items-center gap-2 text-xs text-blue-700";
-  sourceElement.appendChild(label);
-
-  sources.forEach((source) => {
-    if (!source || !source.label || !source.url) return;
-    const link = document.createElement("a");
-    link.href = source.url;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    link.className = "underline hover:text-blue-900";
-    link.textContent = source.label;
-    sourceElement.appendChild(link);
+    try {
+      const chatbotResponse = await sendMessage(message);
+      appendMessage(chatbotResponse.message, "left", chatbotResponse.emergency);
+      appendSources(chatbotResponse.sources);
+    } finally {
+      input.disabled = false;
+      sendButton.disabled = false;
+      sendLabel.textContent = "Send";
+      document.getElementById("messages").setAttribute("aria-busy", "false");
+      input.focus();
+    }
   });
-  messages.append(sourceElement);
-  messages.scrollTop = messages.scrollHeight;
-};
 
+  const appendMessage = (message, position, emergency = false) => {
+    const messages = document.getElementById("messages");
+    const container = document.createElement("div");
+
+    if (position === "right") {
+      container.className = "flex justify-end";
+      container.innerHTML = `
+        <div class="max-w-[85%] rounded-2xl bg-primary px-5 py-3.5 text-xs sm:text-sm text-white shadow-md">
+          ${escapeHtml(message)}
+        </div>
+      `;
+    } else {
+      container.className = "flex items-start gap-3";
+      const emergencyClass = emergency
+        ? "border-2 border-rose-300 bg-rose-50 text-rose-950 font-medium"
+        : "border border-slate-200 bg-white text-slate-800";
+      container.innerHTML = `
+        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${emergency ? 'bg-rose-600' : 'bg-primary'} text-white text-xs font-bold shadow-sm">
+          ${emergency ? '🚨' : 'AI'}
+        </div>
+        <div class="max-w-[85%] rounded-2xl ${emergencyClass} p-4 text-xs sm:text-sm shadow-sm leading-relaxed">
+          ${escapeHtml(message)}
+        </div>
+      `;
+    }
+
+    messages.appendChild(container);
+    messages.scrollTop = messages.scrollHeight;
+  };
+
+  const appendSources = (sources) => {
+    if (!sources || !sources.length) return;
+    const messages = document.getElementById("messages");
+    const sourceElement = document.createElement("div");
+    sourceElement.className = "ml-11 flex flex-wrap items-center gap-2 text-xs text-primary font-medium";
+
+    const label = document.createElement("span");
+    label.className = "text-slate-500 font-semibold";
+    label.textContent = "Clinical Resources:";
+    sourceElement.appendChild(label);
+
+    sources.forEach((source) => {
+      if (!source || !source.label || !source.url) return;
+      const link = document.createElement("a");
+      link.href = source.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.className = "rounded-md bg-indigo-50 px-2 py-1 text-primary hover:bg-indigo-100 transition underline";
+      link.textContent = source.label;
+      sourceElement.appendChild(link);
+    });
+
+    messages.appendChild(sourceElement);
+    messages.scrollTop = messages.scrollHeight;
+  };
+
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  // Quick Chips Click Handlers
+  document.querySelectorAll(".quick-chip").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      input.value = chip.textContent.trim();
+      form.requestSubmit();
+    });
+  });
 </script>
-<%- include('bottom') %>
+
+<%- include('partials/page-end') %>

@@ -1,7 +1,8 @@
+const path = require("path");
+require("dotenv").config({ path: path.resolve(__dirname, ".env") });
 require("dotenv").config();
 const { assertRuntimeConfig } = require("./services/runtime-config");
 assertRuntimeConfig();
-const path = require("path");
 const express = require("express");
 const http = require("http");
 const mongoose = require("mongoose");
@@ -25,7 +26,7 @@ app.set("trust proxy", 1);
 // Keep compatibility with the project's existing .env keys while supporting
 // conventional uppercase deployment variables.
 const PORT = process.env.PORT || process.env.port || 8000;
-const DATABASE_URL = process.env.DATABASE_URL || process.env.database_url;
+const DATABASE_URL = process.env.DATABASE_URL || process.env.database_url || (process.env.NODE_ENV !== "production" ? "mongodb://localhost:27017/birlasoft2" : undefined);
 
 mongoose
   .connect(DATABASE_URL)
@@ -172,25 +173,11 @@ app.post("/clearapp/:id", restrictTo(["ADMIN", "NORMAL"]), async (req, res) => {
       time: slotTime,
       doctorName: appointment.doctor,
     }).catch((notificationError) => console.error("Waitlist notification failed after cancellation:", notificationError));
-    const token = req.cookies.token;
-    const decoded = validatetoken(token);
-    const patientdata = await User.findById(decoded._id).select("-password");
-    const appointments = await Appointment.find({ userid: decoded._id }).sort({
-      date: -1,
-    });
 
-    patientdata.appointments = appointments.map((appointment) => ({
-      ...appointment.toObject(),
-      formattedDate: new Intl.DateTimeFormat("en-IN", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      }).format(new Date(appointment.date)),
-    }));
-    res.render("myAppointment", { user: req.user, patientdata });
+    if (req.xhr || req.headers.accept?.includes("application/json") || req.get("x-csrf-token")) {
+      return res.json({ success: true, message: "Appointment cancelled successfully." });
+    }
+    return res.redirect("/my-appointment");
   } catch (error) {
     console.error(error);
     res.status(500).send("server error");

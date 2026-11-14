@@ -1,22 +1,38 @@
-<div class="flex flex-col items-center px-6 my-20 rounded-lg md:flex-row bg-primary sm:px-10 md:px-14 lg:px-12 md:mx-10">
-  <!-- Left Side -->
-  <div class="flex-1 py-8 sm:py-10 md:py-16 lg:py-24">
-    <div class="text-xl font-semibold text-white sm:text-2xl md:text-3xl lg:text-5xl">
-      <p>Book Appointment</p>
-      <p class="mt-4">With 100+ Trusted Doctors</p>
-    </div>
-    <button 
-      onclick="window.location.href='/login'" 
-      class="px-8 py-3 mt-6 text-sm text-gray-600 transition-all bg-white rounded-full sm:text-base hover:scale-105">
-      Create Account
-    </button>
-  </div>
+<!-- Call To Action Banner -->
+<div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-900 via-primary to-slate-900 p-8 sm:p-12 lg:p-16 text-white shadow-2xl my-16">
+  <div class="pointer-events-none absolute -right-20 -bottom-20 h-72 w-72 rounded-full bg-white/10 blur-2xl" aria-hidden="true"></div>
 
-  <!-- Right Side -->
-  <div class="relative flex justify-center items-center md:w-[250px] lg:w-[250px]">
-    <img 
-      class="object-contain w-full max-w-[200px] lg:max-w-[250px]" 
-      src="/assets/onelife-clinician-generated.png"
-      alt="Clinician ready to help with an appointment" />
+  <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+    <div class="max-w-xl text-center md:text-left space-y-4">
+      <span class="inline-block rounded-full bg-white/20 px-3.5 py-1 text-xs font-semibold backdrop-blur-md">Instant Virtual &amp; In-Person Care</span>
+      <h2 class="text-2xl sm:text-4xl font-extrabold tracking-tight">Ready to Schedule Your Appointment?</h2>
+      <p class="text-sm sm:text-base text-indigo-100 font-light">Join over 10,000 satisfied patients who trust OneLife for their medical consultations, diagnostics, and continuous health records.</p>
+      
+      <div class="pt-2 flex flex-wrap items-center justify-center md:justify-start gap-3">
+        <a
+          href="/register"
+          class="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 text-xs sm:text-sm font-bold text-slate-900 shadow-lg transition duration-300 hover:bg-slate-100 hover:scale-105"
+        >
+          <span>Create Free Account</span>
+          <span aria-hidden="true">&rarr;</span>
+        </a>
+        <a
+          href="/doctors"
+          class="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 text-xs sm:text-sm font-semibold text-white backdrop-blur-md transition duration-300 hover:bg-white/20 hover:scale-105"
+        >
+          <span>Explore Clinicians</span>
+        </a>
+      </div>
+    </div>
+
+    <div class="relative flex justify-center items-center">
+      <div class="relative h-56 w-56 sm:h-64 sm:w-64 overflow-hidden rounded-2xl border-2 border-white/20 bg-white/5 backdrop-blur-sm shadow-xl">
+        <img
+          class="h-full w-full object-cover object-top"
+          src="/assets/onelife-clinician-generated.png"
+          alt="OneLife Clinician ready to assist you"
+        />
+      </div>
+    </div>
   </div>
 </div>

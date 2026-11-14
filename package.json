@@ -1,0 +1,25 @@
+{
+  "name": "onelife-hospital-management-suite",
+  "version": "2.0.0",
+  "description": "OneLife - Commercial-Ready Hospital Management & Telehealth Platform",
+  "main": "backend/index.js",
+  "scripts": {
+    "start": "node backend/index.js",
+    "dev": "node --watch backend/index.js",
+    "test": "node --test backend/test/*.test.js",
+    "build:css": "npm --prefix frontend/patient run build:css",
+    "watch:css": "npm --prefix frontend/patient run watch:css",
+    "verify": "node backend/test/verify-static.cjs && node --test backend/test/*.test.js"
+  },
+  "keywords": [
+    "hospital-management",
+    "telehealth",
+    "doctor-appointment",
+    "healthcare-crm",
+    "razorpay",
+    "jitsi-meet",
+    "medical-portal"
+  ],
+  "author": "OneLife Technologies",
+  "license": "Commercial"
+}

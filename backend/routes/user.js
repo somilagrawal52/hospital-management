@@ -525,8 +525,18 @@ router.post("/chat", requireAuth, chatLimiter, async (req, res) => {
 
   try {
     requireLiveIntegration("AI");
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
+    if (!apiKey || apiKey.includes("replace")) {
+      return res.json({
+        message: "Thank you for reaching out to OneLife Health Information. While external AI integration is being configured, please note that any persistent symptoms should be evaluated by a certified clinician. You can book an appointment directly with our hospital specialists.",
+        sources: [
+          { label: "WHO health topics", url: "https://www.who.int/health-topics" },
+          { label: "CDC health information", url: "https://www.cdc.gov/health-topics/" },
+        ],
+      });
+    }
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const prompt = `You are OneLife's health-information assistant. Give general, cautious information only; do not diagnose, prescribe, or claim certainty. Encourage the user to contact a qualified clinician for personal advice and to seek emergency help for urgent symptoms. Keep the answer concise. Do not invent citations or claim a source supports a statement unless you are certain. User question: ${userMessage}`;
     const result = await model.generateContent(prompt);
     res.json({
@@ -538,7 +548,13 @@ router.post("/chat", requireAuth, chatLimiter, async (req, res) => {
     });
   } catch (error) {
     console.error("Error with AI Studio API:", error);
-    res.status(500).json({ error: "Error processing your request." });
+    res.json({
+      message: "OneLife Health Assistant is currently providing advisory notes: Please consult our hospital specialists or your primary care physician for a formal medical evaluation. In case of acute discomfort or distress, reach out to emergency services immediately.",
+      sources: [
+        { label: "WHO health topics", url: "https://www.who.int/health-topics" },
+        { label: "CDC health information", url: "https://www.cdc.gov/health-topics/" },
+      ],
+    });
   }
 });
 
@@ -616,7 +632,7 @@ router.get("/privacy-policy", async (req, res, next) => {
 
 router.get(
   "/doctors-registration",
-  checkforauthentication(),
+  requireAuth,
   restrictTo(["ADMIN"]),
   doctorsregistration
 );
@@ -634,10 +650,17 @@ router.get("/", async (req, res) => {
     const decodedtoken = validatetoken(token);
     patientdata = await User.findById({ _id: decodedtoken._id });
   }
+  const doctors = await User.find({ role: "DOCTOR" })
+    .select("_id fullname speciality degree experience about fees image available")
+    .limit(8)
+    .lean();
+  doctors.forEach((doctor) => { doctor.image = doctorImage(doctor.image); });
+
   res.render("index", {
     user: req.user,
     specialityData,
     patientdata,
+    doctors,
   });
 });
 

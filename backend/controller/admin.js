@@ -1,6 +1,7 @@
 const User = require("../models/user");
 const Message = require("../models/messages");
 const SupportThread = require("../models/support-thread");
+const mongoose = require("mongoose");
 const path = require("path");
 const { cookieOptions } = require("../services/auth");
 
@@ -66,7 +67,7 @@ async function updateSupportThread(req, res) {
     }
     if (["normal", "high", "urgent"].includes(priority)) thread.priority = priority;
     if (assignedTo === "") thread.assignedTo = null;
-    else if (assignedTo) thread.assignedTo = assignedTo;
+    else if (assignedTo && mongoose.isValidObjectId(assignedTo)) thread.assignedTo = assignedTo;
     if (String(reply || "").trim()) {
       thread.messages.push({ senderId: req.user._id, senderRole: "ADMIN", body: reply.trim() });
       thread.firstResponseAt ||= new Date();

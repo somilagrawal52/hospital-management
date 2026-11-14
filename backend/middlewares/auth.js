@@ -1,7 +1,7 @@
 const { validatetoken } = require("../services/auth");
-function checkforauthentication(cookieName) {
+function checkforauthentication(cookieName = "token") {
   return (req, res, next) => {
-    const tokencookievalue = req.cookies[cookieName];
+    const tokencookievalue = req.cookies?.[cookieName];
     if (!tokencookievalue) {
       return next();
     }
@@ -20,6 +20,11 @@ function checkforauthentication(cookieName) {
 
 function requireAuth(req, res, next) {
   if (!req.user) {
+    if (req.accepts && req.accepts("html") && !req.xhr && !req.headers?.["x-requested-with"] && !req.headers?.["content-type"]?.includes("application/json") && req.method === "GET") {
+      if (req.originalUrl.startsWith("/admin")) return res.redirect("/admin/login");
+      if (req.originalUrl.startsWith("/doctor")) return res.redirect("/doctorlogin");
+      return res.redirect("/login");
+    }
     return res.status(401).json({ success: false, message: "Please sign in to continue." });
   }
   return next();
@@ -34,7 +39,7 @@ function restrictTo(roles = []) {
       } else if (req.originalUrl.startsWith("/doctor")) {
         return res.redirect("/doctorlogin");
       } else {
-        return res.redirect("/admin/login");
+        return res.redirect("/login");
       }
     }
 

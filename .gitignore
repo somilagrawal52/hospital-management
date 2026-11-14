@@ -1,3 +1,5 @@
 .env
 node_modules
 invoices
+audit-reports
+docs
