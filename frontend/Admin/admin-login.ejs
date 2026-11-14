@@ -39,6 +39,15 @@
             <p>Use your administrator email and password to continue.</p>
           </div>
 
+          <div style="background: #eef6f8; border: 1px solid #c8dfe4; border-radius: 0.65rem; padding: 0.75rem 0.9rem; margin-bottom: 1.2rem; font-size: 0.82rem; color: #16404d;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.3rem;">
+              <strong>⚡ Commercial Demo Access</strong>
+              <span style="font-size: 0.72rem; background: #0f6d79; color: white; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 600;">Evaluator</span>
+            </div>
+            <p style="margin: 0 0 0.5rem 0; font-size: 0.78rem; opacity: 0.9;">Click to automatically fill administrator credentials for evaluation:</p>
+            <button type="button" id="fill-admin-demo" style="background: white; border: 1px solid #9bbec7; border-radius: 0.4rem; padding: 0.35rem 0.7rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; color: #0f6d79;">Fill Admin Account (somilagrawal2004@gmail.com)</button>
+          </div>
+
           <% if (error) { %>
             <div class="server-error" role="alert"><%= error %></div>
           <% } %>
@@ -90,6 +99,12 @@
             form.classList.add('was-validated');
             form.querySelector(':invalid').focus();
           }
+        });
+
+        document.getElementById('fill-admin-demo')?.addEventListener('click', function() {
+          document.getElementById('email').value = 'somilagrawal2004@gmail.com';
+          document.getElementById('password').value = 'admin123';
+          document.getElementById('password').focus();
         });
       })();
     </script>

@@ -10,8 +10,51 @@
         <div><h1 id="doctor-login-heading">Care starts with a well-prepared team.</h1><p>Access your schedule, online requests, and patient appointments from the clinician workspace.</p></div>
         <small>OneLife Hospital · Clinician access only</small>
       </section>
-      <section class="doctor-login-panel" aria-label="Doctor sign in"><div class="doctor-login-card"><h2>Sign in to your workspace</h2><p>Use the email and password assigned to your clinician account.</p><% if (error) { %><div class="doctor-login-error" role="alert"><%= error %></div><% } %><form id="doctor-login-form" action="/doctorlogin" method="post" novalidate><input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" /><div class="doctor-login-field"><label for="email">Email address</label><input id="email" type="email" name="email" autocomplete="email" value="<%= email || '' %>" required /><p class="doctor-login-help">Enter a valid email address.</p></div><div class="doctor-login-field"><label for="password">Password</label><input id="password" type="password" name="password" autocomplete="current-password" required /><p class="doctor-login-help">Enter your password.</p></div><button class="doctor-login-submit" type="submit">Sign in securely</button></form></div></section>
+      <section class="doctor-login-panel" aria-label="Doctor sign in">
+        <div class="doctor-login-card">
+          <h2>Sign in to your workspace</h2>
+          <p>Use the email and password assigned to your clinician account.</p>
+
+          <div style="background: #eaf4f3; border: 1px solid #bce1dd; border-radius: 0.65rem; padding: 0.75rem 0.9rem; margin-bottom: 1.2rem; font-size: 0.82rem; color: #0e4c54;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.3rem;">
+              <strong>⚡ Commercial Demo Access</strong>
+              <span style="font-size: 0.72rem; background: #0d6873; color: white; padding: 0.1rem 0.4rem; border-radius: 4px; font-weight: 600;">Clinician</span>
+            </div>
+            <p style="margin: 0 0 0.5rem 0; font-size: 0.78rem; opacity: 0.9;">Click to automatically fill doctor credentials for evaluation:</p>
+            <button type="button" id="fill-doctor-demo" style="background: white; border: 1px solid #84c0b9; border-radius: 0.4rem; padding: 0.35rem 0.7rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; color: #0d6873;">Fill Doctor Account (agrawalsomil67@gmail.com)</button>
+          </div>
+
+          <% if (error) { %><div class="doctor-login-error" role="alert"><%= error %></div><% } %>
+          <form id="doctor-login-form" action="/doctorlogin" method="post" novalidate>
+            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+            <div class="doctor-login-field">
+              <label for="email">Email address</label>
+              <input id="email" type="email" name="email" autocomplete="email" value="<%= email || '' %>" required />
+              <p class="doctor-login-help">Enter a valid email address.</p>
+            </div>
+            <div class="doctor-login-field">
+              <label for="password">Password</label>
+              <input id="password" type="password" name="password" autocomplete="current-password" required />
+              <p class="doctor-login-help">Enter your password.</p>
+            </div>
+            <button class="doctor-login-submit" type="submit">Sign in securely</button>
+          </form>
+        </div>
+      </section>
     </main>
-    <script>document.getElementById('doctor-login-form').addEventListener('submit', function (event) { if (!this.checkValidity()) { event.preventDefault(); this.classList.add('was-validated'); this.querySelector(':invalid').focus(); } });</script>
+    <script>
+      document.getElementById('doctor-login-form').addEventListener('submit', function (event) {
+        if (!this.checkValidity()) {
+          event.preventDefault();
+          this.classList.add('was-validated');
+          this.querySelector(':invalid').focus();
+        }
+      });
+      document.getElementById('fill-doctor-demo')?.addEventListener('click', function() {
+        document.getElementById('email').value = 'agrawalsomil67@gmail.com';
+        document.getElementById('password').value = 'doctor123';
+        document.getElementById('password').focus();
+      });
+    </script>
   </body>
 </html>

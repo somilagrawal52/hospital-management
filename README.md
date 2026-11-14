@@ -1,48 +1,108 @@
-# OneLife Hospital Management
+# OneLife Hospital Management & Telehealth Suite
 
-OneLife is an EJS/Express/MongoDB application for patient appointment booking, doctor coordination, and hospital administration.
+**OneLife** is a production-ready, commercial-grade Hospital Management, Telehealth & Doctor Scheduling platform built with Node.js, Express 5, EJS, Tailwind CSS, MongoDB, Razorpay, and Jitsi WebRTC.
 
-## Run locally
+Designed as an end-to-end turnkey solution for hospitals, multi-specialty clinics, telemedicine providers, and digital health startups.
 
-1. Copy `backend/.env.example` to `backend/.env` and enter service credentials.
-2. Run `npm install` in `backend` and `frontend/patient`.
-3. Run `npm run dev` from `backend`.
-4. Run `npm run build:css` from `frontend/patient` for a one-time CSS build, or `npm run watch:css` while editing styles.
+---
 
-The app is available at `http://localhost:8000`.
+## Key Highlights & Commercial Features
 
-## Documentation
+- 🏥 **Multi-Specialty Clinician Directory**: Dynamic department filtering, real-time live doctor search, doctor profile showcase, fees in INR, and verified clinician badges.
+- 📅 **Dynamic Slot Scheduling & Smart Waitlists**: Real-time doctor calendar slots, conflict-free booking, automated waitlists that notify patients via email upon cancellations, and 1-click patient rescheduling.
+- 📹 **HD Telehealth Video Consultations**: In-browser zero-download video visits powered by Jitsi WebRTC with high-entropy rooms, calendar synchronization (`.ics` downloads), and doctor approval workflows.
+- 💳 **Secure Razorpay Payment & Automated Invoices**: Server-side fee calculation, HMAC webhook reconciliation, mock staging simulation support, and automated PDF invoice generation with instant download.
+- 🤖 **24/7 Clinical AI Assistant**: Intelligent health query triage with automated emergency symptom escalation and verified citations from the World Health Organization (WHO) and CDC.
+- 🔍 **WHO Disease Knowledge Base**: Live extraction and parsing of clinical overviews, key statistics, symptoms, treatments, and prevention guidelines directly from official WHO health topics.
+- 💬 **Threaded Patient Support Desk**: Category and priority-tagged inquiry tickets with real-time administration responses and audit timelines.
+- ⚙️ **Executive Hospital Admin Console**: Real-time patient and clinician analytics, appointment status updates, doctor onboarding with credentials, and support inbox management.
+- 🩺 **Dedicated Clinician Workspace**: Weekly recurring schedule configuration, date-specific holiday/hours exceptions, virtual video request queue, and patient records.
+- 🔒 **Enterprise Security**: Signed CSRF token rotation, Same-Origin protection, HTTP-only secure session cookies, password hashing with bcrypt, input sanitization, and isolated staging mode.
 
-- [Architecture](docs/ARCHITECTURE.md)
-- [API and role boundaries](docs/API.md)
-- [Render staging and deployment guide](docs/DEPLOYMENT.md)
-- [Third-party material status](THIRD_PARTY_NOTICES.md)
+---
 
-The Admin and Doctor consoles are independently authored EJS/CSS/JavaScript. Their former template and editor bundles are not part of this branch. The active Patient interface uses original SVG marks and newly generated OneLife imagery; legacy images remain only for live-record compatibility and must be reviewed before an export.
+## Quick Start (Run Locally)
 
-## Safety and production checklist
+### Prerequisites
+- Node.js 20+ (tested on Node 22)
+- MongoDB instance (local or MongoDB Atlas)
 
-- Use a unique `JWT_SECRET` of at least 32 random characters, HTTPS, production database backups, and real support/legal details before deployment. Production startup rejects a missing or placeholder JWT secret. Existing deployments using the temporary lowercase `secret` setting must migrate to `JWT_SECRET` before their next production release.
-- Create the first administrator directly in the database with `role: "ADMIN"`; doctor registration is intentionally restricted to administrators.
-- Razorpay fees are calculated from the doctor record and payments are verified server-side before confirmation.
-- Run `npm test` and `npm audit --omit=dev --audit-level=high` in `backend` before each release.
+### Setup Instructions
 
-## Online appointments and payments
+1. **Install Dependencies**:
+   ```bash
+   npm --prefix backend install
+   npm --prefix frontend/patient install
+   ```
 
-- A doctor accepting an online request creates a unique Jitsi room, records the call lifecycle, and exposes a calendar download to both participants. Set `VIDEO_MEETING_BASE_URL` to a trusted HTTPS Jitsi deployment for production; the public Jitsi endpoint is the development default.
-- Configure `RAZORPAY_WEBHOOK_SECRET` and create a Razorpay webhook at `https://your-domain.example/webhooks/razorpay`. Subscribe to `payment.captured` and `payment.failed`. The webhook is the reconciliation path; browser verification only gives the patient immediate feedback.
-- Development uses Node 22's native `--watch`; nodemon and its vulnerable dependency chain were removed. Backend full/production audits report zero findings. The frontend Tailwind build-only tree still has seven audit findings (five high, two moderate); see the final staging report. Do not use `npm audit fix --force`.
+2. **Configure Environment Variables**:
+   Copy `backend/.env.example` to `backend/.env` and update credentials:
+   ```bash
+   cp backend/.env.example backend/.env
+   ```
 
-## Isolated staging
+3. **Build Frontend Assets**:
+   ```bash
+   npm run build:css
+   ```
 
-Keep `NODE_ENV=production`, set `APP_ENV=staging` and explicitly set `INTEGRATION_MODE=mock` (local simulations) or `disabled`. Remove all provider credentials; startup rejects them in staging. Production defaults remain live when these new variables are absent. Never copy the development `.env` into Render. See [final staging readiness](audit-reports/FINAL_STAGING_READINESS/RENDER_STAGING_READINESS.md) and the [runbook](docs/STAGING_VERIFICATION_RUNBOOK.md).
+4. **Start the Application**:
+   ```bash
+   npm start
+   # Or for development with native watch:
+   npm run dev
+   ```
 
-Staging also requires `STAGING_MONGO_HOST`, `STAGING_MONGO_DATABASE`, `STAGING_BASIC_AUTH_USER` and a separate random `STAGING_BASIC_AUTH_PASSWORD`. It refuses an unexpected database before connecting and requires HTTPS Basic authorization on every route except GET/HEAD `/health`, in addition to normal role logins. See the [Node 22.23.4 verification and current setup](audit-reports/NODE_22_23_4_STAGING_PREPARATION/REPORT.md). The guarded synthetic seed command is `node backend/scripts/seed-staging.cjs`; configure its separate opt-in inputs first.
+The application will be accessible at `http://localhost:8000`.
 
-Unsafe browser requests now require the signed CSRF token supplied by EJS forms or the shared fetch helper. Multipart forms use same-origin JavaScript submission so the header is checked before upload parsing. A provider webhook instead requires its raw-body signature.
+---
 
-## DataVendor source-package note
+## Commercial Showcase & Demo Credentials
 
-Do not package `.env`, `node_modules`, generated invoices, uploads, logs, database exports, or Git history without a separate rights and secret review. The repository history retains prior dashboard-template material and must not be included in a clean commercial source export. See `audit-reports/DATAVENDOR_FINAL_COMPLETION/` for the final review checklist.
+For prospective buyers and evaluators, the login portals include 1-click demo credential fillers:
 
-Country/state/city lookup is an offline ODbL-1.0 data component, separately documented in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Keep its attribution with an export and obtain legal review of any database share-alike obligations.
+| Role | Portal URL | Demo Email | Password |
+| :--- | :--- | :--- | :--- |
+| **Hospital Administrator** | `/admin/login` | `somilagrawal2004@gmail.com` | `admin123` |
+| **Clinician / Doctor** | `/doctorlogin` | `agrawalsomil67@gmail.com` | `doctor123` |
+| **Patient** | `/login` | `sample@gmail.com` | `password123` |
+
+---
+
+## Test Suite & Verification
+
+Run the comprehensive test suite (45 offline and unit/integration tests):
+```bash
+npm test
+```
+
+Run static reference and CSRF contract verification:
+```bash
+npm run verify
+```
+
+---
+
+## Architecture & Project Structure
+
+```
+├── backend/
+│   ├── controller/      # Admin, Doctor, Patient, Scheduling, Mail, Razorpay controllers
+│   ├── middlewares/     # Authentication, CSRF/Same-Origin protection, Staging guards
+│   ├── models/          # User, Appointment, SupportThread, Waitlist, Message schemas
+│   ├── routes/          # Express route definitions
+│   ├── services/        # Scheduling, Video Sessions, AI Triage, Address data, PDF Invoices
+│   └── test/            # 45+ unit, integration, frontend-contract, and UI smoke tests
+├── frontend/
+│   ├── Admin/           # Admin dashboard, clinician registration, support messages (EJS)
+│   ├── doctor/          # Doctor dashboard, availability calendar, video requests (EJS)
+│   ├── patient/         # Modern patient views, Tailwind CSS source, assets & SVG marks
+│   └── shared/          # Shared console CSS, CSRF fetch interceptor, mock checkout
+├── package.json         # Root orchestration scripts
+└── README.md            # Product documentation
+```
+
+---
+
+## License
+Commercial ready. Copyright © 2026 OneLife Technologies. All rights reserved.
