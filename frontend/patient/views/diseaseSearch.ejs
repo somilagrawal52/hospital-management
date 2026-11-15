@@ -3,53 +3,53 @@
 
 <div class="py-8 max-w-5xl mx-auto">
   <!-- Knowledge Base Header -->
-  <div class="text-center max-w-2xl mx-auto mb-10">
-    <span class="inline-block rounded-full bg-teal-50 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-teal-800">Global Health Knowledge</span>
-    <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 mt-2">OneLife Clinical Disease Guide</h1>
-    <p class="text-xs sm:text-sm text-slate-600 mt-2">Direct access to verified clinical health topics, symptoms, prevention, and treatments from the World Health Organization (WHO).</p>
-    <div class="mt-3 inline-block rounded-full bg-slate-100 px-3.5 py-1 text-[11px] text-slate-500 font-medium">
-      Educational reference only · Consult your physician for medical advice
+  <div class="text-center max-w-2xl mx-auto mb-12">
+    <span class="inline-block rounded-full bg-teal-50 border border-teal-100 px-4 py-1 text-xs font-bold uppercase tracking-wider text-teal-800 shadow-2xs">Global Health Knowledge</span>
+    <h1 class="text-2xl sm:text-4xl font-extrabold text-slate-900 mt-3 tracking-tight">OneLife Clinical Disease Guide</h1>
+    <p class="text-xs sm:text-sm text-slate-600 mt-2">Direct access to verified clinical health topics, symptoms, prevention guidelines, and treatments from the World Health Organization (WHO).</p>
+    <div class="mt-3.5 inline-block rounded-full bg-slate-100 px-3.5 py-1 text-[11px] text-slate-500 font-medium border border-slate-200/60">
+      Educational clinical reference only · Consult your physician for medical advice
     </div>
   </div>
 
   <!-- Search Card -->
-  <div class="rounded-3xl border border-slate-200 bg-white p-6 sm:p-10 shadow-lg">
-    <form class="search-form flex flex-col sm:flex-row gap-3" id="searchForm">
+  <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-10 shadow-xs">
+    <form class="search-form flex flex-col sm:flex-row gap-3.5" id="searchForm">
       <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
       <div class="relative flex-1">
         <input
           type="text"
-          class="search-input w-full rounded-2xl border border-slate-300 bg-slate-50 py-3.5 pl-11 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm"
+          class="search-input w-full rounded-2xl border border-slate-300 bg-slate-50/80 py-4 pl-12 pr-4 text-sm font-semibold text-slate-900 placeholder-slate-400 focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-2xs transition"
           id="diseaseInput"
           placeholder="Enter a condition or disease (e.g. malaria, diabetes, asthma, dengue, covid-19)"
           required
         />
-        <span class="absolute left-4 top-3.5 text-slate-400 text-base" aria-hidden="true">🔍</span>
+        <span class="absolute left-4.5 top-4 text-slate-400 text-lg" aria-hidden="true">🔍</span>
       </div>
       <button
         type="submit"
-        class="search-btn rounded-2xl bg-primary px-8 py-3.5 text-sm font-bold text-white shadow-md shadow-primary/25 hover:bg-indigo-600 hover:shadow-lg transition shrink-0"
+        class="search-btn rounded-2xl bg-gradient-to-r from-primary to-indigo-600 px-8 py-4 text-sm font-bold text-white shadow-md shadow-primary/25 hover:scale-[1.01] hover:shadow-glow-primary transition shrink-0"
       >
         Search WHO Database
       </button>
     </form>
 
     <!-- Example Tags -->
-    <div class="mt-5 flex flex-wrap items-center gap-2 text-xs">
-      <span class="font-bold text-slate-500">Popular topics:</span>
-      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition" data-disease="diabetes">Diabetes</button>
-      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition" data-disease="malaria">Malaria</button>
-      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition" data-disease="tuberculosis">Tuberculosis</button>
-      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition" data-disease="dengue">Dengue</button>
-      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition" data-disease="hepatitis">Hepatitis</button>
-      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition" data-disease="hypertension">Hypertension</button>
+    <div class="mt-6 flex flex-wrap items-center gap-2 text-xs">
+      <span class="font-bold text-slate-400 uppercase tracking-wider text-[11px]">Popular:</span>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="diabetes">Diabetes</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="malaria">Malaria</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="tuberculosis">Tuberculosis</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="dengue">Dengue</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="hepatitis">Hepatitis</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="hypertension">Hypertension</button>
     </div>
 
     <!-- Loading State -->
     <div class="loading hidden my-10 text-center" id="loading">
       <div class="spinner mx-auto mb-3"></div>
-      <p class="text-sm font-semibold text-slate-700">Querying World Health Organization health topics…</p>
-      <p class="text-xs text-slate-400 mt-1">Extracting clinical facts, symptoms, and prevention guidance.</p>
+      <p class="text-sm font-semibold text-slate-800">Querying World Health Organization health topics…</p>
+      <p class="text-xs text-slate-500 mt-1">Extracting clinical facts, symptoms, and prevention guidance.</p>
     </div>
 
     <!-- Error State -->
@@ -57,28 +57,28 @@
 
     <!-- Results Display -->
     <div class="results hidden mt-10 space-y-6" id="results">
-      <div class="disease-card rounded-2xl border border-slate-200 bg-slate-50/50 p-6 sm:p-8 space-y-6">
+      <div class="disease-card rounded-3xl border border-slate-200 bg-slate-50/60 p-6 sm:p-8 space-y-6">
         <div class="border-b border-slate-200 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <span class="text-[11px] font-bold uppercase tracking-wider text-primary">WHO Official Topic</span>
             <h2 class="disease-title text-2xl font-extrabold text-slate-900 mt-1 capitalize" id="diseaseTitle"></h2>
           </div>
-          <a href="/doctors" class="inline-flex items-center gap-1.5 rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-600 transition">
+          <a href="/doctors" class="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:bg-indigo-600 transition">
             <span>Consult a Specialist</span> &rarr;
           </a>
         </div>
 
         <!-- Overview -->
-        <div class="info-section rounded-2xl bg-white p-5 border border-slate-200 shadow-sm" id="introSection">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 mb-2 flex items-center gap-1.5">
+        <div class="info-section rounded-2xl bg-white p-6 border border-slate-200 shadow-xs" id="introSection">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900 mb-2.5 flex items-center gap-2">
             <span>📋</span> Overview
           </h4>
           <div class="info-content text-xs sm:text-sm text-slate-700 leading-relaxed" id="introContent"></div>
         </div>
 
         <!-- Key Facts -->
-        <div class="info-section rounded-2xl bg-white p-5 border border-slate-200 shadow-sm" id="factsSection">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-700 mb-2 flex items-center gap-1.5">
+        <div class="info-section rounded-2xl bg-white p-6 border border-slate-200 shadow-xs" id="factsSection">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-700 mb-2.5 flex items-center gap-2">
             <span>💡</span> Key Statistical Facts
           </h4>
           <ul class="info-list space-y-2 text-xs sm:text-sm text-slate-700" id="factsList"></ul>
@@ -86,16 +86,16 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Symptoms & Signs -->
-          <div class="info-section rounded-2xl bg-white p-5 border border-slate-200 shadow-sm" id="symptomsSection">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-rose-700 mb-2 flex items-center gap-1.5">
+          <div class="info-section rounded-2xl bg-white p-6 border border-slate-200 shadow-xs" id="symptomsSection">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-rose-700 mb-2.5 flex items-center gap-2">
               <span>🩺</span> Symptoms &amp; Clinical Signs
             </h4>
             <ul class="info-list space-y-2 text-xs sm:text-sm text-slate-700" id="symptomsList"></ul>
           </div>
 
           <!-- Treatment -->
-          <div class="info-section rounded-2xl bg-white p-5 border border-slate-200 shadow-sm" id="treatmentSection">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-2 flex items-center gap-1.5">
+          <div class="info-section rounded-2xl bg-white p-6 border border-slate-200 shadow-xs" id="treatmentSection">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-2.5 flex items-center gap-2">
               <span>💊</span> Treatment &amp; Therapies
             </h4>
             <ul class="info-list space-y-2 text-xs sm:text-sm text-slate-700" id="treatmentList"></ul>
@@ -103,8 +103,8 @@
         </div>
 
         <!-- Prevention -->
-        <div class="info-section rounded-2xl bg-white p-5 border border-slate-200 shadow-sm" id="preventionSection">
-          <h4 class="text-xs font-bold uppercase tracking-wider text-teal-700 mb-2 flex items-center gap-1.5">
+        <div class="info-section rounded-2xl bg-white p-6 border border-slate-200 shadow-xs" id="preventionSection">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-teal-700 mb-2.5 flex items-center gap-2">
             <span>🛡️</span> Prevention &amp; Control
           </h4>
           <ul class="info-list space-y-2 text-xs sm:text-sm text-slate-700" id="preventionList"></ul>
@@ -117,6 +117,9 @@
     </div>
   </div>
 </div>
+
+<script src="/assets/disease-search-page.js"></script>
+<%- include('partials/page-end') %>
 
 <script src="/assets/disease-search-page.js"></script>
 <%- include('partials/page-end') %>

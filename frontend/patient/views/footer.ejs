@@ -1,27 +1,38 @@
-<footer class="mt-20 border-t border-slate-200 bg-slate-50/70 pt-14 pb-8 text-sm text-slate-600">
+<footer class="mt-24 border-t border-slate-200/90 bg-white pt-16 pb-10 text-sm text-slate-600">
   <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-slate-200">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-14 border-b border-slate-200">
       <!-- Col 1: Brand & Mission -->
       <div class="lg:col-span-2 space-y-4">
-        <a href="/" class="flex items-center gap-2.5 text-primary" aria-label="OneLife Home">
-          <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white shadow-md">
-            <img class="h-5 w-5 brightness-0 invert" src="/assets/onelife-mark.svg" alt="" />
+        <a href="/" class="flex items-center gap-3 transition" aria-label="OneLife Home">
+          <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary via-indigo-600 to-teal-500 text-white shadow-md shadow-primary/25">
+            <img class="h-6 w-6 brightness-0 invert" src="/assets/onelife-mark.svg" alt="" />
           </div>
-          <span class="text-2xl font-bold tracking-tight text-slate-900">OneLife</span>
+          <div>
+            <span class="text-2xl font-extrabold tracking-tight text-slate-900">OneLife</span>
+            <span class="block text-[10px] font-bold uppercase tracking-wider text-primary">Healthcare &amp; Diagnostics</span>
+          </div>
         </a>
         <p class="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-sm">
-          OneLife is a full-featured hospital management and digital care coordination platform. Connect with trusted clinicians, schedule in-clinic appointments, and access virtual telehealth with ease.
+          OneLife is an enterprise-grade hospital management and digital care coordination platform. Connect with trusted clinicians, schedule in-clinic appointments, and access virtual telehealth with ease.
         </p>
-        <div class="flex items-center gap-2 text-xs text-slate-500 pt-1">
-          <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
-          <span>ISO 27001 Security Ready · Jitsi HD Video Encryption</span>
+        <div class="flex flex-wrap items-center gap-2 pt-2 text-[11px] font-semibold text-slate-500">
+          <span class="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-emerald-800 border border-emerald-200/60">
+            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+            ISO 27001 Ready
+          </span>
+          <span class="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-0.5 text-primary border border-indigo-200/60">
+            <span>📹</span> Jitsi HD WebRTC
+          </span>
+          <span class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-slate-700 border border-slate-200">
+            <span>💳</span> Razorpay Verified
+          </span>
         </div>
       </div>
 
       <!-- Col 2: Clinical Services -->
       <div>
         <p class="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">Clinical Services</p>
-        <ul class="space-y-2 text-xs sm:text-sm">
+        <ul class="space-y-2.5 text-xs sm:text-sm font-medium">
           <li><a class="hover:text-primary transition" href="/doctors">Find Clinicians</a></li>
           <li><a class="hover:text-primary transition" href="/disease">WHO Disease Checker</a></li>
           <li><a class="hover:text-primary transition" href="/chats">AI Health Assistant</a></li>
@@ -33,26 +44,32 @@
 
       <!-- Col 3: Portals & Account -->
       <div>
-        <p class="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">Patient &amp; Staff Portals</p>
-        <ul class="space-y-2 text-xs sm:text-sm">
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">Portals &amp; Access</p>
+        <ul class="space-y-2.5 text-xs sm:text-sm font-medium">
           <li><a class="hover:text-primary transition" href="/login">Patient Sign In</a></li>
           <li><a class="hover:text-primary transition" href="/register">Create Account</a></li>
           <li><a class="hover:text-primary transition" href="/my-appointment">My Appointments</a></li>
           <li><a class="hover:text-primary transition" href="/messages">Support Tickets</a></li>
-          <li><a class="hover:text-emerald-700 font-medium transition" href="/doctorlogin">Doctor Workspace</a></li>
-          <li><a class="hover:text-indigo-700 font-medium transition" href="/admin/login">Hospital Admin Portal</a></li>
+          <li><a class="text-emerald-700 font-bold hover:underline transition" href="/doctorlogin">Doctor Workspace &rarr;</a></li>
+          <li><a class="text-primary font-bold hover:underline transition" href="/admin/login">Admin Console &rarr;</a></li>
         </ul>
       </div>
 
       <!-- Col 4: Contact & Help -->
       <div>
         <p class="text-xs font-bold uppercase tracking-wider text-slate-900 mb-4">Emergency &amp; Help</p>
-        <ul class="space-y-2 text-xs sm:text-sm">
-          <li><span class="text-xs text-slate-500 block">Emergency Helpline:</span><a class="font-bold text-slate-900 hover:text-primary" href="tel:+919399304021">+91 93993 04021</a></li>
-          <li><span class="text-xs text-slate-500 block">Medical Support:</span><a class="font-medium text-slate-900 hover:text-primary" href="mailto:support@onelife.health">support@onelife.health</a></li>
-          <li class="pt-2"><a class="hover:text-primary transition" href="/about">About OneLife</a></li>
-          <li><a class="hover:text-primary transition" href="/contact">Contact Hospital</a></li>
-          <li><a class="hover:text-primary transition" href="/privacy-policy">Privacy &amp; Data Policy</a></li>
+        <ul class="space-y-2.5 text-xs sm:text-sm">
+          <li>
+            <span class="text-xs text-slate-400 block font-semibold">24/7 Helpline:</span>
+            <a class="font-bold text-slate-900 hover:text-primary tracking-wide" href="tel:+919399304021">+91 93993 04021</a>
+          </li>
+          <li>
+            <span class="text-xs text-slate-400 block font-semibold">Medical Support:</span>
+            <a class="font-medium text-slate-900 hover:text-primary" href="mailto:support@onelife.health">support@onelife.health</a>
+          </li>
+          <li class="pt-2"><a class="hover:text-primary transition font-medium" href="/about">About OneLife</a></li>
+          <li><a class="hover:text-primary transition font-medium" href="/contact">Contact Hospital</a></li>
+          <li><a class="hover:text-primary transition font-medium" href="/privacy-policy">Privacy &amp; Data Policy</a></li>
         </ul>
       </div>
     </div>
@@ -60,8 +77,8 @@
     <!-- Bottom Copyright & Compliance Strip -->
     <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
       <p>&copy; 2026 OneLife Hospital Management Suite. All rights reserved.</p>
-      <p class="text-center sm:text-right">
-        Notice: Educational and scheduling services only. In life-threatening emergencies, call 112 / 911 immediately.
+      <p class="text-center sm:text-right font-medium">
+        Notice: Educational and scheduling services only. In acute life-threatening emergencies, call 112 / 911 immediately.
       </p>
     </div>
   </div>

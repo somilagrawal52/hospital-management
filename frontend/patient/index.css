@@ -1,17 +1,88 @@
-/* Ensure Tailwind CSS is installed and configured correctly */
+/* OneLife Enterprise Healthcare Theme */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html {
+    font-family: 'Plus Jakarta Sans', Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+    color: #0f172a;
+    background-color: #f8fafc;
+  }
+}
+
 .active hr {
     display: block;
 }
-  
-::-webkit-scrollbar{
-    display: none;
+
+/* Slim Modern Scrollbars */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.7);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.6);
+  border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.8);
 }
 
-body {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+/* Glassmorphism & Elevated Accents */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.glass-panel-dark {
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.subtle-mesh-bg {
+  background-color: #0b1120;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.22) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(13, 148, 136, 0.2) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(99, 102, 241, 0.18) 0px, transparent 50%);
+}
+
+.card-shine-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-shine-effect::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    60deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transform: rotate(30deg);
+  transition: transform 0.8s ease;
+  pointer-events: none;
+}
+
+.card-shine-effect:hover::after {
+  transform: rotate(30deg) translate(20%, 20%);
+}
