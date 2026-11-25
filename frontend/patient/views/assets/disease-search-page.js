@@ -64,6 +64,15 @@ function displayResults(data) {
   toggleSection('treatmentSection', data.treatment);
   toggleSection('preventionSection', data.prevention);
 
+  const consultBtn = document.getElementById('consultSpecialistBtn');
+  const consultLabel = document.getElementById('consultSpecialistLabel');
+  if (consultBtn) {
+    consultBtn.href = data.speciality ? `/doctors/${encodeURIComponent(data.speciality)}` : '/doctors';
+  }
+  if (consultLabel) {
+    consultLabel.textContent = data.speciality ? `Consult a ${data.speciality}` : 'Consult a Specialist';
+  }
+
   setDisplay(resultsState, true);
 }
 

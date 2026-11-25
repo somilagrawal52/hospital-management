@@ -1,0 +1,297 @@
+<%- include('partials/head', { pageTitle: 'Clinical Consultation & e-Prescription | OneLife' }) %>
+<%- include('partials/header', { doctor, brandLabel: 'Clinician workspace', showMessagesLink: true }) %>
+
+<main id="main-content" class="console-main">
+  <header class="console-page-heading">
+    <div>
+      <p class="console-eyebrow">Clinical consultation · Token #<%= appointment.queueToken || '—' %></p>
+      <h1><%= appointment.patientMember?.fullname || appointment.fullname %></h1>
+      <p>
+        <%= formattedDate %> ·
+        <strong><%= appointment.visitMode === 'telehealth' || appointment.isOnline ? 'HD Telehealth' : appointment.visitMode === 'walk_in' ? 'Walk-In OPD' : 'In-Clinic OPD' %></strong>
+        <% if (appointment.patientMember?.relation && appointment.patientMember.relation !== 'Self') { %>
+          · Caregiver Booking (<%= appointment.patientMember.relation %> of <%= appointment.fullname %>)
+        <% } %>
+      </p>
+    </div>
+    <div class="console-inline">
+      <% if (prescription) { %>
+        <a class="console-button console-button--quiet" href="/prescriptions/<%= prescription._id %>/pdf">Download e-Prescription PDF</a>
+      <% } %>
+      <a class="console-button console-button--quiet" href="/doctor">Back to dashboard</a>
+    </div>
+  </header>
+
+  <% const allergyWarning = appointment.intake?.allergies || patientAccount?.allergies || prescription?.allergiesAlert || ''; %>
+  <% if (allergyWarning) { %>
+    <div class="console-alert" style="margin-bottom: 1.2rem" role="alert">
+      <strong>Allergy Alert:</strong> <%= allergyWarning %>
+    </div>
+  <% } %>
+
+  <section class="console-grid console-grid--wide">
+    <!-- Left Column: Clinical e-Prescription Form -->
+    <div class="console-stack">
+      <article class="console-panel">
+        <div class="console-panel__header">
+          <div>
+            <h2><%= prescription ? `Edit Digital e-Prescription (${prescription.verificationCode})` : 'Issue Digital e-Prescription' %></h2>
+            <p>Generate a QR-verifiable digital prescription PDF for the patient and chemist.</p>
+          </div>
+          <% if (prescription) { %>
+            <span class="console-pill console-pill--success">Issued</span>
+          <% } %>
+        </div>
+        <div class="console-panel__body">
+          <form id="rx-form" class="console-form">
+            <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+
+            <div class="console-form-grid console-form-grid--three">
+              <div class="console-field"><label for="rx-bp">BP (mmHg)</label><input id="rx-bp" name="bp" type="text" placeholder="120/80" value="<%= prescription?.vitals?.bp || appointment.intake?.vitals?.bp || '' %>" /></div>
+              <div class="console-field"><label for="rx-pulse">Pulse (bpm)</label><input id="rx-pulse" name="pulse" type="text" placeholder="76" value="<%= prescription?.vitals?.pulse || '' %>" /></div>
+              <div class="console-field"><label for="rx-temp">Temp (°F)</label><input id="rx-temp" name="temp" type="text" placeholder="98.6" value="<%= prescription?.vitals?.temp || appointment.intake?.vitals?.temp || '' %>" /></div>
+              <div class="console-field"><label for="rx-spo2">SpO2 (%)</label><input id="rx-spo2" name="spo2" type="text" placeholder="99%" value="<%= prescription?.vitals?.spo2 || appointment.intake?.vitals?.spo2 || '' %>" /></div>
+              <div class="console-field"><label for="rx-weight">Weight (kg)</label><input id="rx-weight" name="weight" type="text" placeholder="68" value="<%= prescription?.vitals?.weight || appointment.intake?.vitals?.weight || '' %>" /></div>
+              <div class="console-field"><label for="rx-followup">Follow-up Date</label><input id="rx-followup" name="followUpDate" type="date" value="<%= prescription?.followUpDate || '' %>" /></div>
+            </div>
+
+            <div class="console-form-grid">
+              <div class="console-field">
+                <label for="rx-complaint">Chief Complaint</label>
+                <input id="rx-complaint" name="chiefComplaint" type="text" value="<%= prescription?.chiefComplaint || appointment.intake?.chiefComplaint || '' %>" placeholder="Primary symptoms reported" />
+              </div>
+              <div class="console-field">
+                <label for="rx-allergies">Allergy Alert</label>
+                <input id="rx-allergies" name="allergiesAlert" type="text" value="<%= allergyWarning %>" placeholder="e.g. Penicillin, Sulfa drugs, None" />
+              </div>
+            </div>
+
+            <div class="console-field">
+              <label for="rx-diagnosis">Clinical Diagnosis / Provisional Assessment *</label>
+              <input id="rx-diagnosis" name="diagnosis" type="text" required value="<%= prescription?.diagnosis || '' %>" placeholder="e.g. Acute Viral Upper Respiratory Infection / Uncomplicated Essential Hypertension" />
+            </div>
+
+            <div class="console-field">
+              <div class="console-panel__header" style="padding: 0.75rem 1rem; border: 1px solid var(--console-line); border-radius: 0.75rem 0.75rem 0 0;">
+                <div>
+                  <strong style="font-size: 0.9rem;">Medications (Rx)</strong>
+                  <p style="font-size: 0.76rem;">Quick-add common clinic templates or enter custom formulations.</p>
+                </div>
+                <button type="button" id="add-medicine-row" class="console-button console-button--quiet console-button--small">+ Add Medicine</button>
+              </div>
+              <div style="border: 1px solid var(--console-line); border-top: 0; border-radius: 0 0 0.75rem 0.75rem; padding: 0.85rem; background: #fbfdfd;">
+                <div class="console-inline" style="margin-bottom: 0.75rem;">
+                  <span style="font-size: 0.75rem; color: var(--console-muted); font-weight: 700;">Quick Presets:</span>
+                  <button type="button" class="console-button console-button--quiet console-button--small rx-preset" data-name="Paracetamol (Dolo)" data-dosage="650 mg" data-freq="1-0-1" data-timing="After food" data-duration="3 days" data-notes="SOS if fever > 100°F">Paracetamol 650</button>
+                  <button type="button" class="console-button console-button--quiet console-button--small rx-preset" data-name="Pantoprazole" data-dosage="40 mg" data-freq="1-0-0" data-timing="Before breakfast" data-duration="7 days" data-notes="Empty stomach">Pantoprazole 40</button>
+                  <button type="button" class="console-button console-button--quiet console-button--small rx-preset" data-name="Cetirizine" data-dosage="10 mg" data-freq="0-0-1" data-timing="After dinner" data-duration="5 days" data-notes="May cause mild drowsiness">Cetirizine 10</button>
+                  <button type="button" class="console-button console-button--quiet console-button--small rx-preset" data-name="Azithromycin" data-dosage="500 mg" data-freq="1-0-0" data-timing="After food" data-duration="3 days" data-notes="Complete full 3-day course">Azithromycin 500</button>
+                </div>
+                <div id="medicines-container" class="console-stack" style="gap: 0.7rem;"></div>
+              </div>
+            </div>
+
+            <div class="console-form-grid">
+              <div class="console-field">
+                <label for="rx-labs">Lab / Diagnostic Orders (comma or newline separated)</label>
+                <textarea id="rx-labs" name="labTests" rows="3" placeholder="e.g. Complete Blood Count (CBC), Fasting Lipid Profile, HbA1c"><%= (prescription?.labTests || []).join(', ') %></textarea>
+              </div>
+              <div class="console-field">
+                <label for="rx-advice">Clinical Advice &amp; Red-Flag Precautions</label>
+                <textarea id="rx-advice" name="advice" rows="3" placeholder="Hydration, dietary advice, when to return urgently…"><%= prescription?.advice || '' %></textarea>
+              </div>
+            </div>
+
+            <p id="rx-status" class="console-status" role="status"></p>
+
+            <div class="console-form-actions">
+              <button type="submit" class="console-button" data-complete="false">Save e-Prescription Draft</button>
+              <button type="button" id="save-complete-btn" class="console-button" style="background: linear-gradient(135deg, #047857, #0d9488);">Save Rx &amp; Mark Completed</button>
+            </div>
+          </form>
+        </div>
+      </article>
+    </div>
+
+    <!-- Right Column: Patient Clinical Brief & Longitudinal History -->
+    <aside class="console-stack">
+      <article class="console-panel">
+        <div class="console-panel__header">
+          <div>
+            <h2>Patient Pre-Visit Brief</h2>
+            <p>Submitted intake &amp; demographic profile.</p>
+          </div>
+        </div>
+        <div class="console-panel__body">
+          <dl class="console-key-value">
+            <div><dt>Phone</dt><dd><%= appointment.number || '—' %></dd></div>
+            <div><dt>Gender / DOB</dt><dd><%= appointment.patientMember?.gender || patientAccount?.gender || '—' %> · <%= appointment.patientMember?.dob || patientAccount?.dob || '—' %></dd></div>
+            <div><dt>Blood Group</dt><dd><strong><%= appointment.patientMember?.bloodGroup || patientAccount?.bloodGroup || 'Unknown' %></strong></dd></div>
+            <div><dt>ABHA ID</dt><dd><%= patientAccount?.abhaId || 'Not linked' %></dd></div>
+            <div><dt>Chronic Conditions</dt><dd><%= patientAccount?.chronicConditions || 'None reported' %></dd></div>
+            <div><dt>Chief Complaint</dt><dd><%= appointment.intake?.chiefComplaint || 'Not entered by patient' %></dd></div>
+            <div><dt>Duration</dt><dd><%= appointment.intake?.symptomDuration || '—' %></dd></div>
+            <div><dt>Current Meds</dt><dd><%= appointment.intake?.currentMedications || 'None listed' %></dd></div>
+          </dl>
+        </div>
+      </article>
+
+      <article class="console-panel">
+        <div class="console-panel__header">
+          <div>
+            <h2>Prior Visit Prescriptions</h2>
+            <p>Longitudinal history with this account.</p>
+          </div>
+        </div>
+        <div class="console-panel__body console-stack">
+          <% if (priorPrescriptions && priorPrescriptions.length) { %>
+            <% priorPrescriptions.forEach((oldRx) => { %>
+              <div style="border: 1px solid var(--console-line); border-radius: 0.65rem; padding: 0.75rem;">
+                <div class="console-inline" style="justify-content: space-between;">
+                  <strong style="font-size: 0.85rem;"><%= oldRx.diagnosis %></strong>
+                  <span class="console-pill"><%= oldRx.verificationCode %></span>
+                </div>
+                <p style="font-size: 0.78rem; color: var(--console-muted); margin: 0.25rem 0 0;">
+                  <%= new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium' }).format(new Date(oldRx.visitDate)) %> · <%= (oldRx.medicines || []).map((m) => m.name).join(', ') %>
+                </p>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <p class="console-empty" style="padding: 1rem;">No prior prescriptions recorded with you.</p>
+          <% } %>
+        </div>
+      </article>
+    </aside>
+  </section>
+</main>
+
+<%- include('partials/footer') %>
+<script>
+  const appointmentId = <%- JSON.stringify(String(appointment._id)) %>;
+  const initialMedicines = <%- JSON.stringify(prescription?.medicines || []).replace(/</g, '\\u003c') %>;
+  const container = document.getElementById('medicines-container');
+  const rxForm = document.getElementById('rx-form');
+  const rxStatus = document.getElementById('rx-status');
+
+  function createMedicineRow(med = {}) {
+    const row = document.createElement('div');
+    row.className = 'availability-exception medicine-row';
+    row.innerHTML = `
+      <div class="console-form-grid console-form-grid--three" style="gap: 0.65rem;">
+        <label class="console-field">Medicine Name *<input type="text" class="med-name" required placeholder="e.g. Tab. Paracetamol 650mg" /></label>
+        <label class="console-field">Dosage<input type="text" class="med-dosage" placeholder="1 Tab / 5 ml" /></label>
+        <label class="console-field">Frequency<select class="med-freq">
+          <option value="1-0-1">1-0-1 (Twice daily)</option>
+          <option value="1-1-1">1-1-1 (Thrice daily)</option>
+          <option value="1-0-0">1-0-0 (Morning)</option>
+          <option value="0-0-1">0-0-1 (Night)</option>
+          <option value="SOS">SOS (As needed)</option>
+          <option value="Stat">Stat (Once now)</option>
+        </select></label>
+        <label class="console-field">Meal Timing<select class="med-timing">
+          <option value="After food">After food</option>
+          <option value="Before food">Before food</option>
+          <option value="Empty stomach">Empty stomach</option>
+          <option value="Bedtime">At bedtime</option>
+        </select></label>
+        <label class="console-field">Duration<input type="text" class="med-duration" placeholder="5 days" /></label>
+        <label class="console-field">Notes<input type="text" class="med-notes" placeholder="Optional instruction" /></label>
+      </div>
+      <div style="margin-top: 0.5rem; text-align: right;">
+        <button type="button" class="console-button console-button--danger console-button--small remove-med">Remove</button>
+      </div>
+    `;
+    row.querySelector('.med-name').value = med.name || '';
+    row.querySelector('.med-dosage').value = med.dosage || '';
+    if (med.frequency) row.querySelector('.med-freq').value = med.frequency;
+    if (med.timing) row.querySelector('.med-timing').value = med.timing;
+    row.querySelector('.med-duration').value = med.duration || '5 days';
+    row.querySelector('.med-notes').value = med.instructions || '';
+    row.querySelector('.remove-med').addEventListener('click', () => {
+      if (container.children.length > 1) row.remove();
+    });
+    return row;
+  }
+
+  if (initialMedicines.length) {
+    initialMedicines.forEach((m) => container.append(createMedicineRow(m)));
+  } else {
+    container.append(createMedicineRow({}));
+  }
+
+  document.getElementById('add-medicine-row').addEventListener('click', () => {
+    container.append(createMedicineRow({}));
+  });
+
+  document.querySelectorAll('.rx-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const firstEmpty = [...container.querySelectorAll('.medicine-row')].find((r) => !r.querySelector('.med-name').value.trim());
+      const preset = {
+        name: btn.dataset.name,
+        dosage: btn.dataset.dosage,
+        frequency: btn.dataset.freq,
+        timing: btn.dataset.timing,
+        duration: btn.dataset.duration,
+        instructions: btn.dataset.notes,
+      };
+      if (firstEmpty) {
+        firstEmpty.replaceWith(createMedicineRow(preset));
+      } else {
+        container.append(createMedicineRow(preset));
+      }
+    });
+  });
+
+  async function submitPrescription(markCompleted) {
+    if (!rxForm.reportValidity()) return;
+    const medicines = [...container.querySelectorAll('.medicine-row')].map((row) => ({
+      name: row.querySelector('.med-name').value.trim(),
+      dosage: row.querySelector('.med-dosage').value.trim(),
+      frequency: row.querySelector('.med-freq').value,
+      timing: row.querySelector('.med-timing').value,
+      duration: row.querySelector('.med-duration').value.trim(),
+      instructions: row.querySelector('.med-notes').value.trim(),
+    })).filter((m) => m.name);
+
+    const payload = {
+      diagnosis: document.getElementById('rx-diagnosis').value.trim(),
+      chiefComplaint: document.getElementById('rx-complaint').value.trim(),
+      allergiesAlert: document.getElementById('rx-allergies').value.trim(),
+      bp: document.getElementById('rx-bp').value.trim(),
+      pulse: document.getElementById('rx-pulse').value.trim(),
+      temp: document.getElementById('rx-temp').value.trim(),
+      spo2: document.getElementById('rx-spo2').value.trim(),
+      weight: document.getElementById('rx-weight').value.trim(),
+      followUpDate: document.getElementById('rx-followup').value,
+      labTests: document.getElementById('rx-labs').value,
+      advice: document.getElementById('rx-advice').value,
+      medicines,
+      markCompleted,
+    };
+
+    rxStatus.textContent = 'Saving digital e-Prescription…';
+    try {
+      const response = await fetch(`/doctor/consult/${appointmentId}/prescription`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to save prescription.');
+      rxStatus.textContent = `Saved (${data.verificationCode}). Reloading…`;
+      window.location.reload();
+    } catch (error) {
+      rxStatus.textContent = error.message;
+    }
+  }
+
+  rxForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    submitPrescription(false);
+  });
+
+  document.getElementById('save-complete-btn').addEventListener('click', () => {
+    submitPrescription(true);
+  });
+</script>
+<%- include('partials/scripts') %>

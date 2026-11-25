@@ -5,6 +5,10 @@ async function handleAppointmentAction(action, appointmentId) {
     document.getElementById(`reschedule-${appointmentId}`)?.classList.toggle('hidden');
     return;
   }
+  if (action === 'intake') {
+    document.getElementById(`intake-${appointmentId}`)?.classList.toggle('hidden');
+    return;
+  }
   const endpoint = action === 'cancel' ? `/clearapp/${appointmentId}` : `/make-online/${appointmentId}`;
 
   try {
@@ -92,5 +96,47 @@ document.querySelectorAll('.waitlist-cancel').forEach((button) => {
       if (!response.ok || !data.success) throw new Error(data.message || 'Unable to leave waitlist.');
       window.location.reload();
     } catch (error) { button.disabled = false; alert(error.message || 'Unable to leave waitlist.'); }
+  });
+});
+
+document.querySelectorAll('.intake-panel').forEach((panel) => {
+  const form = panel.querySelector('.intake-form');
+  const status = panel.querySelector('.intake-status');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const payload = Object.fromEntries(new FormData(form).entries());
+    if (status) status.textContent = 'Saving…';
+    try {
+      const response = await fetch(`/appointments/${panel.dataset.appointmentId}/intake`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to save clinical brief.');
+      if (status) status.textContent = 'Saved for your doctor!';
+    } catch (error) {
+      if (status) status.textContent = error.message;
+    }
+  });
+});
+
+document.querySelectorAll('.review-panel').forEach((panel) => {
+  const form = panel.querySelector('.review-form');
+  form?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const payload = Object.fromEntries(new FormData(form).entries());
+    try {
+      const response = await fetch(`/appointments/${panel.dataset.appointmentId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to submit review.');
+      window.location.reload();
+    } catch (error) {
+      alert(error.message || 'Unable to submit review.');
+    }
   });
 });

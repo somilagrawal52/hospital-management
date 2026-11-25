@@ -1,3 +1,4 @@
+<% const safeReviews = typeof reviews !== 'undefined' ? reviews : []; const safeComplaint = typeof prefillComplaint !== 'undefined' ? prefillComplaint : ''; %>
 <%- include('partials/page-start', { includeHeroHeader: false, pageTitle: 'Book Appointment - OneLife' }) %>
 
 <div class="py-8">
@@ -35,7 +36,11 @@
               <div class="mt-2.5 flex flex-wrap items-center justify-center sm:justify-start lg:justify-center gap-2 text-xs">
                 <span class="rounded-xl bg-slate-100 px-3 py-1 font-semibold text-slate-700"><%= docInfo.degree || 'MBBS' %></span>
                 <span class="rounded-xl bg-indigo-50 px-3 py-1 font-bold text-primary"><%= docInfo.experience ? `${docInfo.experience} Years Experience` : 'Senior Consultant' %></span>
-                <span class="rounded-xl bg-amber-50 px-2.5 py-1 font-bold text-amber-800 flex items-center gap-1">★ 4.9</span>
+                <% if (docInfo.ratingCount > 0) { %>
+                  <span class="rounded-xl bg-amber-50 px-2.5 py-1 font-bold text-amber-800 flex items-center gap-1">★ <%= Number(docInfo.ratingAverage).toFixed(1) %> (<%= docInfo.ratingCount %>)</span>
+                <% } else { %>
+                  <span class="rounded-xl bg-emerald-50 px-2.5 py-1 font-bold text-emerald-700">✓ Verified Clinician</span>
+                <% } %>
               </div>
             </div>
           </div>
@@ -82,8 +87,28 @@
           <div class="flex items-center gap-2 font-bold text-slate-900">
             <span class="text-base">🛡️</span> Bank-Grade Secure Payment
           </div>
-          <p class="leading-relaxed">Processed securely via Razorpay with instant appointment confirmation, calendar invite, and downloadable GST invoice receipt.</p>
+          <p class="leading-relaxed">Processed securely via Razorpay with instant OPD token generation, 10-minute slot hold protection, calendar invite, and GST tax receipt.</p>
         </div>
+
+        <% if (safeReviews.length) { %>
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 space-y-3 shadow-xs">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900">Verified Patient Reviews</h3>
+              <span class="text-xs font-bold text-amber-700">★ <%= Number(docInfo.ratingAverage || 5).toFixed(1) %></span>
+            </div>
+            <div class="space-y-3">
+              <% safeReviews.slice(0, 3).forEach((rev) => { %>
+                <div class="rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5 text-xs space-y-1">
+                  <div class="flex items-center justify-between">
+                    <strong class="text-slate-900"><%= rev.patientName %></strong>
+                    <span class="text-amber-500 font-bold">★ <%= rev.rating %>/5</span>
+                  </div>
+                  <% if (rev.comment) { %><p class="text-slate-600 leading-relaxed"><%= rev.comment %></p><% } %>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
       </aside>
 
       <!-- Right Column: Booking Slot & Patient Details Form (7 cols) -->
@@ -171,6 +196,19 @@
               </div>
             </div>
 
+            <!-- Family Member / Patient Selection -->
+            <% if (locals.patientdata && patientdata.dependents && patientdata.dependents.length > 0) { %>
+              <div class="rounded-2xl border border-indigo-200/80 bg-indigo-50/40 p-4 space-y-2">
+                <label for="memberId" class="block text-xs font-bold uppercase tracking-wider text-slate-900">Who Is This Consultation For?</label>
+                <select id="memberId" name="memberId" class="block w-full rounded-xl border border-slate-300 bg-white text-xs font-semibold text-slate-900 py-2.5 px-3">
+                  <option value="self" data-allergies="<%= patientdata.allergies || '' %>">Self (<%= patientdata.fullname %>)</option>
+                  <% patientdata.dependents.forEach((dep) => { %>
+                    <option value="<%= dep._id %>" data-allergies="<%= dep.allergies || '' %>"><%= dep.fullname %> (<%= dep.relation %>)</option>
+                  <% }) %>
+                </select>
+              </div>
+            <% } %>
+
             <!-- Patient Information -->
             <div class="space-y-4">
               <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900">2. Patient Contact Details</h3>
@@ -250,6 +288,32 @@
               </div>
             </div>
 
+            <!-- Pre-Visit 60s Clinical Brief (Optional) -->
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 space-y-4">
+              <div class="flex items-center justify-between">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900">4. Pre-Visit Clinical Brief (Optional)</h3>
+                <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800">Saves Consult Time</span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label for="chiefComplaint" class="block text-xs font-semibold text-slate-700 mb-1">Main Symptoms / Reason</label>
+                  <input type="text" id="chiefComplaint" name="chiefComplaint" value="<%= safeComplaint %>" placeholder="e.g. Fever & cough" class="block w-full rounded-xl border border-slate-300 bg-white text-xs text-slate-900 py-2.5 px-3" />
+                </div>
+                <div>
+                  <label for="symptomDuration" class="block text-xs font-semibold text-slate-700 mb-1">Duration</label>
+                  <input type="text" id="symptomDuration" name="symptomDuration" placeholder="e.g. 3 days / 2 weeks" class="block w-full rounded-xl border border-slate-300 bg-white text-xs text-slate-900 py-2.5 px-3" />
+                </div>
+                <div>
+                  <label for="allergies" class="block text-xs font-semibold text-slate-700 mb-1">Known Allergies</label>
+                  <input type="text" id="allergies" name="allergies" value="<%= (locals.patientdata && patientdata.allergies) || '' %>" placeholder="e.g. Penicillin, Dust (or None)" class="block w-full rounded-xl border border-slate-300 bg-white text-xs text-slate-900 py-2.5 px-3" />
+                </div>
+                <div>
+                  <label for="currentMedications" class="block text-xs font-semibold text-slate-700 mb-1">Current Medications</label>
+                  <input type="text" id="currentMedications" name="currentMedications" placeholder="e.g. Metformin 500mg daily" class="block w-full rounded-xl border border-slate-300 bg-white text-xs text-slate-900 py-2.5 px-3" />
+                </div>
+              </div>
+            </div>
+
             <!-- Booking Actions -->
             <div class="pt-5 border-t border-slate-100">
               <% if (user) { %>
@@ -281,17 +345,6 @@
     </div>
   <% } %>
 </div>
-
-<% if (typeof integrationMode === 'undefined' || integrationMode === 'live') { %>
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<% } else if (integrationMode === 'mock') { %>
-<script src="/console-assets/js/mock-checkout.js"></script>
-<% } %>
-<script>window.RAZORPAY_KEY = '<%= razorpayKey || "" %>';</script>
-<script>window.DOCTOR_ID = '<%= docInfo ? docInfo._id : "" %>';</script>
-<script src="/assets/appointment-page.js"></script>
-
-<%- include('partials/page-end') %>
 
 <% if (typeof integrationMode === 'undefined' || integrationMode === 'live') { %>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>

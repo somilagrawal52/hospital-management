@@ -130,19 +130,3 @@
 </script>
 
 <%- include('partials/page-end') %>
-
-<script src="/assets/login-page.js"></script>
-<script>
-  // 1-Click Demo Fill for Evaluators
-  document.getElementById('fill-demo-patient')?.addEventListener('click', () => {
-    const emailInput = document.getElementById('email');
-    const passwordInput = document.getElementById('password');
-    if (emailInput && passwordInput) {
-      emailInput.value = 'sample@gmail.com';
-      passwordInput.value = 'password123';
-      passwordInput.focus();
-    }
-  });
-</script>
-
-<%- include('partials/page-end') %>

@@ -38,11 +38,13 @@
     <div class="mt-6 flex flex-wrap items-center gap-2 text-xs">
       <span class="font-bold text-slate-400 uppercase tracking-wider text-[11px]">Popular:</span>
       <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="diabetes">Diabetes</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="dengue">Dengue</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="hypertension">BP / Hypertension</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="typhoid">Typhoid</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="migraine">Migraine</button>
+      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="pcos">PCOS</button>
       <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="malaria">Malaria</button>
       <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="tuberculosis">Tuberculosis</button>
-      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="dengue">Dengue</button>
-      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="hepatitis">Hepatitis</button>
-      <button type="button" class="example-tag rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 font-semibold text-slate-700 hover:border-primary hover:bg-indigo-50 hover:text-primary transition shadow-2xs" data-disease="hypertension">Hypertension</button>
     </div>
 
     <!-- Loading State -->
@@ -63,8 +65,8 @@
             <span class="text-[11px] font-bold uppercase tracking-wider text-primary">WHO Official Topic</span>
             <h2 class="disease-title text-2xl font-extrabold text-slate-900 mt-1 capitalize" id="diseaseTitle"></h2>
           </div>
-          <a href="/doctors" class="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:bg-indigo-600 transition">
-            <span>Consult a Specialist</span> &rarr;
+          <a id="consultSpecialistBtn" href="/doctors" class="inline-flex items-center gap-1.5 rounded-2xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-primary/25 hover:bg-indigo-600 transition">
+            <span id="consultSpecialistLabel">Consult a Specialist</span> &rarr;
           </a>
         </div>
 
@@ -117,9 +119,6 @@
     </div>
   </div>
 </div>
-
-<script src="/assets/disease-search-page.js"></script>
-<%- include('partials/page-end') %>
 
 <script src="/assets/disease-search-page.js"></script>
 <%- include('partials/page-end') %>

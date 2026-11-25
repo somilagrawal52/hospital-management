@@ -2,7 +2,6 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const { createHmac } = require("crypto");
 const { createtokenforuser } = require("../services/auth");
-const { type } = require("os");
 
 const userschema = new mongoose.Schema(
   {
@@ -33,12 +32,51 @@ const userschema = new mongoose.Schema(
     city: {
       type: String,
     },
-    dob:{
-      type:String,
+    dob: {
+      type: String,
     },
-    address:{
-      type:Object,
-      default:{line1:'',line2:''}
+    bloodGroup: {
+      type: String,
+      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Unknown", ""],
+      default: "",
+    },
+    allergies: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: "",
+    },
+    chronicConditions: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+      default: "",
+    },
+    abhaId: {
+      type: String,
+      trim: true,
+      maxlength: 40,
+      default: "",
+    },
+    emergencyContact: {
+      name: { type: String, trim: true, maxlength: 120, default: "" },
+      number: { type: String, trim: true, maxlength: 30, default: "" },
+      relation: { type: String, trim: true, maxlength: 60, default: "" },
+    },
+    dependents: [
+      {
+        fullname: { type: String, required: true, trim: true, maxlength: 120 },
+        relation: { type: String, enum: ["Parent", "Spouse", "Child", "Sibling", "Other"], default: "Other" },
+        gender: { type: String, enum: ["Male", "Female", "Other", ""], default: "" },
+        dob: { type: String, default: "" },
+        bloodGroup: { type: String, default: "" },
+        allergies: { type: String, trim: true, maxlength: 400, default: "" },
+        chronicConditions: { type: String, trim: true, maxlength: 400, default: "" },
+      },
+    ],
+    address: {
+      type: Object,
+      default: { line1: "", line2: "" },
     },
     image: {
       type: String,
@@ -46,42 +84,64 @@ const userschema = new mongoose.Schema(
     speciality: {
       type: String,
     },
-    degree:{
-      type:String,
+    degree: {
+      type: String,
     },
-    experience:{
-      type:String,
+    experience: {
+      type: String,
     },
-    about:{
-      type:String,
+    about: {
+      type: String,
     },
-    available:{
-      type:Boolean,
-      default:true
+    available: {
+      type: Boolean,
+      default: true,
     },
     // Doctors can override the default Mon-Sat 09:00-17:00, 30-minute calendar.
     // Existing doctor records remain valid and use that default until they save a schedule.
     availability: {
-      weekly: [{
-        day: { type: Number, min: 0, max: 6 },
-        enabled: { type: Boolean, default: true },
-        startTime: { type: String },
-        endTime: { type: String },
-        slotMinutes: { type: Number },
-      }],
-      exceptions: [{
-        date: { type: String },
-        unavailable: { type: Boolean, default: false },
-        startTime: { type: String },
-        endTime: { type: String },
-        slotMinutes: { type: Number },
-      }],
+      weekly: [
+        {
+          day: { type: Number, min: 0, max: 6 },
+          enabled: { type: Boolean, default: true },
+          startTime: { type: String },
+          endTime: { type: String },
+          slotMinutes: { type: Number },
+        },
+      ],
+      exceptions: [
+        {
+          date: { type: String },
+          unavailable: { type: Boolean, default: false },
+          startTime: { type: String },
+          endTime: { type: String },
+          slotMinutes: { type: Number },
+        },
+      ],
     },
-    fees:{
-      type:Number,
+    fees: {
+      type: Number,
     },
-    date:{
-      type:Number,
+    queueStatus: {
+      date: { type: String, default: "" },
+      currentToken: { type: Number, default: 0 },
+      delayMinutes: { type: Number, default: 0, min: 0, max: 240 },
+      delayReason: { type: String, trim: true, maxlength: 200, default: "" },
+      updatedAt: { type: Date },
+    },
+    ratingAverage: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    ratingCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    date: {
+      type: Number,
     },
     role: {
       type: String,
@@ -95,7 +155,7 @@ const userschema = new mongoose.Schema(
     // Retained temporarily so existing SHA-256 accounts can be upgraded on login.
     salt: { type: String },
   },
-  {minimize:false}
+  { minimize: false },
 );
 
 userschema.pre("save", async function (next) {
@@ -110,7 +170,7 @@ userschema.pre("save", async function (next) {
   }
 });
 
-userschema.statics.matchpassword= async function (email, password) {
+userschema.statics.matchpassword = async function (email, password) {
   const user = await this.findOne({ email: String(email).toLowerCase() });
   if (!user) throw new Error("user not found");
 
@@ -128,5 +188,6 @@ userschema.statics.matchpassword= async function (email, password) {
   const token = createtokenforuser(user);
   return token;
 };
+
 const User = mongoose.model("user", userschema);
 module.exports = User;

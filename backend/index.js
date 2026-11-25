@@ -14,6 +14,9 @@ const userRoute = require("./routes/user");
 const { checkforauthentication, restrictTo } = require("./middlewares/auth");
 const { requireSameOrigin, csrfContext } = require("./middlewares/csrf-origin");
 const { integrationMode, isolatedIntegrations } = require("./services/integrations");
+const { i18nMiddleware } = require("./services/i18n");
+const { computeOperationalAnalytics } = require("./services/care-metrics");
+const { localDateKey } = require("./services/scheduling");
 const User = require("./models/user");
 const Appointment = require("./models/appointment");
 const { razorpayWebhook } = require("./controller/webhooks");
@@ -65,6 +68,7 @@ app.post("/webhooks/razorpay", express.raw({ type: "application/json", limit: "1
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true, limit: "100kb" }));
 app.use(cookieParser());
+app.use(i18nMiddleware);
 app.use(csrfContext);
 app.use(requireSameOrigin);
 app.use((req, res, next) => { res.locals.integrationMode = integrationMode(); next(); });
@@ -111,12 +115,17 @@ app.get(
       todayStart.setHours(0, 0, 0, 0);
       const tomorrowStart = new Date(todayStart);
       tomorrowStart.setDate(tomorrowStart.getDate() + 1);
-      const [patientsCount, doctorsCount, appointments, todayAppointmentsCount] = await Promise.all([
+      const [patientsCount, doctorsCount, appointments, allAppointments, doctorsList, todayAppointmentsCount] = await Promise.all([
         User.countDocuments({ role: "NORMAL" }),
         User.countDocuments({ role: "DOCTOR" }),
-        Appointment.find().sort({ date: -1 }).limit(10).lean(),
+        Appointment.find().sort({ date: -1 }).limit(15).lean(),
+        Appointment.find().select("status visitMode isOnline queueState slotDate date amount payment doctordata docId doctorId").lean(),
+        User.find({ role: "DOCTOR" }).select("_id fullname speciality fees available queueStatus").lean(),
         Appointment.countDocuments({ date: { $gte: todayStart, $lt: tomorrowStart }, status: { $nin: ["cancelled"] } }),
       ]);
+
+      const analytics = computeOperationalAnalytics(allAppointments, doctorsList);
+      const todayKey = localDateKey(new Date());
 
       const recentAppointments = appointments.map((appointment) => ({
         ...appointment,
@@ -132,6 +141,9 @@ app.get(
         doctorsCount,
         todayAppointmentsCount,
         appointments: recentAppointments,
+        doctorsList,
+        analytics,
+        todayKey,
       });
     } catch (error) {
       console.error("Error loading admin dashboard:", error);
@@ -165,6 +177,9 @@ app.post("/clearapp/:id", restrictTo(["ADMIN", "NORMAL"]), async (req, res) => {
       cancelled: true,
       isOnline: false,
       iscompleted: false,
+      ...(appointment.payment?.status === "success"
+        ? { "payment.refundStatus": "eligible", "payment.refundAmount": Number(appointment.amount || appointment.payment?.amount || 0) }
+        : {}),
     });
     const slotTime = appointment.slotTime || new Date(appointment.date).toLocaleTimeString("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false });
     notifyWaitlistForSlot({

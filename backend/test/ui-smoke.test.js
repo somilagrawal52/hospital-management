@@ -101,8 +101,40 @@ test("chat, disease search, login, profile, and messages render cleanly", async 
 
   const profileHtml = await render(view("patient", "views", "profile.ejs"), {
     user: { _id: "user-1", email: "test@example.com", role: "NORMAL" },
-    patientdata: { fullname: "Test Patient", email: "test@example.com", number: "1234567890", address: { line1: "Line 1", line2: "Line 2" }, gender: "Male", dob: "1995-01-01" },
+    patientdata: { fullname: "Test Patient", email: "test@example.com", number: "1234567890", address: { line1: "Line 1", line2: "Line 2" }, gender: "Male", dob: "1995-01-01", dependents: [] },
     csrfToken: "mock-token",
   });
   assert.match(profileHtml, /Personal Health Profile/);
+  assert.match(profileHtml, /Family &amp; Dependent Profiles/);
+
+  const recordsHtml = await render(view("patient", "views", "health-records.ejs"), {
+    user: { _id: "user-1", role: "NORMAL" },
+    patientdata: { bloodGroup: "O+", allergies: "Penicillin", dependents: [] },
+    prescriptions: [{ _id: "rx-1", doctorName: "Somil", doctorSpeciality: "Neurologist", formattedDate: "15 Jan 2030", verificationCode: "ONERX-203001-ABCDEF", diagnosis: "Migraine", medicines: [{ name: "Paracetamol", frequency: "1-0-1", duration: "3 days" }], labTests: ["CBC"] }],
+    csrfToken: "mock-token",
+  });
+  assert.match(recordsHtml, /ONERX-203001-ABCDEF/);
+  assert.match(recordsHtml, /\/prescriptions\/rx-1\/pdf/);
+
+  const verifyHtml = await render(view("patient", "views", "rx-verify.ejs"), {
+    user: null,
+    patientdata: null,
+    code: "ONERX-203001-ABCDEF",
+    record: { verificationCode: "ONERX-203001-ABCDEF", doctorName: "Somil", doctorDegree: "MBBS", doctorSpeciality: "Neurologist", patientMasked: "Te** Pa*****", visitDateFormatted: "15 Jan 2030", medicinesCount: 1, medicines: [{ name: "Paracetamol", dosage: "650mg", frequency: "1-0-1", duration: "3 days" }] },
+    csrfToken: "mock-token",
+  });
+  assert.match(verifyHtml, /Authentic OneLife Digital Prescription/);
+  assert.match(verifyHtml, /Te\*\* Pa\*\*\*\*\*/);
+
+  const consultHtml = await render(view("doctor", "doctor-consult.ejs"), {
+    doctor: { _id: "doc-1", fullname: "Somil" },
+    appointment: { _id: "app-1", fullname: "Test Patient", number: "9999999999", visitMode: "telehealth", isOnline: true, queueToken: 2, intake: { chiefComplaint: "Fever", allergies: "Sulfa" } },
+    patientAccount: { bloodGroup: "B+", allergies: "Sulfa" },
+    prescription: null,
+    priorPrescriptions: [],
+    formattedDate: "15 Jan 2030",
+    csrfToken: "mock-token",
+  });
+  assert.match(consultHtml, /Allergy Alert:/);
+  assert.match(consultHtml, /medicines-container/);
 });

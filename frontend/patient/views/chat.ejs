@@ -103,12 +103,13 @@
 </div>
 
 <script>
+  const chatHistory = [];
   const sendMessage = async (message) => {
     try {
       const response = await fetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, history: chatHistory.slice(-6) }),
       });
 
       if (!response.ok) {
@@ -120,6 +121,8 @@
         message: data.message || "I apologize, but I could not process your query at this moment.",
         emergency: Boolean(data.emergency),
         sources: Array.isArray(data.sources) ? data.sources : [],
+        recommendedDoctors: Array.isArray(data.recommendedDoctors) ? data.recommendedDoctors : [],
+        recommendedSpeciality: data.recommendedSpeciality || "",
       };
     } catch (error) {
       console.error("Error fetching AI response:", error);
@@ -127,6 +130,8 @@
         message: "I am temporarily unable to connect to the medical knowledge base. Please consult our hospital specialists or contact support.",
         emergency: false,
         sources: [],
+        recommendedDoctors: [],
+        recommendedSpeciality: "",
       };
     }
   };
@@ -142,6 +147,7 @@
     if (!message) return;
 
     appendMessage(message, "right");
+    chatHistory.push({ role: "user", text: message });
     input.value = "";
     input.disabled = true;
     sendButton.disabled = true;
@@ -151,6 +157,10 @@
     try {
       const chatbotResponse = await sendMessage(message);
       appendMessage(chatbotResponse.message, "left", chatbotResponse.emergency);
+      chatHistory.push({ role: "assistant", text: chatbotResponse.message });
+      if (!chatbotResponse.emergency && chatbotResponse.recommendedDoctors.length) {
+        appendDoctorRecommendations(chatbotResponse.recommendedDoctors, chatbotResponse.recommendedSpeciality);
+      }
       appendSources(chatbotResponse.sources);
     } finally {
       input.disabled = false;
@@ -217,135 +227,33 @@
     messages.scrollTop = messages.scrollHeight;
   };
 
-  function escapeHtml(text) {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  // Quick Chips Click Handlers
-  document.querySelectorAll(".quick-chip").forEach((chip) => {
-    chip.addEventListener("click", () => {
-      input.value = chip.textContent.trim();
-      form.requestSubmit();
-    });
-  });
-</script>
-
-<%- include('partials/page-end') %>
-
-<script>
-  const sendMessage = async (message) => {
-    try {
-      const response = await fetch("/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP Error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return {
-        message: data.message || "I apologize, but I could not process your query at this moment.",
-        emergency: Boolean(data.emergency),
-        sources: Array.isArray(data.sources) ? data.sources : [],
-      };
-    } catch (error) {
-      console.error("Error fetching AI response:", error);
-      return {
-        message: "I am temporarily unable to connect to the medical knowledge base. Please consult our hospital specialists or contact support.",
-        emergency: false,
-        sources: [],
-      };
-    }
-  };
-
-  const form = document.getElementById("send-msg");
-  const input = document.getElementById("message-input");
-  const sendButton = document.getElementById("send-btn");
-  const sendLabel = document.getElementById("send-label");
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const message = input.value.trim();
-    if (!message) return;
-
-    appendMessage(message, "right");
-    input.value = "";
-    input.disabled = true;
-    sendButton.disabled = true;
-    sendLabel.textContent = "Analyzing…";
-    document.getElementById("messages").setAttribute("aria-busy", "true");
-
-    try {
-      const chatbotResponse = await sendMessage(message);
-      appendMessage(chatbotResponse.message, "left", chatbotResponse.emergency);
-      appendSources(chatbotResponse.sources);
-    } finally {
-      input.disabled = false;
-      sendButton.disabled = false;
-      sendLabel.textContent = "Send";
-      document.getElementById("messages").setAttribute("aria-busy", "false");
-      input.focus();
-    }
-  });
-
-  const appendMessage = (message, position, emergency = false) => {
+  const appendDoctorRecommendations = (doctors, speciality) => {
     const messages = document.getElementById("messages");
-    const container = document.createElement("div");
+    const wrapper = document.createElement("div");
+    wrapper.className = "ml-12 rounded-2xl border border-indigo-200 bg-indigo-50/70 p-3.5 space-y-2.5 max-w-[85%]";
+    const heading = document.createElement("p");
+    heading.className = "text-[11px] font-bold uppercase tracking-wider text-primary";
+    heading.textContent = speciality ? `Recommended ${speciality} Specialists` : "Available OneLife Clinicians";
+    wrapper.appendChild(heading);
 
-    if (position === "right") {
-      container.className = "flex justify-end";
-      container.innerHTML = `
-        <div class="max-w-[85%] rounded-2xl bg-primary px-5 py-3.5 text-xs sm:text-sm text-white shadow-md">
-          ${escapeHtml(message)}
+    const grid = document.createElement("div");
+    grid.className = "grid grid-cols-1 sm:grid-cols-2 gap-2.5";
+    doctors.forEach((doc) => {
+      const card = document.createElement("a");
+      card.href = doc.bookingUrl || `/appointment/${doc.id}`;
+      card.className = "block rounded-xl border border-slate-200 bg-white p-3 hover:border-primary transition shadow-2xs";
+      card.innerHTML = `
+        <div class="flex items-center justify-between gap-2">
+          <strong class="text-xs font-bold text-slate-900">Dr. ${escapeHtml(doc.fullname || "")}</strong>
+          <span class="text-[11px] font-extrabold text-primary">₹${escapeHtml(String(doc.fees || 500))}</span>
         </div>
+        <p class="text-[11px] text-slate-500 mt-0.5">${escapeHtml(doc.speciality || "")} · ${escapeHtml(doc.nextSlotLabel || "Open slots")}</p>
+        <span class="inline-block mt-1.5 text-[11px] font-bold text-emerald-700">Book Consultation &rarr;</span>
       `;
-    } else {
-      container.className = "flex items-start gap-3";
-      const emergencyClass = emergency
-        ? "border-2 border-rose-300 bg-rose-50 text-rose-950 font-medium"
-        : "border border-slate-200 bg-white text-slate-800";
-      container.innerHTML = `
-        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${emergency ? 'bg-rose-600' : 'bg-primary'} text-white text-xs font-bold shadow-sm">
-          ${emergency ? '🚨' : 'AI'}
-        </div>
-        <div class="max-w-[85%] rounded-2xl ${emergencyClass} p-4 text-xs sm:text-sm shadow-sm leading-relaxed">
-          ${escapeHtml(message)}
-        </div>
-      `;
-    }
-
-    messages.appendChild(container);
-    messages.scrollTop = messages.scrollHeight;
-  };
-
-  const appendSources = (sources) => {
-    if (!sources || !sources.length) return;
-    const messages = document.getElementById("messages");
-    const sourceElement = document.createElement("div");
-    sourceElement.className = "ml-11 flex flex-wrap items-center gap-2 text-xs text-primary font-medium";
-
-    const label = document.createElement("span");
-    label.className = "text-slate-500 font-semibold";
-    label.textContent = "Clinical Resources:";
-    sourceElement.appendChild(label);
-
-    sources.forEach((source) => {
-      if (!source || !source.label || !source.url) return;
-      const link = document.createElement("a");
-      link.href = source.url;
-      link.target = "_blank";
-      link.rel = "noopener noreferrer";
-      link.className = "rounded-md bg-indigo-50 px-2 py-1 text-primary hover:bg-indigo-100 transition underline";
-      link.textContent = source.label;
-      sourceElement.appendChild(link);
+      grid.appendChild(card);
     });
-
-    messages.appendChild(sourceElement);
+    wrapper.appendChild(grid);
+    messages.appendChild(wrapper);
     messages.scrollTop = messages.scrollHeight;
   };
 

@@ -12,7 +12,9 @@ const { cookieOptions } = require("../services/auth");
 const { validatePaymentVerification } = require("razorpay/dist/utils/razorpay-utils");
 const { doctorImage } = require("../services/doctor-image");
 const { finalizePayment, formatAppointmentDate } = require("../services/payment-finalization");
-const { assertSlotAvailable, isDateKey, isTime } = require("../services/scheduling");
+const { assertSlotAvailable, isDateKey, isTime, localDateKey, PAYMENT_HOLD_MINUTES } = require("../services/scheduling");
+const { buildQueueEstimate } = require("../services/opd-queue");
+const Prescription = require("../models/prescription");
 const { fulfilPatientWaitlist } = require("../services/waitlist");
 const { notifyWaitlistForSlot } = require("../services/waitlist");
 
@@ -66,7 +68,22 @@ async function getOnlineAppointmentRequests(req, res) {
 
 async function bookappointment(req, res) {
   try {
-    const { docId, fullname, email, number, date, time, line1, line2 } = req.body;
+    const {
+      docId,
+      fullname,
+      email,
+      number,
+      date,
+      time,
+      line1,
+      line2,
+      consultationMode,
+      memberId,
+      chiefComplaint,
+      symptomDuration,
+      allergies,
+      currentMedications,
+    } = req.body;
     const userid = req.user._id;
     if (!docId || !fullname?.trim() || !email?.trim() || !number?.trim() || !isDateKey(date) || !isTime(time) || !line1?.trim() || !line2?.trim()) {
       return res.status(400).json({ success: false, message: "Please complete all appointment details." });
@@ -79,13 +96,52 @@ async function bookappointment(req, res) {
     } catch (error) {
       return res.status(409).json({ success: false, message: error.message || "This appointment slot is no longer available." });
     }
-    
+
     const razorpayOrder = await razorpayClient().orders.create({
       // Never trust the fee supplied by the browser.
       amount: Math.round(Number(doctordata.fees) * 100),
       currency: "INR",
     });
     const userdata = await User.findById(userid).select("-password");
+    const visitMode = consultationMode === "telehealth" ? "telehealth" : "clinic";
+    const selectedDependent =
+      memberId && memberId !== "self"
+        ? (userdata?.dependents || []).find((item) => String(item._id) === String(memberId))
+        : null;
+
+    const patientMember = selectedDependent
+      ? {
+          memberId: String(selectedDependent._id),
+          fullname: selectedDependent.fullname,
+          relation: selectedDependent.relation,
+          gender: selectedDependent.gender || "",
+          dob: selectedDependent.dob || "",
+          bloodGroup: selectedDependent.bloodGroup || "",
+        }
+      : {
+          memberId: "self",
+          fullname: fullname.trim(),
+          relation: "Self",
+          gender: userdata?.gender || "",
+          dob: userdata?.dob || "",
+          bloodGroup: userdata?.bloodGroup || "",
+        };
+
+    const resolvedAllergies = String(
+      allergies ?? (selectedDependent ? selectedDependent.allergies : userdata?.allergies) ?? "",
+    ).trim();
+
+    const intake =
+      chiefComplaint || symptomDuration || resolvedAllergies || currentMedications
+        ? {
+            chiefComplaint: String(chiefComplaint || "").trim().slice(0, 800),
+            symptomDuration: String(symptomDuration || "").trim().slice(0, 120),
+            allergies: resolvedAllergies.slice(0, 500),
+            currentMedications: String(currentMedications || "").trim().slice(0, 500),
+            submittedAt: new Date(),
+          }
+        : undefined;
+
     const appointment = new Appointment({
       fullname,
       email,
@@ -96,12 +152,18 @@ async function bookappointment(req, res) {
       docId,
       doctorId: doctordata._id,
       doctor: doctordata.fullname,
+      visitMode,
+      isOnline: visitMode === "telehealth",
+      patientMember,
+      ...(intake ? { intake } : {}),
+      paymentHoldExpiresAt: new Date(Date.now() + PAYMENT_HOLD_MINUTES * 60 * 1000),
       payment: {
         orderId: razorpayOrder.id,
         amount: doctordata.fees,
         currency: "INR",
         status: "pending",
       },
+      ...(visitMode === "telehealth" ? { video: { status: "requested", consentAt: new Date() } } : {}),
       date: appointmentDate,
       slotDate: date,
       slotTime: time,
@@ -214,15 +276,54 @@ async function myappointments(req,res) {
     const appointments = await Appointment.find({ userid: decoded._id }).sort({
       date: -1,
     });
-    const waitlist = await Waitlist.find({ patientId: decoded._id, status: { $in: ["active", "notified"] } })
-      .populate("doctorId", "fullname speciality")
-      .sort({ slotDate: 1 })
-      .lean();
+    const [waitlist, prescriptions] = await Promise.all([
+      Waitlist.find({ patientId: decoded._id, status: { $in: ["active", "notified"] } })
+        .populate("doctorId", "fullname speciality")
+        .sort({ slotDate: 1 })
+        .lean(),
+      Prescription.find({ patientId: decoded._id })
+        .select("_id appointmentId verificationCode diagnosis followUpDate")
+        .lean(),
+    ]);
+
+    const rxByAppointment = new Map(prescriptions.map((rx) => [String(rx.appointmentId), rx]));
+    const todayKey = localDateKey(new Date());
+    const todayDocIds = [...new Set(
+      appointments
+        .filter((item) => (item.slotDate || localDateKey(item.date)) === todayKey && !["cancelled", "payment_failed"].includes(item.status))
+        .map((item) => item.docId),
+    )];
+
+    const [todayDoctors, todayQueues] = todayDocIds.length
+      ? await Promise.all([
+          User.find({ _id: { $in: todayDocIds } }).select("queueStatus").lean(),
+          Appointment.find({
+            docId: { $in: todayDocIds },
+            slotDate: todayKey,
+            status: { $nin: ["cancelled", "payment_failed"] },
+          })
+            .select("docId slotDate queueToken queueState status date")
+            .lean(),
+        ])
+      : [[], []];
+
+    const queueStatusByDoc = new Map(todayDoctors.map((doc) => [String(doc._id), doc.queueStatus]));
+    const queueRowsByDoc = new Map();
+    for (const row of todayQueues) {
+      if (!queueRowsByDoc.has(row.docId)) queueRowsByDoc.set(row.docId, []);
+      queueRowsByDoc.get(row.docId).push(row);
+    }
 
     patientdata.appointments = appointments.map((appointmentDoc) => {
       const appointment = appointmentDoc.toObject();
       if (appointment.doctordata) appointment.doctordata.image = doctorImage(appointment.doctordata.image);
       appointment.formattedDate = formatAppointmentDate(appointment.date);
+      appointment.prescription = rxByAppointment.get(String(appointment._id)) || null;
+      appointment.queueEstimate = buildQueueEstimate({
+        appointment,
+        doctorQueueStatus: queueStatusByDoc.get(String(appointment.docId)),
+        activeDayAppointments: queueRowsByDoc.get(String(appointment.docId)) || [],
+      });
       return appointment;
     });
     patientdata.upcomingAppointmentsCount = patientdata.appointments.filter(
@@ -335,14 +436,34 @@ async function UpdateProfile(req, res) {
   try {
     const token = req.cookies.token;
     const decoded = validatetoken(token);
-    const { fullname, email, number, address, dob, gender } = req.body;
+    const {
+      fullname,
+      email,
+      number,
+      address,
+      dob,
+      gender,
+      bloodGroup,
+      allergies,
+      chronicConditions,
+      abhaId,
+      emergencyContact,
+    } = req.body;
     let parsedAddress;
     if (address) {
       try {
-        parsedAddress = JSON.parse(address);
+        parsedAddress = typeof address === "string" ? JSON.parse(address) : address;
       } catch (parseError) {
         console.error("Error parsing address:", parseError);
         return res.status(400).json({ success: false, message: "Invalid address format" });
+      }
+    }
+    let parsedEmergencyContact;
+    if (emergencyContact) {
+      try {
+        parsedEmergencyContact = typeof emergencyContact === "string" ? JSON.parse(emergencyContact) : emergencyContact;
+      } catch {
+        parsedEmergencyContact = undefined;
       }
     }
     const updateData = {
@@ -352,7 +473,12 @@ async function UpdateProfile(req, res) {
       email: email?.trim().toLowerCase(),
       image: req.file ? `/assets/${req.file.filename}` : undefined,
       dob,
-      gender
+      gender,
+      ...(bloodGroup !== undefined ? { bloodGroup: String(bloodGroup || "").trim() } : {}),
+      ...(allergies !== undefined ? { allergies: String(allergies || "").trim() } : {}),
+      ...(chronicConditions !== undefined ? { chronicConditions: String(chronicConditions || "").trim() } : {}),
+      ...(abhaId !== undefined ? { abhaId: String(abhaId || "").trim() } : {}),
+      ...(parsedEmergencyContact ? { emergencyContact: parsedEmergencyContact } : {}),
     };
     const result = await User.findByIdAndUpdate(
       { _id: decoded._id },
@@ -366,7 +492,7 @@ async function UpdateProfile(req, res) {
     res.json({success:true,message:"Profile updated successfully",token})
   } catch (error) {
     console.error(error);
-    res.json({ success: false, message: "Error updating" });
+    res.status(error.code === 11000 ? 409 : 400).json({ success: false, message: error.code === 11000 ? "That email is already registered to another account." : "Error updating profile" });
   }
 }
 
@@ -409,10 +535,15 @@ async function updateAppointmentStatus(req, res) {
     if (!existing || (req.user.role === "DOCTOR" && existing.docId !== String(req.user._id))) {
       return res.status(404).json({ success: false, message: "Appointment not found" });
     }
+    const refundPatch =
+      status === "cancelled" && existing.payment?.status === "success"
+        ? { "payment.refundStatus": "eligible", "payment.refundAmount": Number(existing.amount || existing.payment?.amount || 0) }
+        : {};
     const appointment = await Appointment.findByIdAndUpdate(
       appointmentId,
       {
         ...statusUpdates[status],
+        ...refundPatch,
         $push: { statusHistory: { status, changedBy: req.user._id, source: "dashboard" } },
       },
       { new: true }
@@ -470,9 +601,13 @@ async function markAppointmentOnline(req, res) {
     appointment.statusHistory.push({ status: "online_requested", changedBy: req.user._id, source: "patient_request" });
     await appointment.save();
 
-    // Optionally notify doctor or patient
-    await sendWhatsAppMessage(`+91${appointment.doctordata.number}`, `You have a new request for an *online* appointment from ${appointment.fullname}.`);
-    
+    if (appointment.doctordata?.number) {
+      sendWhatsAppMessage(
+        `+91${appointment.doctordata.number}`,
+        `You have a new request for an *online* appointment from ${appointment.fullname}.`,
+      ).catch((whatsappError) => console.error("Online appointment WhatsApp notification failed:", whatsappError?.message || whatsappError));
+    }
+
     res.json({ success: true, message: "Appointment marked as online" });
   } catch (err) {
     console.error(err);

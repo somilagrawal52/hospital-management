@@ -16,17 +16,19 @@
     <% if (locals.user) { %>
       <!-- Avatar Section -->
       <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100">
-        <div class="relative group cursor-pointer">
-          <input id="image-input" type="file" class="hidden" accept="image/jpeg,image/png,image/webp" />
-          <img
-            id="profile-image" 
-            class="h-28 w-28 rounded-2xl object-cover border-4 border-indigo-50 shadow-md bg-slate-100" 
-            src="<%= (patientdata && patientdata.image) ? patientdata.image : '/assets/onelife-avatar.svg' %>"
-            alt="Profile Avatar"
-          />
-          <div class="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-semibold">
-            Change Photo
-          </div>
+        <div class="relative group">
+          <label for="image-input" id="image-upload-label" class="block cursor-pointer">
+            <input id="image-input" type="file" class="hidden" accept="image/jpeg,image/png,image/webp" disabled />
+            <img
+              id="profile-image"
+              class="h-28 w-28 rounded-2xl object-cover border-4 border-indigo-50 shadow-md bg-slate-100"
+              src="<%= (patientdata && patientdata.image) ? patientdata.image : '/assets/onelife-avatar.svg' %>"
+              alt="Profile Avatar"
+            />
+            <span id="image-upload-overlay" class="hidden absolute inset-0 rounded-2xl bg-black/50 transition-opacity flex items-center justify-center text-white text-xs font-semibold">
+              Change Photo
+            </span>
+          </label>
         </div>
         
         <div class="text-center sm:text-left flex-1">
@@ -92,6 +94,34 @@
             <input id="dob-input" class="hidden rounded-lg border border-slate-300 px-3 py-1 text-xs" type="date" value="<%= (patientdata && patientdata.dob) || '' %>" />
             <p id="dob-text" class="font-semibold text-slate-800"><%= (patientdata && patientdata.dob) || 'Not specified' %></p>
           </div>
+
+          <span class="font-semibold text-slate-500">Blood Group:</span>
+          <div>
+            <select id="bloodGroup-input" class="hidden rounded-lg border border-slate-300 px-3 py-1 text-xs">
+              <% ['', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'].forEach((bg) => { %>
+                <option value="<%= bg %>" <%= (patientdata && patientdata.bloodGroup === bg) ? 'selected' : '' %>><%= bg || 'Not specified' %></option>
+              <% }) %>
+            </select>
+            <p id="bloodGroup-text" class="font-semibold text-rose-700"><%= (patientdata && patientdata.bloodGroup) || 'Not specified' %></p>
+          </div>
+
+          <span class="font-semibold text-slate-500">Known Allergies:</span>
+          <div>
+            <input id="allergies-input" class="hidden w-full max-w-sm rounded-lg border border-slate-300 px-3 py-1 text-xs" type="text" value="<%= (patientdata && patientdata.allergies) || '' %>" placeholder="e.g. Penicillin, Sulfa, Peanuts" />
+            <p id="allergies-text" class="font-semibold text-slate-800"><%= (patientdata && patientdata.allergies) || 'None specified' %></p>
+          </div>
+
+          <span class="font-semibold text-slate-500">Chronic Conditions:</span>
+          <div>
+            <input id="chronicConditions-input" class="hidden w-full max-w-sm rounded-lg border border-slate-300 px-3 py-1 text-xs" type="text" value="<%= (patientdata && patientdata.chronicConditions) || '' %>" placeholder="e.g. Diabetes Type 2, Hypertension" />
+            <p id="chronicConditions-text" class="font-semibold text-slate-800"><%= (patientdata && patientdata.chronicConditions) || 'None specified' %></p>
+          </div>
+
+          <span class="font-semibold text-slate-500">ABHA Health ID:</span>
+          <div>
+            <input id="abhaId-input" class="hidden w-full max-w-sm rounded-lg border border-slate-300 px-3 py-1 text-xs" type="text" value="<%= (patientdata && patientdata.abhaId) || '' %>" placeholder="Optional 14-digit ABHA number" />
+            <p id="abhaId-text" class="font-mono text-xs text-slate-700"><%= (patientdata && patientdata.abhaId) || 'Optional / Not linked' %></p>
+          </div>
         </div>
       </div>
 
@@ -106,6 +136,47 @@
       </div>
     <% } %>
   </div>
+
+  <% if (locals.user) { %>
+    <!-- Family & Dependent Care Profiles -->
+    <section class="mt-8 rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-6">
+      <div>
+        <span class="inline-block rounded-full bg-indigo-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">Family Care Account</span>
+        <h2 class="text-lg font-extrabold text-slate-900 mt-1.5">Family &amp; Dependent Profiles</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Book OPD &amp; telehealth appointments cleanly for parents, spouse, or children without mixing clinical records.</p>
+      </div>
+
+      <% if (patientdata?.dependents && patientdata.dependents.length) { %>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <% patientdata.dependents.forEach((dep) => { %>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 flex items-start justify-between gap-3 text-xs">
+              <div>
+                <p class="font-bold text-slate-900 text-sm"><%= dep.fullname %></p>
+                <p class="text-primary font-semibold"><%= dep.relation %><% if (dep.bloodGroup) { %> · Blood <%= dep.bloodGroup %><% } %></p>
+                <% if (dep.allergies) { %><p class="text-rose-700 mt-1">Allergies: <%= dep.allergies %></p><% } %>
+              </div>
+              <button type="button" class="remove-dependent rounded-lg border border-rose-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-rose-600 hover:bg-rose-50" data-id="<%= dep._id %>">Remove</button>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+
+      <form id="dependent-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-slate-100 pt-5 text-xs">
+        <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+        <input type="text" name="fullname" required placeholder="Family member full name" class="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5" />
+        <select name="relation" class="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5">
+          <option value="Parent">Parent</option>
+          <option value="Spouse">Spouse</option>
+          <option value="Child">Child</option>
+          <option value="Sibling">Sibling</option>
+          <option value="Other">Other</option>
+        </select>
+        <input type="text" name="bloodGroup" placeholder="Blood group (e.g. O+)" class="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5" />
+        <input type="text" name="allergies" placeholder="Known allergies (optional)" class="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5" />
+        <button type="submit" class="sm:col-span-2 rounded-xl bg-slate-900 py-2.5 font-bold text-white hover:bg-primary transition">+ Add Family Member</button>
+      </form>
+    </section>
+  <% } %>
 </div>
 
 <script src="/assets/profile-page.js"></script>

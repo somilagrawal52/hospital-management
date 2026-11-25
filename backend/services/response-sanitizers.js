@@ -11,15 +11,15 @@ function pick(source, fields) {
 }
 
 function adminDoctor(document) {
-  return pick(plain(document), ["_id", "fullname", "email", "gender", "number", "speciality", "degree", "experience", "about", "fees", "image", "available"]);
+  return pick(plain(document), ["_id", "fullname", "email", "gender", "number", "speciality", "degree", "experience", "about", "fees", "image", "available", "ratingAverage", "ratingCount"]);
 }
 
 function adminAppointment(document) {
-  return pick(plain(document), ["_id", "fullname", "email", "number", "doctor", "date", "slotDate", "slotTime", "amount", "status", "isOnline", "cancelled", "iscompleted"]);
+  return pick(plain(document), ["_id", "fullname", "email", "number", "doctor", "date", "slotDate", "slotTime", "visitMode", "queueToken", "queueState", "amount", "status", "isOnline", "cancelled", "iscompleted"]);
 }
 
 function doctorAppointment(document) {
-  return pick(plain(document), ["_id", "fullname", "email", "number", "doctor", "date", "slotDate", "slotTime", "status", "isOnline", "cancelled", "iscompleted", "video"]);
+  return pick(plain(document), ["_id", "fullname", "email", "number", "doctor", "date", "slotDate", "slotTime", "visitMode", "queueToken", "queueState", "status", "isOnline", "cancelled", "iscompleted", "video", "prescriptionId"]);
 }
 
 module.exports = { adminAppointment, adminDoctor, doctorAppointment };

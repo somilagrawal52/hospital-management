@@ -1,16 +1,129 @@
 <%- include('partials/head', { pageTitle: 'Administration dashboard | OneLife' }) %>
 <%- include('partials/header', { adminName: 'Admin' }) %>
 <%- include('partials/sidebar', { activePage: 'dashboard' }) %>
+<%
+  const safeAnalytics = typeof analytics !== 'undefined' ? analytics : {};
+  const safeDoctorsList = typeof doctorsList !== 'undefined' ? doctorsList : [];
+  const totalModes = Math.max(1, (safeAnalytics.clinicCount || 0) + (safeAnalytics.telehealthCount || 0) + (safeAnalytics.walkInCount || 0));
+%>
 
 <main id="main-content" class="console-main">
   <header class="console-page-heading">
-    <div><p class="console-eyebrow">Care operations</p><h1>Hospital overview</h1><p>Track care activity and keep appointments moving.</p></div>
+    <div><p class="console-eyebrow">Care operations</p><h1>Hospital overview</h1><p>Monitor hospital revenue, OPD &amp; walk-in queues, and coordinate appointments.</p></div>
   </header>
 
   <section class="console-grid console-grid--metrics" aria-label="Key statistics">
-    <article class="console-metric"><div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">P</span>Registered patients</div><p class="console-metric__value"><%= patientsCount %></p><p class="console-metric__note">Patient accounts on the platform</p></article>
-    <article class="console-metric"><div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">D</span>Active clinicians</div><p class="console-metric__value"><%= doctorsCount %></p><p class="console-metric__note">Doctors in the directory</p></article>
-    <article class="console-metric"><div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">T</span>Today’s schedule</div><p class="console-metric__value"><%= todayAppointmentsCount %></p><p class="console-metric__note">Appointments not cancelled</p></article>
+    <article class="console-metric">
+      <div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">P</span>Registered patients</div>
+      <p class="console-metric__value"><%= patientsCount %></p>
+      <p class="console-metric__note"><%= doctorsCount %> active clinicians in directory</p>
+    </article>
+    <article class="console-metric">
+      <div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">T</span>Today’s OPD load</div>
+      <p class="console-metric__value"><%= todayAppointmentsCount %></p>
+      <p class="console-metric__note"><%= safeAnalytics.clinicCount || 0 %> clinic · <%= safeAnalytics.telehealthCount || 0 %> video · <%= safeAnalytics.walkInCount || 0 %> walk-in</p>
+    </article>
+    <article class="console-metric">
+      <div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">₹</span>Settled revenue</div>
+      <p class="console-metric__value">₹<%= (safeAnalytics.totalRevenueInr || 0).toLocaleString('en-IN') %></p>
+      <p class="console-metric__note"><%= safeAnalytics.completionRate ?? 100 %>% visit completion rate</p>
+    </article>
+  </section>
+
+  <!-- Reception Walk-In Token & Operations Analytics -->
+  <section class="console-grid console-grid--two" style="margin-top: 1.2rem">
+    <!-- Walk-In Reception Token Drawer -->
+    <article class="console-panel">
+      <div class="console-panel__header">
+        <div>
+          <h2>OPD Reception: Issue Walk-In Token</h2>
+          <p>Register walk-in clinic patients into the unified daily doctor queue.</p>
+        </div>
+      </div>
+      <div class="console-panel__body">
+        <form id="walkin-form" action="/admin/walk-in" method="post" class="console-form">
+          <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+          <div class="console-form-grid">
+            <div class="console-field">
+              <label for="walkin-doctor">Assign Clinician *</label>
+              <select id="walkin-doctor" name="doctorId" required>
+                <option value="">Select doctor</option>
+                <% safeDoctorsList.forEach((doc) => { %>
+                  <option value="<%= doc._id %>">Dr. <%= doc.fullname %> (<%= doc.speciality %> · ₹<%= doc.fees || 500 %>)</option>
+                <% }) %>
+              </select>
+            </div>
+            <div class="console-field">
+              <label for="walkin-payment">Desk Settlement</label>
+              <select id="walkin-payment" name="paymentMethod">
+                <option value="cash">Cash Collected at Desk</option>
+                <option value="upi">UPI / QR Collected at Desk</option>
+              </select>
+            </div>
+            <div class="console-field">
+              <label for="walkin-name">Patient Name *</label>
+              <input id="walkin-name" name="fullname" type="text" required placeholder="Walk-in patient full name" />
+            </div>
+            <div class="console-field">
+              <label for="walkin-phone">Mobile Number *</label>
+              <input id="walkin-phone" name="number" type="tel" required placeholder="10-digit mobile number" />
+            </div>
+          </div>
+          <div class="console-field">
+            <label for="walkin-complaint">Reason for Visit / Complaint</label>
+            <input id="walkin-complaint" name="chiefComplaint" type="text" placeholder="e.g. Fever & cough since 2 days" />
+          </div>
+          <div class="console-form-actions">
+            <button type="submit" class="console-button">Issue OPD Queue Token</button>
+            <span id="walkin-status" class="console-status" role="status"></span>
+          </div>
+        </form>
+      </div>
+    </article>
+
+    <!-- Operational Mix & Specialty Demand -->
+    <article class="console-panel">
+      <div class="console-panel__header">
+        <div>
+          <h2>Care Channel &amp; Specialty Mix</h2>
+          <p>Live distribution across bookings and departments.</p>
+        </div>
+      </div>
+      <div class="console-panel__body console-stack">
+        <div>
+          <div class="console-inline" style="justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.35rem;">
+            <span>In-Clinic OPD (<%= safeAnalytics.clinicCount || 0 %>)</span>
+            <span><%= Math.round(((safeAnalytics.clinicCount || 0) / totalModes) * 100) %>%</span>
+          </div>
+          <div class="console-bar-track"><div class="console-bar-fill" style="width: <%= Math.round(((safeAnalytics.clinicCount || 0) / totalModes) * 100) %>%"></div></div>
+        </div>
+        <div>
+          <div class="console-inline" style="justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.35rem;">
+            <span>HD Telehealth (<%= safeAnalytics.telehealthCount || 0 %>)</span>
+            <span><%= Math.round(((safeAnalytics.telehealthCount || 0) / totalModes) * 100) %>%</span>
+          </div>
+          <div class="console-bar-track"><div class="console-bar-fill" style="width: <%= Math.round(((safeAnalytics.telehealthCount || 0) / totalModes) * 100) %>%"></div></div>
+        </div>
+        <div>
+          <div class="console-inline" style="justify-content: space-between; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.35rem;">
+            <span>Reception Walk-Ins (<%= safeAnalytics.walkInCount || 0 %>)</span>
+            <span><%= Math.round(((safeAnalytics.walkInCount || 0) / totalModes) * 100) %>%</span>
+          </div>
+          <div class="console-bar-track"><div class="console-bar-fill" style="width: <%= Math.round(((safeAnalytics.walkInCount || 0) / totalModes) * 100) %>%"></div></div>
+        </div>
+
+        <% if (safeAnalytics.specialityBreakdown && safeAnalytics.specialityBreakdown.length) { %>
+          <div style="border-top: 1px solid var(--console-line); padding-top: 0.75rem;">
+            <strong style="font-size: 0.8rem; color: var(--console-muted); text-transform: uppercase;">Top Department Volume</strong>
+            <div class="console-inline" style="margin-top: 0.45rem;">
+              <% safeAnalytics.specialityBreakdown.forEach((item) => { %>
+                <span class="console-pill"><%= item.label %> · <%= item.count %></span>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </article>
   </section>
 
   <section class="console-panel" style="margin-top: 1.2rem">
@@ -18,12 +131,21 @@
     <div class="console-panel__body">
       <div class="console-table-wrap">
         <table class="console-table">
-          <thead><tr><th>Patient</th><th>Doctor</th><th>Phone</th><th>Date</th><th>Status</th><th>Update</th></tr></thead>
+          <thead><tr><th>Patient</th><th>Doctor</th><th>Phone</th><th>Date / Token</th><th>Status</th><th>Update</th></tr></thead>
           <tbody>
             <% appointments.forEach((appointment) => { %>
               <% const status = appointment.status || 'pending'; const statusTone = status === 'cancelled' ? 'danger' : status === 'completed' ? 'success' : status === 'pending' || status === 'online_requested' ? 'warning' : ''; %>
               <tr>
-                <td><%= appointment.fullname || '—' %></td><td><%= appointment.doctor || '—' %></td><td><%= appointment.number || '—' %></td><td><%= appointment.formattedDate %></td>
+                <td>
+                  <strong><%= appointment.patientMember?.fullname || appointment.fullname || '—' %></strong>
+                  <div style="font-size: 0.74rem; color: var(--console-muted);"><%= appointment.visitMode === 'walk_in' ? 'Walk-In' : appointment.visitMode === 'telehealth' || appointment.isOnline ? 'Telehealth' : 'In-Clinic' %></div>
+                </td>
+                <td><%= appointment.doctor || '—' %></td>
+                <td><%= appointment.number || '—' %></td>
+                <td>
+                  <div><%= appointment.formattedDate %></div>
+                  <% if (appointment.queueToken) { %><div style="font-size: 0.74rem; font-weight: 700;">Token #<%= appointment.queueToken %></div><% } %>
+                </td>
                 <td><span class="console-pill <%= statusTone ? `console-pill--${statusTone}` : '' %>"><%= status.replace(/_/g, ' ') %></span></td>
                 <td>
                   <% if (!['completed', 'cancelled'].includes(status)) { %>
@@ -57,6 +179,27 @@
       if (!response.ok || !data.success) throw new Error(data.message || 'Unable to update appointment.');
       window.location.reload();
     } catch (error) { button.disabled = false; window.alert(error.message || 'Unable to update appointment.'); }
+  });
+
+  document.getElementById('walkin-form')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const status = document.getElementById('walkin-status');
+    const payload = Object.fromEntries(new FormData(form).entries());
+    status.textContent = 'Generating OPD token…';
+    try {
+      const response = await fetch('/admin/walk-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to issue walk-in token.');
+      status.textContent = data.message;
+      window.location.reload();
+    } catch (error) {
+      status.textContent = error.message;
+    }
   });
 </script>
 <%- include('partials/scripts') %>

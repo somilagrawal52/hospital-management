@@ -36,7 +36,10 @@ test("dashboard templates render representative appointments without vendor bund
   const doctor = await render(view("doctor", "doctor-dashboard.ejs"), { doctor: { fullname: "Doctor", available: true }, patientsAssignedCount: 1, fellowDoctorsCount: 2, onlineRequestsCount: 0, upcomingAppointmentsCount: 1, appointments: [appointment] });
   assert.match(doctor, /data-enhanced-table/);
   assert.match(doctor, /data-table-search/);
+  assert.match(doctor, /\/doctor\/queue/);
+  assert.match(doctor, /\/doctor\/consult\//);
   assert.doesNotMatch(doctor, /cdn\.datatables|jquery|tinymce|simple-datatables/i);
+  assert.match(admin, /\/admin\/walk-in/);
 });
 
 test("doctor login and availability keep route and dynamic-data contracts", async () => {

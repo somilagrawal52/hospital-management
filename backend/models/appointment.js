@@ -78,8 +78,16 @@ const appointmentschema = new mongoose.Schema(
       paymentId: { type: String },
       confirmationSentAt: { type: Date },
       reconciledAt: { type: Date },
+      refundStatus: { type: String, enum: ["none", "eligible", "initiated", "processed"], default: "none" },
+      refundAmount: { type: Number, default: 0 },
     },
+    paymentHoldExpiresAt: { type: Date, index: true },
     invoiceFile: { type: String },
+    visitMode: {
+      type: String,
+      enum: ["clinic", "telehealth", "walk_in"],
+      default: "clinic",
+    },
     isOnline: {
       type: Boolean,
       default: false,
@@ -90,6 +98,36 @@ const appointmentschema = new mongoose.Schema(
     },
     slotDate: { type: String, match: /^\d{4}-\d{2}-\d{2}$/ },
     slotTime: { type: String, match: /^\d{2}:\d{2}$/ },
+    queueToken: { type: Number, index: true },
+    queueState: {
+      type: String,
+      enum: ["waiting", "checked_in", "called", "in_consultation", "completed", "no_show"],
+      default: "waiting",
+    },
+    checkedInAt: { type: Date },
+    patientMember: {
+      memberId: { type: String, default: "self" },
+      fullname: { type: String, trim: true, maxlength: 120 },
+      relation: { type: String, trim: true, maxlength: 60, default: "Self" },
+      gender: { type: String, trim: true, maxlength: 30 },
+      dob: { type: String, trim: true, maxlength: 30 },
+      bloodGroup: { type: String, trim: true, maxlength: 20 },
+    },
+    intake: {
+      chiefComplaint: { type: String, trim: true, maxlength: 800, default: "" },
+      symptomDuration: { type: String, trim: true, maxlength: 120, default: "" },
+      allergies: { type: String, trim: true, maxlength: 500, default: "" },
+      currentMedications: { type: String, trim: true, maxlength: 500, default: "" },
+      vitals: {
+        bp: { type: String, trim: true, maxlength: 40, default: "" },
+        temp: { type: String, trim: true, maxlength: 40, default: "" },
+        spo2: { type: String, trim: true, maxlength: 40, default: "" },
+        weight: { type: String, trim: true, maxlength: 40, default: "" },
+      },
+      submittedAt: { type: Date },
+    },
+    prescriptionId: { type: mongoose.Schema.Types.ObjectId, ref: "prescription" },
+    reviewId: { type: mongoose.Schema.Types.ObjectId, ref: "review" },
     amount: {
       type: Number,
       required: true,
@@ -144,6 +182,7 @@ const appointmentschema = new mongoose.Schema(
       changedBy: { type: mongoose.Schema.Types.ObjectId, ref: "user" },
     }],
   },
+  { timestamps: true },
 );
 
 appointmentschema.index({ docId: 1, date: 1 });

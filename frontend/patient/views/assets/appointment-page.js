@@ -96,6 +96,15 @@ if (dateInput) {
   dateInput.addEventListener('change', loadSlots);
 }
 
+const memberSelect = document.getElementById('memberId');
+const allergiesInput = document.getElementById('allergies');
+memberSelect?.addEventListener('change', () => {
+  const opt = memberSelect.selectedOptions?.[0];
+  if (opt && allergiesInput) {
+    allergiesInput.value = opt.dataset.allergies || '';
+  }
+});
+
 waitlistButton?.addEventListener('click', async () => {
   if (!dateInput?.value) return;
   waitlistButton.disabled = true;

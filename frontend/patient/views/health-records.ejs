@@ -1,0 +1,134 @@
+<%- include('partials/page-start', { includeHeroHeader: false, pageTitle: 'My Health Records & e-Prescriptions - OneLife' }) %>
+<% const translate = typeof t === 'function' ? t : (k, f) => f || k; %>
+
+<div class="py-8 max-w-5xl mx-auto">
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b border-slate-200 pb-6 mb-8 gap-4">
+    <div>
+      <span class="inline-block rounded-full bg-teal-50 border border-teal-100 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-teal-800">Longitudinal Patient Locker</span>
+      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2 tracking-tight"><%= translate('records.title', 'Patient Health Records & e-Prescriptions') %></h1>
+      <p class="text-xs sm:text-sm text-slate-600 mt-1"><%= translate('records.subtitle', 'View completed consultations, download QR-verified digital prescriptions, allergies, and upcoming follow-up dates.') %></p>
+    </div>
+    <a href="/my-profile" class="inline-flex items-center gap-1.5 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 shadow-2xs hover:border-primary hover:text-primary transition shrink-0">
+      <span>Update Clinical Profile</span> &rarr;
+    </a>
+  </div>
+
+  <!-- Clinical Identity & Medical Summary Strip -->
+  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Blood Group</p>
+      <p class="text-xl font-extrabold text-rose-700 mt-1"><%= patientdata?.bloodGroup || 'Not Set' %></p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Known Allergies</p>
+      <p class="text-xs font-semibold text-slate-800 mt-1.5 leading-relaxed"><%= patientdata?.allergies || 'None documented' %></p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Chronic Conditions</p>
+      <p class="text-xs font-semibold text-slate-800 mt-1.5 leading-relaxed"><%= patientdata?.chronicConditions || 'None documented' %></p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs">
+      <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">ABHA / Family Profiles</p>
+      <p class="text-xs font-semibold text-primary mt-1.5"><%= patientdata?.abhaId || 'ABHA Optional' %></p>
+      <p class="text-[11px] text-slate-500 mt-0.5"><%= (patientdata?.dependents || []).length %> family members linked</p>
+    </div>
+  </section>
+
+  <!-- e-Prescriptions Timeline -->
+  <section class="space-y-6">
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-extrabold text-slate-900">Digital Prescriptions &amp; Visit Summaries</h2>
+      <span class="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-primary"><%= prescriptions.length %> Issued Rx</span>
+    </div>
+
+    <% if (prescriptions && prescriptions.length > 0) { %>
+      <% prescriptions.forEach((rx) => { %>
+        <article class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-6 py-4">
+            <div>
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-base font-bold text-slate-900">Dr. <%= rx.doctorName %></h3>
+                <span class="rounded-md bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-primary"><%= rx.doctorSpeciality || 'Physician' %></span>
+                <% if (rx.patientRelation && rx.patientRelation !== 'Self') { %>
+                  <span class="rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800">For: <%= rx.patientName %> (<%= rx.patientRelation %>)</span>
+                <% } %>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Visited on <%= rx.formattedDate %> · Code: <strong class="font-mono text-slate-800"><%= rx.verificationCode %></strong></p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <a href="/prescriptions/<%= rx._id %>/pdf" class="rounded-xl bg-primary px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-indigo-600 transition">
+                📄 Download Rx PDF
+              </a>
+              <a href="/rx/verify/<%= encodeURIComponent(rx.verificationCode) %>" class="rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition">
+                ✓ Verify Authenticity
+              </a>
+            </div>
+          </div>
+
+          <div class="p-6 space-y-5">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4">
+                <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Clinical Diagnosis</p>
+                <p class="text-sm font-bold text-slate-900 mt-1"><%= rx.diagnosis %></p>
+                <% if (rx.chiefComplaint) { %>
+                  <p class="text-xs text-slate-600 mt-1">Chief Complaint: <%= rx.chiefComplaint %></p>
+                <% } %>
+              </div>
+              <% if (rx.followUpDate) { %>
+                <div class="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4">
+                  <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Recommended Follow-Up</p>
+                  <p class="text-sm font-bold text-emerald-900 mt-1"><%= rx.followUpDate %></p>
+                  <a href="/doctors" class="inline-block mt-1 text-xs font-bold text-emerald-700 underline">Book Follow-up Slot &rarr;</a>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-400 uppercase text-[10px]">
+                    <th class="py-2 pr-4">Medicine</th>
+                    <th class="py-2 pr-4">Dosage</th>
+                    <th class="py-2 pr-4">Regimen</th>
+                    <th class="py-2 pr-4">Timing</th>
+                    <th class="py-2">Duration</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <% (rx.medicines || []).forEach((med) => { %>
+                    <tr>
+                      <td class="py-2.5 pr-4 font-bold text-slate-900"><%= med.name %><% if (med.instructions) { %><span class="block text-[11px] font-normal text-slate-500"><%= med.instructions %></span><% } %></td>
+                      <td class="py-2.5 pr-4 text-slate-700"><%= med.dosage || '—' %></td>
+                      <td class="py-2.5 pr-4 font-mono font-semibold text-primary"><%= med.frequency || '1-0-1' %></td>
+                      <td class="py-2.5 pr-4 text-slate-600"><%= med.timing || 'After food' %></td>
+                      <td class="py-2.5 text-slate-700"><%= med.duration || '5 days' %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+
+            <% if (rx.labTests && rx.labTests.length) { %>
+              <div class="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 text-xs">
+                <strong class="text-primary uppercase tracking-wider text-[11px] block mb-1">Recommended Lab Tests</strong>
+                <p class="text-slate-800 font-medium"><%= rx.labTests.join(' · ') %></p>
+              </div>
+            <% } %>
+
+            <% if (rx.advice) { %>
+              <p class="text-xs text-slate-600 leading-relaxed"><strong class="text-slate-900">Clinical Advice:</strong> <%= rx.advice %></p>
+            <% } %>
+          </div>
+        </article>
+      <% }) %>
+    <% } else { %>
+      <div class="rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center shadow-xs">
+        <p class="text-base font-bold text-slate-800">No e-Prescriptions Issued Yet</p>
+        <p class="text-xs text-slate-500 mt-1.5 max-w-md mx-auto">After you complete an in-clinic or video consultation, your clinician's structured digital prescription and follow-up plan will appear here permanently.</p>
+        <a href="/my-appointment" class="mt-4 inline-block rounded-2xl bg-primary px-6 py-2.5 text-xs font-bold text-white shadow-sm">View Appointments &rarr;</a>
+      </div>
+    <% } %>
+  </section>
+</div>
+
+<%- include('partials/page-end') %>

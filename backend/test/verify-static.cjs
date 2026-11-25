@@ -16,11 +16,31 @@ for (const file of unique) {
   if (!file.endsWith('.ejs')) continue;
   const source = fs.readFileSync(path.join(root, file), 'utf8');
   try { ejs.compile(source, { filename: path.join(root, file) }); counts.ejs++; } catch (error) { failures.push(`${file}: EJS ${error.message.split('\n')[0]}`); }
+  let inlineCombined = '';
+  const externalScripts = new Set();
   for (const match of source.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
-    if (/\bsrc=|application\/json/i.test(match[1]) || !match[2].trim()) continue;
-    try { new vm.Script(match[2].replace(/<%[=-][\s\S]*?%>/g, 'null').replace(/<%[\s\S]*?%>/g, '')); counts.inlineScripts++; }
-    catch (error) { failures.push(`${file}: inline script ${error.message}`); }
+    const srcMatch = match[1].match(/\bsrc=["']([^"']+)["']/i);
+    if (srcMatch) {
+      if (externalScripts.has(srcMatch[1])) failures.push(`${file}: duplicate external script ${srcMatch[1]}`);
+      externalScripts.add(srcMatch[1]);
+      continue;
+    }
+    if (/application\/json/i.test(match[1]) || !match[2].trim()) continue;
+    const sanitized = match[2].replace(/<%[=-][\s\S]*?%>/g, 'null').replace(/<%[\s\S]*?%>/g, '');
+    try {
+      new vm.Script(sanitized);
+      inlineCombined += `\n;${sanitized}`;
+      counts.inlineScripts++;
+    } catch (error) {
+      failures.push(`${file}: inline script ${error.message}`);
+    }
   }
+  if (inlineCombined) {
+    try { new vm.Script(inlineCombined); }
+    catch (error) { failures.push(`${file}: combined inline scripts ${error.message}`); }
+  }
+  const pageEndMatches = source.match(/include\(['"]partials\/page-end['"]\)/g) || [];
+  if (pageEndMatches.length > 1) failures.push(`${file}: duplicate partials/page-end include`);
   for (const match of source.matchAll(/(?:src|href)=["']([^"']+)["']/g)) {
     const url = match[1].split(/[?#]/)[0];
     if (url.includes('<%')) continue;

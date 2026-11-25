@@ -4,6 +4,8 @@ const path = require("path");
 const fs=require('fs');
 const { doctorImage } = require("../services/doctor-image");
 const { adminDoctor } = require("../services/response-sanitizers");
+const { computeOperationalAnalytics } = require("../services/care-metrics");
+const { localDateKey } = require("../services/scheduling");
 const { mailsender, sendWhatsAppMessage } = require("./mail");
 const {validatetoken}=require("../services/auth");
 const { cookieOptions } = require("../services/auth");
@@ -47,7 +49,7 @@ async function doctorsdetailtable(req, res) {
     }
     const { speciality } = req.params;
     const doctors = await User.find({ role: "DOCTOR" })
-      .select("_id fullname speciality degree experience about fees image available")
+      .select("_id fullname speciality degree experience about fees image available ratingAverage ratingCount queueStatus")
       .lean();
     const filterDoc = speciality
     ? doctors.filter((doc) => doc.speciality === speciality)
@@ -75,6 +77,12 @@ async function doctorsdashboard(req, res) {
     const onlineRequestsCount = await Appointment.countDocuments({ docId: req.user._id, status: "online_requested" });
     const upcomingAppointmentsCount = appointments.filter((item) => item.status === "confirmed" && new Date(item.date) >= new Date()).length;
 
+    const todayKey = localDateKey(new Date());
+    const analytics = computeOperationalAnalytics(appointments, [doctor]);
+    const todayQueue = appointments
+      .filter((item) => (item.slotDate || localDateKey(item.date)) === todayKey && !["cancelled", "payment_failed", "payment_pending"].includes(item.status))
+      .sort((a, b) => Number(a.queueToken || 9999) - Number(b.queueToken || 9999));
+
     const formattedAppointments = appointments.map((appointment) => ({
       ...appointment,
       formattedDate: new Intl.DateTimeFormat("en-IN", {
@@ -91,6 +99,9 @@ async function doctorsdashboard(req, res) {
       onlineRequestsCount,
       upcomingAppointmentsCount,
       appointments: formattedAppointments,
+      todayKey,
+      todayQueue,
+      analytics,
     });
   } catch (error) {
     console.error("Error loading doctor dashboard:", error);

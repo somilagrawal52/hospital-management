@@ -1,6 +1,8 @@
 const Appointment = require("../models/appointment");
 
-const ACTIVE_SLOT_STATUSES = ["payment_pending", "pending", "confirmed", "online_requested", "created"];
+const PAYMENT_HOLD_MINUTES = 10;
+const ACTIVE_SLOT_STATUSES = ["pending", "confirmed", "online_requested", "created"];
+const ALL_SLOT_STATUSES = ["payment_pending", ...ACTIVE_SLOT_STATUSES];
 const INDIA_TIME_ZONE = "Asia/Kolkata";
 const DEFAULT_WEEKLY_SCHEDULE = [
   { day: 0, enabled: false, startTime: "09:00", endTime: "17:00", slotMinutes: 30 },
@@ -119,16 +121,49 @@ function normaliseAvailability(input = {}) {
   return { weekly: [...weeklyByDay.values()].sort((a, b) => a.day - b.day), exceptions };
 }
 
+function activeSlotFilter(now = new Date()) {
+  const legacyCutoff = new Date(now.getTime() - PAYMENT_HOLD_MINUTES * 60 * 1000);
+  return {
+    $or: [
+      { status: { $in: ACTIVE_SLOT_STATUSES } },
+      {
+        status: "payment_pending",
+        $or: [
+          { paymentHoldExpiresAt: { $gt: now } },
+          { paymentHoldExpiresAt: { $exists: false }, createdAt: { $gt: legacyCutoff } },
+        ],
+      },
+    ],
+  };
+}
+
+async function expireStalePaymentHolds(now = new Date()) {
+  const legacyCutoff = new Date(now.getTime() - PAYMENT_HOLD_MINUTES * 60 * 1000);
+  const filter = {
+    status: "payment_pending",
+    $or: [
+      { paymentHoldExpiresAt: { $lte: now } },
+      { paymentHoldExpiresAt: { $exists: false }, createdAt: { $lte: legacyCutoff } },
+    ],
+  };
+  return Appointment.updateMany(filter, {
+    $set: { status: "payment_failed", "payment.status": "expired" },
+    $push: { statusHistory: { status: "payment_failed", source: "hold_expired" } },
+  });
+}
+
 async function availableSlotsForDoctor(doctor, dateKey, { excludeAppointmentId } = {}) {
   if (!doctor?.available) return [];
   const rule = availabilityForDate(doctor, dateKey);
   if (!rule.enabled) return [];
 
+  await expireStalePaymentHolds().catch(() => {});
+
   const { start, end } = dayBounds(dateKey);
   const query = {
     docId: String(doctor._id),
     date: { $gte: start, $lt: end },
-    status: { $in: ACTIVE_SLOT_STATUSES },
+    ...activeSlotFilter(),
   };
   if (excludeAppointmentId) query._id = { $ne: excludeAppointmentId };
   const appointments = await Appointment.find(query).select("date").lean();
@@ -152,11 +187,14 @@ async function assertSlotAvailable(doctor, dateKey, time, options) {
 }
 
 module.exports = {
-  ACTIVE_SLOT_STATUSES,
+  ACTIVE_SLOT_STATUSES: ALL_SLOT_STATUSES,
+  PAYMENT_HOLD_MINUTES,
+  activeSlotFilter,
   availabilityForDate,
   assertSlotAvailable,
   availableSlotsForDoctor,
   dateTimeForSlot,
+  expireStalePaymentHolds,
   isDateKey,
   isTime,
   localDateKey,

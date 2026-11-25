@@ -98,9 +98,13 @@
                   <h3 class="text-base font-bold text-slate-900 group-hover:text-primary transition-colors">Dr. <%= item.fullname %></h3>
                   <span class="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-white font-bold" title="Verified Clinician">✓</span>
                 </div>
-                <div class="flex items-center text-amber-400 text-xs font-bold gap-0.5">
-                  <span>★</span>
-                  <span class="text-slate-800 text-[11px]">4.9</span>
+                <div class="flex items-center text-xs font-bold gap-0.5">
+                  <% if (item.ratingCount > 0) { %>
+                    <span class="text-amber-400">★</span>
+                    <span class="text-slate-800 text-[11px]"><%= Number(item.ratingAverage).toFixed(1) %> (<%= item.ratingCount %>)</span>
+                  <% } else { %>
+                    <span class="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] text-emerald-700">Verified</span>
+                  <% } %>
                 </div>
               </div>
               <p class="text-xs font-bold text-primary mt-1"><%= item.speciality %></p>
@@ -152,34 +156,6 @@
     </main>
   </div>
 </div>
-
-<script>
-  // Real-time live client-side search filter
-  const searchInput = document.getElementById('doctor-search');
-  const cards = document.querySelectorAll('.doctor-card');
-  const noResults = document.getElementById('no-search-results');
-
-  searchInput?.addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase().trim();
-    let matches = 0;
-
-    cards.forEach((card) => {
-      const name = card.dataset.name || '';
-      const speciality = card.dataset.speciality || '';
-      const degree = card.dataset.degree || '';
-      const isMatch = name.includes(term) || speciality.includes(term) || degree.includes(term);
-
-      card.style.display = isMatch ? 'flex' : 'none';
-      if (isMatch) matches++;
-    });
-
-    if (noResults) {
-      noResults.classList.toggle('hidden', matches > 0 || cards.length === 0);
-    }
-  });
-</script>
-
-<%- include('partials/page-end') %>
 
 <script>
   // Real-time live client-side search filter

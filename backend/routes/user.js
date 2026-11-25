@@ -17,7 +17,11 @@ const { notifyWaitlistForSlot } = require("../services/waitlist");
 const path = require("path");
 const mongoose = require("mongoose");
 const Appointment = require("../models/appointment");
+const Review = require("../models/review");
 const { validatetoken } = require("../services/auth");
+const { ensureInvoicePdf } = require("../services/payment-finalization");
+const { getLocalDiseaseEntry } = require("../services/disease-kb");
+const { recommendCliniciansForMessage } = require("../services/ai-care-router");
 const {
   specialityData,
 } = require("../../frontend/patient/views/assets/assets");
@@ -28,14 +32,25 @@ const {
 } = require("../controller/address");
 const {
   adminlogin,
-  adminregister,
-  adminregistertodb,
   adminloginfromdb,
   adminlogout,
   adminprofile,
   showallmsg,
   updateSupportThread,
 } = require("../controller/admin");
+const {
+  addDependent,
+  consultWorkspacePage,
+  createWalkInAppointment,
+  downloadPrescriptionPdf,
+  healthRecordsPage,
+  removeDependent,
+  savePrescription,
+  submitDoctorReview,
+  updateAppointmentIntake,
+  updateDoctorQueue,
+  verifyPrescriptionPage,
+} = require("../controller/clinical");
 const {
   doctorsregistration,
   doctorsdetailtable,
@@ -152,7 +167,7 @@ router.get("/appointments/online", requireAuth, restrictTo(["DOCTOR"]), getOnlin
 router.post("/appointments/status", requireAuth, restrictTo(["DOCTOR", "ADMIN"]), updateAppointmentStatus);
 
 router.get("/disease", (req, res) => {
-  res.render("diseaseSearch");
+  res.render("diseaseSearch", { user: req.user || null, patientdata: null });
 });
 
 router.get("/disease/:name", async (req, res) => {
@@ -163,6 +178,10 @@ router.get("/disease/:name", async (req, res) => {
   if (isolatedIntegrations()) {
     if (integrationMode() === "disabled") return res.status(503).json({ error: "External disease lookup is disabled in this environment." });
     return res.json({ disease: diseaseName, pageTitle: diseaseName, intro: "Staging simulation: external disease lookup was not performed.", symptoms: [], treatment: [], prevention: [], keyFacts: [], mocked: true });
+  }
+  const localHit = getLocalDiseaseEntry(diseaseName);
+  if (localHit) {
+    return res.json(localHit);
   }
   const url = `https://www.who.int/health-topics/${encodeURIComponent(diseaseName)}`;
   
@@ -314,70 +333,40 @@ router.get("/disease/:name", async (req, res) => {
   } catch (error) {
     console.error('Scraping error:', error.message);
     
+    const localEntry = getLocalDiseaseEntry(diseaseName);
+    if (error.response?.status === 404 && localEntry) {
+      return res.json(localEntry);
+    }
+    if (localEntry) {
+      return res.json(localEntry);
+    }
     if (error.response) {
       if (error.response.status === 404) {
         res.status(404).json({
           error: "Disease page not found. Please check the spelling.",
-          suggestion: "Try searching for common diseases like 'diabetes', 'malaria', 'covid-19'"
+          suggestion: "Try searching for common diseases like 'diabetes', 'malaria', 'dengue', 'hypertension', 'migraine'",
         });
       } else if (error.response.status === 403) {
         res.status(403).json({
-          error: "Access denied. The website may be blocking automated requests."
+          error: "Access denied. The external source may be temporarily limiting automated requests.",
         });
       } else {
         res.status(error.response.status).json({
-          error: `HTTP ${error.response.status}: ${error.response.statusText}`
+          error: `HTTP ${error.response.status}: ${error.response.statusText}`,
         });
       }
-    } else if (error.code === 'ECONNABORTED') {
+    } else if (error.code === "ECONNABORTED") {
       res.status(408).json({
-        error: "Request timeout. The website took too long to respond."
+        error: "Request timeout. The website took too long to respond.",
       });
     } else {
       res.status(500).json({
         error: "Failed to fetch disease info. Please try again.",
-        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        details: process.env.NODE_ENV === "development" ? error.message : undefined,
       });
     }
   }
 });
-
-function extractContent($, baseSelector) {
-  let content = '';
-  
-  // Try multiple content selectors
-  const selectors = [
-    `${baseSelector} article`,
-    `${baseSelector} .content`,
-    `${baseSelector} p`,
-    'article',
-    '.content',
-    'p'
-  ];
-
-  for (const selector of selectors) {
-    const elements = $(selector);
-    if (elements.length) {
-      content = elements.map((_, el) => $(el).text()).get().join(' ');
-      if (content.length > 200) break;
-    }
-  }
-
-  return content.replace(/\s+/g, ' ').trim();
-}
-
-function extractSection(content, keywords) {
-  const sentences = content.split(/[.!?]+/);
-  return sentences
-    .filter(sentence => 
-      keywords.some(keyword => 
-        sentence.toLowerCase().includes(keyword.toLowerCase())
-      )
-    )
-    .map(s => s.trim())
-    .filter(s => s.length > 30)
-    .slice(0, 5);
-}
 
 router.get("/video-requests", requireAuth, restrictTo(["DOCTOR"]), async (req, res) => {
   try {
@@ -511,6 +500,15 @@ router.post("/appointments/:id/video/events", requireAuth, async (req, res) => {
 
 router.post("/chat", requireAuth, chatLimiter, async (req, res) => {
   const userMessage = String(req.body.message || "").trim();
+  const history = Array.isArray(req.body.history)
+    ? req.body.history
+        .slice(-6)
+        .map((turn) => ({
+          role: turn?.role === "assistant" ? "assistant" : "user",
+          text: String(turn?.text || "").trim().slice(0, 400),
+        }))
+        .filter((turn) => turn.text)
+    : [];
   if (!userMessage || userMessage.length > 1000) {
     return res.status(400).json({ error: "Enter a message of up to 1,000 characters." });
   }
@@ -520,27 +518,69 @@ router.post("/chat", requireAuth, chatLimiter, async (req, res) => {
   if (!isMedicalQuery(userMessage)) {
     return res.json({ message: MEDICAL_ONLY_FALLBACK, fallback: true });
   }
-  if (integrationMode() === "mock") return res.json({ message: "Staging simulation: no AI provider was contacted. Please consult a qualified clinician for health advice.", mocked: true, sources: [] });
+  if (integrationMode() === "mock") {
+    const { speciality, recommendations } = await recommendCliniciansForMessage(userMessage).catch(() => ({ speciality: "General physician", recommendations: [] }));
+    return res.json({
+      message: "Staging simulation: no AI provider was contacted. Please consult a qualified clinician for health advice.",
+      mocked: true,
+      sources: [],
+      recommendedSpeciality: speciality,
+      recommendedDoctors: recommendations,
+    });
+  }
   if (integrationMode() === "disabled") return res.status(503).json({ error: "AI responses are disabled in this environment." });
+
+  const { speciality, recommendations } = await recommendCliniciansForMessage(userMessage).catch(() => ({
+    speciality: "General physician",
+    recommendations: [],
+  }));
 
   try {
     requireLiveIntegration("AI");
-    const apiKey = process.env.GEMINI_API_KEY || process.env.OPENAI_API_KEY;
-    if (!apiKey || apiKey.includes("replace")) {
+    const geminiKey = process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY.includes("replace") ? process.env.GEMINI_API_KEY : "";
+    const openaiKey = process.env.OPENAI_API_KEY && !process.env.OPENAI_API_KEY.includes("replace") ? process.env.OPENAI_API_KEY : "";
+    if (!geminiKey && !openaiKey) {
       return res.json({
-        message: "Thank you for reaching out to OneLife Health Information. While external AI integration is being configured, please note that any persistent symptoms should be evaluated by a certified clinician. You can book an appointment directly with our hospital specialists.",
+        message: `Thank you for contacting OneLife Health Assistant. While external AI generation is being configured, persistent symptoms should be evaluated by a certified ${speciality}. You can book an available specialist directly below.`,
+        recommendedSpeciality: speciality,
+        recommendedDoctors: recommendations,
         sources: [
           { label: "WHO health topics", url: "https://www.who.int/health-topics" },
           { label: "CDC health information", url: "https://www.cdc.gov/health-topics/" },
         ],
       });
     }
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    const prompt = `You are OneLife's health-information assistant. Give general, cautious information only; do not diagnose, prescribe, or claim certainty. Encourage the user to contact a qualified clinician for personal advice and to seek emergency help for urgent symptoms. Keep the answer concise. Do not invent citations or claim a source supports a statement unless you are certain. User question: ${userMessage}`;
-    const result = await model.generateContent(prompt);
+
+    const contextLines = history.map((turn) => `${turn.role === "assistant" ? "Assistant" : "Patient"}: ${turn.text}`).join("\n");
+    const systemPrompt = `You are OneLife's clinical health-information assistant for Indian clinics and telehealth patients. Give general, cautious health education only; do not diagnose, prescribe, or claim certainty. Advise consulting a qualified clinician (especially a ${speciality} if relevant) and seeking urgent emergency care (112/108) for severe red-flag symptoms. Keep answers concise (4-6 sentences max). Never fabricate citations.`;
+    let answer = "";
+
+    if (geminiKey) {
+      const genAI = new GoogleGenerativeAI(geminiKey);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const prompt = `${systemPrompt}\n${contextLines ? `Recent context:\n${contextLines}\n` : ""}Current patient question: ${userMessage}`;
+      const result = await model.generateContent(prompt);
+      answer = result.response.text();
+    } else {
+      const OpenAI = require("openai");
+      const openai = new OpenAI({ apiKey: openaiKey });
+      const messages = [
+        { role: "system", content: systemPrompt },
+        ...history.map((turn) => ({ role: turn.role, content: turn.text })),
+        { role: "user", content: userMessage },
+      ];
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages,
+        max_tokens: 350,
+      });
+      answer = completion.choices?.[0]?.message?.content || "";
+    }
+
     res.json({
-      message: result.response.text(),
+      message: answer,
+      recommendedSpeciality: speciality,
+      recommendedDoctors: recommendations,
       sources: [
         { label: "WHO health topics", url: "https://www.who.int/health-topics" },
         { label: "CDC health information", url: "https://www.cdc.gov/health-topics/" },
@@ -549,7 +589,9 @@ router.post("/chat", requireAuth, chatLimiter, async (req, res) => {
   } catch (error) {
     console.error("Error with AI Studio API:", error);
     res.json({
-      message: "OneLife Health Assistant is currently providing advisory notes: Please consult our hospital specialists or your primary care physician for a formal medical evaluation. In case of acute discomfort or distress, reach out to emergency services immediately.",
+      message: `OneLife Health Assistant advisory: Please consult our ${speciality} specialists or your primary physician for a formal evaluation. For acute chest pain, breathlessness, or trauma, call emergency services (112/108) immediately.`,
+      recommendedSpeciality: speciality,
+      recommendedDoctors: recommendations,
       sources: [
         { label: "WHO health topics", url: "https://www.who.int/health-topics" },
         { label: "CDC health information", url: "https://www.cdc.gov/health-topics/" },
@@ -563,21 +605,25 @@ router.post("/make-online/:id", requireAuth, restrictTo(["NORMAL"]), markAppoint
 router.get("/download-pdf", requireAuth, async (req, res) => {
   const { file } = req.query; // Get the filename from the query string
   if (!file || path.basename(file) !== file) return res.status(400).json({ message: "Invalid file" });
-  const appointment = await Appointment.findOne({ invoiceFile: file });
+  const idMatch = String(file).match(/^invoice-([a-f0-9]{24})\.pdf$/i);
+  const appointment = await Appointment.findOne(
+    idMatch ? { $or: [{ invoiceFile: file }, { _id: idMatch[1] }] } : { invoiceFile: file },
+  );
   const mayDownload = appointment && (req.user.role === "ADMIN" || appointment.userid === String(req.user._id) || appointment.docId === String(req.user._id));
   if (!mayDownload) return res.status(404).json({ message: "File not found" });
-  const filePath = path.join(__dirname, "..", "invoices", file);
 
-  // Check if the file exists
-  if (fs.existsSync(filePath)) {
-    // Set the response headers for file download
+  try {
+    const filePath = await ensureInvoicePdf(appointment);
+    if (!appointment.invoiceFile) {
+      appointment.invoiceFile = path.basename(filePath);
+      await appointment.save().catch(() => {});
+    }
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename=${file}`);
-
-    // Create a readable stream of the file and pipe it to the response
+    res.setHeader("Content-Disposition", `attachment; filename=${path.basename(filePath)}`);
     fs.createReadStream(filePath).pipe(res);
-  } else {
-    res.status(404).json({ message: "File not found" });
+  } catch (error) {
+    console.error("Invoice generation failed:", error);
+    res.status(500).json({ message: "Unable to generate invoice PDF." });
   }
 });
 
@@ -586,19 +632,24 @@ router.get("/appointment/:id", async (req, res) => {
   let patientdata = null;
   if (token) {
     const decodedtoken = validatetoken(token);
-    patientdata = await User.findById({ _id: decodedtoken._id });
+    patientdata = await User.findById({ _id: decodedtoken._id }).select("-password");
   }
   const { id } = req.params;
   if (!mongoose.isValidObjectId(id)) {
     return res.status(404).render("error-404", { title: "Doctor Not Found", message: "The selected doctor does not exist." });
   }
-  const docInfo = await User.findById(id).select("-password");
+  const [docInfo, reviews] = await Promise.all([
+    User.findById(id).select("-password"),
+    Review.find({ doctorId: id }).sort({ createdAt: -1 }).limit(6).lean(),
+  ]);
   if (!docInfo) {
     return res.status(404).send("Doctor not found");
   }
   docInfo.image = doctorImage(docInfo.image);
   res.render("appointment", {
     docInfo,
+    reviews,
+    prefillComplaint: typeof req.query.complaint === "string" ? req.query.complaint.slice(0, 300) : "",
     currencySymbol: "₹",
     razorpayKey: integrationMode() === "live" ? process.env.RAZORPAY_KEY_ID : "mock-key-no-provider",
     user: req.user,
@@ -607,7 +658,8 @@ router.get("/appointment/:id", async (req, res) => {
 });
 
 router.get("/chats", requireAuth, async (req, res) => {
-  res.render("chat");
+  const patientdata = req.user?.role === "NORMAL" ? await User.findById(req.user._id).select("-password") : null;
+  res.render("chat", { user: req.user, patientdata });
 });
 
 router.post("/logout", (req, res) => {
@@ -651,7 +703,7 @@ router.get("/", async (req, res) => {
     patientdata = await User.findById({ _id: decodedtoken._id });
   }
   const doctors = await User.find({ role: "DOCTOR" })
-    .select("_id fullname speciality degree experience about fees image available")
+    .select("_id fullname speciality degree experience about fees image available ratingAverage ratingCount queueStatus")
     .limit(8)
     .lean();
   doctors.forEach((doctor) => { doctor.image = doctorImage(doctor.image); });
@@ -777,6 +829,30 @@ router.post("/testing/mock-payment", (req, res, next) => integrationMode() === "
 router.get("/testing/mock-video/:room", (req, res, next) => integrationMode() === "mock" ? next() : res.sendStatus(404), requireAuth, (req, res) => {
   res.type("text/plain").send("OneLife staging video simulation. No video provider was contacted.");
 });
+
+router.post("/profile/dependents", requireAuth, restrictTo(["NORMAL"]), addDependent);
+
+router.post("/profile/dependents/:id/delete", requireAuth, restrictTo(["NORMAL"]), removeDependent);
+
+router.post("/appointments/:id/intake", requireAuth, restrictTo(["NORMAL"]), updateAppointmentIntake);
+
+router.post("/appointments/:id/review", requireAuth, restrictTo(["NORMAL"]), submitDoctorReview);
+
+router.get("/health-records", requireAuth, restrictTo(["NORMAL"]), healthRecordsPage);
+
+router.get("/prescriptions/:id/pdf", requireAuth, downloadPrescriptionPdf);
+
+router.get("/rx/verify", verifyPrescriptionPage);
+
+router.get("/rx/verify/:code", verifyPrescriptionPage);
+
+router.get("/doctor/consult/:id", requireAuth, restrictTo(["DOCTOR"]), consultWorkspacePage);
+
+router.post("/doctor/consult/:id/prescription", requireAuth, restrictTo(["DOCTOR"]), savePrescription);
+
+router.post("/doctor/queue", requireAuth, restrictTo(["DOCTOR"]), updateDoctorQueue);
+
+router.post("/admin/walk-in", requireAuth, restrictTo(["ADMIN"]), createWalkInAppointment);
 
 router.post(
   "/change-availability",

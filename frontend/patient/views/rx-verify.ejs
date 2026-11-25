@@ -1,0 +1,73 @@
+<%- include('partials/page-start', { includeHeroHeader: false, pageTitle: 'Verify Digital e-Prescription - OneLife' }) %>
+
+<div class="py-10 max-w-2xl mx-auto">
+  <div class="text-center mb-8">
+    <span class="inline-block rounded-full bg-emerald-50 border border-emerald-200 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-800">Pharmacy &amp; Clinic Verification</span>
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2 tracking-tight">Verify OneLife e-Prescription</h1>
+    <p class="text-xs sm:text-sm text-slate-600 mt-1">Pharmacies and laboratories can verify the authenticity of a digital OneLife prescription code below.</p>
+  </div>
+
+  <div class="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm mb-8">
+    <form id="rx-verify-form" action="/rx/verify" method="get" class="flex flex-col sm:flex-row gap-3">
+      <input type="hidden" name="_csrf" value="<%= typeof csrfToken !== 'undefined' ? csrfToken : '' %>" />
+      <input
+        id="rx-code-input"
+        type="text"
+        name="code"
+        value="<%= code || '' %>"
+        placeholder="Enter code (e.g. ONERX-261125-A1B2C3)"
+        class="flex-1 rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-xs sm:text-sm font-mono uppercase text-slate-900 focus:border-primary focus:bg-white focus:outline-none"
+        required
+      />
+      <button type="submit" class="rounded-2xl bg-primary px-6 py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-indigo-600 transition">
+        Verify Rx Code
+      </button>
+    </form>
+  </div>
+  <script>
+    document.getElementById('rx-verify-form')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const code = document.getElementById('rx-code-input').value.trim().toUpperCase();
+      if (code) window.location.assign(`/rx/verify/${encodeURIComponent(code)}`);
+    });
+  </script>
+
+  <% if (code) { %>
+    <% if (record) { %>
+      <div class="rounded-3xl border-2 border-emerald-300 bg-emerald-50/70 p-6 sm:p-8 space-y-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200 pb-4">
+          <div class="flex items-center gap-2 text-emerald-900 font-extrabold text-base">
+            <span>✓</span> Authentic OneLife Digital Prescription
+          </div>
+          <span class="rounded-full bg-emerald-600 text-white px-3 py-1 font-mono text-xs font-bold"><%= record.verificationCode %></span>
+        </div>
+        <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div>
+            <dt class="text-emerald-800 font-bold uppercase text-[10px]">Prescribing Clinician</dt>
+            <dd class="text-slate-900 font-bold text-sm mt-0.5">Dr. <%= record.doctorName %></dd>
+            <dd class="text-slate-600"><%= [record.doctorDegree, record.doctorSpeciality].filter(Boolean).join(' · ') %></dd>
+          </div>
+          <div>
+            <dt class="text-emerald-800 font-bold uppercase text-[10px]">Patient (Privacy Masked)</dt>
+            <dd class="text-slate-900 font-bold text-sm mt-0.5"><%= record.patientMasked %></dd>
+            <dd class="text-slate-600">Issued: <%= record.visitDateFormatted %></dd>
+          </div>
+        </dl>
+        <div class="rounded-2xl bg-white border border-emerald-200 p-4">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">Prescribed Formulations (<%= record.medicinesCount %>)</p>
+          <ul class="space-y-1.5 text-xs text-slate-800">
+            <% record.medicines.forEach((m, idx) => { %>
+              <li><strong><%= idx + 1 %>. <%= m.name %></strong> — <%= [m.dosage, m.frequency, m.duration].filter(Boolean).join(' · ') %></li>
+            <% }) %>
+          </ul>
+        </div>
+      </div>
+    <% } else { %>
+      <div class="rounded-3xl border border-rose-300 bg-rose-50 p-6 text-center text-xs sm:text-sm font-semibold text-rose-800">
+        No matching digital prescription found for code <span class="font-mono"><%= code %></span>. Verify the printed code and try again.
+      </div>
+    <% } %>
+  <% } %>
+</div>
+
+<%- include('partials/page-end') %>

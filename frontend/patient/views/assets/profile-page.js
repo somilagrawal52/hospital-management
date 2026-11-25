@@ -1,13 +1,16 @@
 const profileState = { isEdit: false };
 
 const editTargets = [
-  ['image-input', 'profile-image'],
   ['fullname-input', 'fullname-text'],
   ['email-input', 'email-text'],
   ['phone-input', 'phone-text'],
   ['address-input', 'address-text'],
   ['gender-input', 'gender-text'],
   ['dob-input', 'dob-text'],
+  ['bloodGroup-input', 'bloodGroup-text'],
+  ['allergies-input', 'allergies-text'],
+  ['chronicConditions-input', 'chronicConditions-text'],
+  ['abhaId-input', 'abhaId-text'],
 ];
 
 function toggleHidden(elementId, shouldHide) {
@@ -27,9 +30,20 @@ function toggleEditMode() {
     toggleHidden(textId, profileState.isEdit);
   });
 
+  const imageInput = document.getElementById('image-input');
+  if (imageInput) imageInput.disabled = !profileState.isEdit;
+  toggleHidden('image-upload-overlay', !profileState.isEdit);
   toggleHidden('edit-button', profileState.isEdit);
   toggleHidden('save-button', !profileState.isEdit);
 }
+
+const imageInputEl = document.getElementById('image-input');
+imageInputEl?.addEventListener('change', () => {
+  const file = imageInputEl.files?.[0];
+  if (file) {
+    document.getElementById('profile-image').src = URL.createObjectURL(file);
+  }
+});
 
 const editButton = document.getElementById('edit-button');
 const saveButton = document.getElementById('save-button');
@@ -51,6 +65,18 @@ if (editButton && saveButton) {
     );
     formData.append('dob', document.getElementById('dob-input').value);
     formData.append('gender', document.getElementById('gender-input').value);
+    if (document.getElementById('bloodGroup-input')) {
+      formData.append('bloodGroup', document.getElementById('bloodGroup-input').value);
+    }
+    if (document.getElementById('allergies-input')) {
+      formData.append('allergies', document.getElementById('allergies-input').value);
+    }
+    if (document.getElementById('chronicConditions-input')) {
+      formData.append('chronicConditions', document.getElementById('chronicConditions-input').value);
+    }
+    if (document.getElementById('abhaId-input')) {
+      formData.append('abhaId', document.getElementById('abhaId-input').value);
+    }
 
     const imageFile = document.getElementById('image-input').files[0];
     if (imageFile) {
@@ -87,3 +113,36 @@ if (editButton && saveButton) {
     }
   });
 }
+
+const dependentForm = document.getElementById('dependent-form');
+dependentForm?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const payload = Object.fromEntries(new FormData(dependentForm).entries());
+  try {
+    const response = await fetch('/profile/dependents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.message || 'Unable to add family member.');
+    window.location.reload();
+  } catch (error) {
+    alert(error.message || 'Unable to save family profile.');
+  }
+});
+
+document.querySelectorAll('.remove-dependent').forEach((button) => {
+  button.addEventListener('click', async () => {
+    button.disabled = true;
+    try {
+      const response = await fetch(`/profile/dependents/${button.dataset.id}/delete`, { method: 'POST' });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to remove profile.');
+      window.location.reload();
+    } catch (error) {
+      button.disabled = false;
+      alert(error.message || 'Unable to remove profile.');
+    }
+  });
+});

@@ -1,11 +1,258 @@
 <%- include('partials/head', { pageTitle: 'Doctor dashboard | OneLife' }) %>
 <%- include('partials/header', { doctor, brandLabel: 'Clinician workspace', showMessagesLink: true }) %>
+<%
+  const safeAnalytics = typeof analytics !== 'undefined' ? analytics : {};
+  const safeTodayQueue = typeof todayQueue !== 'undefined' ? todayQueue : [];
+  const activeTodayKey = typeof todayKey !== 'undefined' ? todayKey : '';
+  const liveDelay = doctor?.queueStatus?.date === activeTodayKey ? Number(doctor?.queueStatus?.delayMinutes || 0) : 0;
+  const liveToken = doctor?.queueStatus?.date === activeTodayKey ? Number(doctor?.queueStatus?.currentToken || 0) : 0;
+%>
 
 <main id="main-content" class="console-main">
-  <header class="console-page-heading"><div><p class="console-eyebrow">Clinician workspace</p><h1>Welcome, Dr. <%= doctor?.fullname || '' %></h1><p>Review upcoming appointments and manage care requests.</p></div><a class="console-button" href="/doctor/availability">Manage availability</a></header>
-  <section class="console-grid console-grid--metrics" aria-label="Doctor activity"><article class="console-metric"><div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">P</span>Assigned patients</div><p class="console-metric__value"><%= patientsAssignedCount %></p><p class="console-metric__note">Patients in your appointment history</p></article><article class="console-metric"><div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">C</span>Fellow doctors</div><p class="console-metric__value"><%= fellowDoctorsCount %></p><p class="console-metric__note">Clinicians on the platform</p></article><article class="console-metric"><div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">A</span>Booking status</div><p class="console-metric__value"><%= doctor?.available ? 'Open' : 'Paused' %></p><p class="console-metric__note"><a href="/doctor/availability"><%= doctor?.available ? 'Patients can book appointments' : 'New bookings are paused' %></a></p></article></section>
-  <section class="console-panel" style="margin-top: 1.2rem"><div class="console-panel__header"><div><h2>Patient appointments</h2><p><%= upcomingAppointmentsCount %> upcoming appointment<%= upcomingAppointmentsCount === 1 ? '' : 's' %>.</p></div><a class="console-button console-button--quiet console-button--small" href="/showdocmsg">Online requests (<%= onlineRequestsCount %>)</a></div><div class="console-panel__body"><div class="console-table-tools"><label>Search appointments<input type="search" data-table-search="#doctor-appointments" placeholder="Search patient, date, or status" /></label><div class="console-pagination" data-table-pagination="#doctor-appointments" aria-label="Appointment pages"></div></div><div class="console-table-wrap"><table id="doctor-appointments" class="console-table" data-enhanced-table data-page-size="6"><thead><tr><th><button type="button" data-sort-column="0">Patient</button></th><th><button type="button" data-sort-column="1">Email</button></th><th>Phone</th><th><button type="button" data-sort-column="3">Date</button></th><th><button type="button" data-sort-column="4">Status</button></th><th>Update</th></tr></thead><tbody><% appointments.forEach((appointment) => { %><% const status = appointment.status || 'pending'; const statusTone = status === 'cancelled' ? 'danger' : status === 'completed' ? 'success' : status === 'pending' || status === 'online_requested' ? 'warning' : ''; %><tr><td><%= appointment.fullname || '—' %></td><td><%= appointment.email || '—' %></td><td><%= appointment.number || '—' %></td><td><%= appointment.formattedDate %></td><td><span class="console-pill <%= statusTone ? `console-pill--${statusTone}` : '' %>"><%= status.replace(/_/g, ' ') %></span></td><td><% if (!['completed', 'cancelled'].includes(status)) { %><div class="console-inline"><select class="status-select" aria-label="Update appointment status"><option value="">Update status</option><% if (status !== 'confirmed') { %><option value="confirmed">Confirm</option><% } %><option value="completed">Complete</option><option value="cancelled">Cancel</option></select><button type="button" class="console-button console-button--small update-status" data-id="<%= appointment._id %>">Save</button></div><% } else { %><span class="console-status">Final</span><% } %></td></tr><% }) %></tbody></table></div><% if (!appointments.length) { %><p class="console-empty">No appointments have been assigned yet.</p><% } %></div></section>
+  <header class="console-page-heading">
+    <div>
+      <p class="console-eyebrow">Clinician workspace</p>
+      <h1>Welcome, Dr. <%= doctor?.fullname || '' %></h1>
+      <p>Run today’s OPD &amp; telehealth queue, issue digital e-Prescriptions, and manage your calendar.</p>
+    </div>
+    <div class="console-inline">
+      <a class="console-button console-button--quiet" href="/showdocmsg">Online requests (<%= onlineRequestsCount %>)</a>
+      <a class="console-button" href="/doctor/availability">Manage availability</a>
+    </div>
+  </header>
+
+  <section class="console-grid console-grid--metrics" aria-label="Doctor activity">
+    <article class="console-metric">
+      <div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">P</span>Assigned patients</div>
+      <p class="console-metric__value"><%= patientsAssignedCount %></p>
+      <p class="console-metric__note"><%= safeAnalytics.completedCount || 0 %> completed · <%= safeAnalytics.telehealthCount || 0 %> telehealth</p>
+    </article>
+    <article class="console-metric">
+      <div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">Q</span>Now serving today</div>
+      <p class="console-metric__value" id="doctor-current-token">#<%= liveToken || 0 %></p>
+      <p class="console-metric__note"><%= safeTodayQueue.length %> active token<%= safeTodayQueue.length === 1 ? '' : 's' %> today · Delay: <%= liveDelay ? `+${liveDelay} min` : 'On time' %></p>
+    </article>
+    <article class="console-metric">
+      <div class="console-metric__label"><span class="nav-glyph" aria-hidden="true">A</span>Booking &amp; revenue</div>
+      <p class="console-metric__value"><%= doctor?.available ? 'Open' : 'Paused' %></p>
+      <p class="console-metric__note">₹<%= (safeAnalytics.totalRevenueInr || 0).toLocaleString('en-IN') %> settled · <a href="/doctor/availability"><%= doctor?.available ? 'Calendar active' : 'Bookings paused' %></a></p>
+    </article>
+  </section>
+
+  <!-- Live Hybrid OPD Queue & Delay Broadcast Control -->
+  <section class="console-panel" style="margin-top: 1.2rem">
+    <div class="console-panel__header">
+      <div>
+        <h2>Live Hybrid OPD Queue &amp; Delay Broadcast</h2>
+        <p>Call next waiting patient or broadcast clinic delays directly to waiting patients.</p>
+      </div>
+      <button type="button" id="call-next-btn" class="console-button">Call Next Patient &rarr;</button>
+    </div>
+    <div class="console-panel__body console-stack">
+      <div class="console-form-grid console-form-grid--three" style="align-items: end;">
+        <div class="console-field">
+          <label for="delay-minutes">Clinic Delay Broadcast</label>
+          <select id="delay-minutes">
+            <option value="0" <%= liveDelay === 0 ? 'selected' : '' %>>On Time (0 mins)</option>
+            <option value="15" <%= liveDelay === 15 ? 'selected' : '' %>>Running 15 mins late</option>
+            <option value="30" <%= liveDelay === 30 ? 'selected' : '' %>>Running 30 mins late</option>
+            <option value="45" <%= liveDelay === 45 ? 'selected' : '' %>>Running 45 mins late</option>
+            <option value="60" <%= liveDelay === 60 ? 'selected' : '' %>>Running 60 mins late</option>
+          </select>
+        </div>
+        <div class="console-field">
+          <label for="delay-reason">Reason shown to patients (optional)</label>
+          <input id="delay-reason" type="text" maxlength="200" value="<%= doctor?.queueStatus?.delayReason || '' %>" placeholder="e.g. Emergency round / Case overrun" />
+        </div>
+        <div class="console-form-actions">
+          <button type="button" id="broadcast-delay-btn" class="console-button console-button--quiet">Update Delay Notice</button>
+          <span id="queue-status-msg" class="console-status" role="status"></span>
+        </div>
+      </div>
+
+      <% if (safeTodayQueue.length) { %>
+        <div class="console-queue-grid">
+          <% safeTodayQueue.forEach((q) => { %>
+            <% const qState = q.queueState || 'waiting'; %>
+            <article class="console-queue-card">
+              <div class="console-inline" style="justify-content: space-between;">
+                <span class="console-pill <%= qState === 'in_consultation' ? 'console-pill--success' : qState === 'no_show' ? 'console-pill--danger' : 'console-pill--warning' %>">
+                  Token #<%= q.queueToken || '—' %> · <%= qState.replace(/_/g, ' ') %>
+                </span>
+                <span style="font-size: 0.74rem; color: var(--console-muted); font-weight: 700;">
+                  <%= q.visitMode === 'walk_in' ? 'Walk-In' : q.visitMode === 'telehealth' || q.isOnline ? 'Video' : 'Clinic' %>
+                </span>
+              </div>
+              <div>
+                <strong style="font-size: 0.92rem;"><%= q.patientMember?.fullname || q.fullname %></strong>
+                <p style="font-size: 0.78rem; color: var(--console-muted); margin: 0.15rem 0 0;"><%= q.slotTime || '' %><%= q.intake?.chiefComplaint ? ` · ${q.intake.chiefComplaint}` : '' %></p>
+              </div>
+              <div class="console-inline">
+                <a class="console-button console-button--small" href="/doctor/consult/<%= q._id %>">Consult &amp; Rx</a>
+                <% if (q.status !== 'completed') { %>
+                  <button type="button" class="console-button console-button--quiet console-button--small queue-step-btn" data-id="<%= q._id %>" data-state="checked_in">Check In</button>
+                  <button type="button" class="console-button console-button--quiet console-button--small queue-step-btn" data-id="<%= q._id %>" data-state="no_show">No Show</button>
+                <% } %>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="console-status">No confirmed OPD or walk-in tokens queued for today yet.</p>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- Full Appointments Table -->
+  <section class="console-panel" style="margin-top: 1.2rem">
+    <div class="console-panel__header">
+      <div>
+        <h2>Patient appointments</h2>
+        <p><%= upcomingAppointmentsCount %> upcoming appointment<%= upcomingAppointmentsCount === 1 ? '' : 's' %>.</p>
+      </div>
+      <a class="console-button console-button--quiet console-button--small" href="/showdocmsg">Online requests (<%= onlineRequestsCount %>)</a>
+    </div>
+    <div class="console-panel__body">
+      <div class="console-table-tools">
+        <label>Search appointments<input type="search" data-table-search="#doctor-appointments" placeholder="Search patient, date, or status" /></label>
+        <div class="console-pagination" data-table-pagination="#doctor-appointments" aria-label="Appointment pages"></div>
+      </div>
+      <div class="console-table-wrap">
+        <table id="doctor-appointments" class="console-table" data-enhanced-table data-page-size="6">
+          <thead>
+            <tr>
+              <th><button type="button" data-sort-column="0">Patient</button></th>
+              <th><button type="button" data-sort-column="1">Email / Mode</button></th>
+              <th>Phone</th>
+              <th><button type="button" data-sort-column="3">Date &amp; Token</button></th>
+              <th><button type="button" data-sort-column="4">Status</button></th>
+              <th>Clinical &amp; Update</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% appointments.forEach((appointment) => { %>
+              <% const status = appointment.status || 'pending'; const statusTone = status === 'cancelled' ? 'danger' : status === 'completed' ? 'success' : status === 'pending' || status === 'online_requested' ? 'warning' : ''; %>
+              <tr>
+                <td>
+                  <strong><%= appointment.patientMember?.fullname || appointment.fullname || '—' %></strong>
+                  <% if (appointment.intake?.chiefComplaint) { %>
+                    <div style="font-size: 0.74rem; color: var(--console-muted);"><%= appointment.intake.chiefComplaint %></div>
+                  <% } %>
+                </td>
+                <td>
+                  <div><%= appointment.email || '—' %></div>
+                  <div style="font-size: 0.74rem; color: var(--console-brand); font-weight: 700;">
+                    <%= appointment.visitMode === 'walk_in' ? 'Walk-In OPD' : appointment.visitMode === 'telehealth' || appointment.isOnline ? 'HD Telehealth' : 'In-Clinic' %>
+                  </div>
+                </td>
+                <td><%= appointment.number || '—' %></td>
+                <td>
+                  <div><%= appointment.formattedDate %></div>
+                  <% if (appointment.queueToken) { %>
+                    <div style="font-size: 0.74rem; font-weight: 700;">Token #<%= appointment.queueToken %></div>
+                  <% } %>
+                </td>
+                <td><span class="console-pill <%= statusTone ? `console-pill--${statusTone}` : '' %>"><%= status.replace(/_/g, ' ') %></span></td>
+                <td>
+                  <div class="console-inline">
+                    <a class="console-button console-button--quiet console-button--small" href="/doctor/consult/<%= appointment._id %>">
+                      <%= appointment.prescriptionId ? 'View / Edit Rx' : 'Write Rx' %>
+                    </a>
+                    <% if (!['completed', 'cancelled'].includes(status)) { %>
+                      <select class="status-select" aria-label="Update appointment status">
+                        <option value="">Update status</option>
+                        <% if (status !== 'confirmed') { %><option value="confirmed">Confirm</option><% } %>
+                        <option value="completed">Complete</option>
+                        <option value="cancelled">Cancel</option>
+                      </select>
+                      <button type="button" class="console-button console-button--small update-status" data-id="<%= appointment._id %>">Save</button>
+                    <% } else { %>
+                      <span class="console-status">Final</span>
+                    <% } %>
+                  </div>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <% if (!appointments.length) { %><p class="console-empty">No appointments have been assigned yet.</p><% } %>
+    </div>
+  </section>
 </main>
 <%- include('partials/footer') %>
-<script>document.addEventListener('click', async (event) => { const button = event.target.closest('.update-status'); if (!button) return; const status = button.closest('td').querySelector('.status-select').value; if (!status) return window.alert('Choose a new status first.'); button.disabled = true; try { const response = await fetch('/appointments/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ appointmentId: button.dataset.id, status }) }); const data = await response.json(); if (!response.ok || !data.success) throw new Error(data.message || 'Unable to update appointment.'); window.location.reload(); } catch (error) { button.disabled = false; window.alert(error.message || 'Unable to update appointment.'); } });</script>
+<script>
+  document.addEventListener('click', async (event) => {
+    const button = event.target.closest('.update-status');
+    if (button) {
+      const status = button.closest('td').querySelector('.status-select').value;
+      if (!status) return window.alert('Choose a new status first.');
+      button.disabled = true;
+      try {
+        const response = await fetch('/appointments/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ appointmentId: button.dataset.id, status }) });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || 'Unable to update appointment.');
+        window.location.reload();
+      } catch (error) { button.disabled = false; window.alert(error.message || 'Unable to update appointment.'); }
+      return;
+    }
+
+    const qBtn = event.target.closest('.queue-step-btn');
+    if (qBtn) {
+      qBtn.disabled = true;
+      try {
+        const response = await fetch('/doctor/queue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ appointmentId: qBtn.dataset.id, queueState: qBtn.dataset.state }),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || 'Unable to update queue token.');
+        window.location.reload();
+      } catch (error) { qBtn.disabled = false; window.alert(error.message); }
+    }
+  });
+
+  document.getElementById('call-next-btn')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const msg = document.getElementById('queue-status-msg');
+    btn.disabled = true;
+    try {
+      const response = await fetch('/doctor/queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'call_next' }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'No patients in queue.');
+      if (msg) msg.textContent = data.message;
+      window.location.reload();
+    } catch (error) {
+      btn.disabled = false;
+      if (msg) msg.textContent = error.message;
+    }
+  });
+
+  document.getElementById('broadcast-delay-btn')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    const msg = document.getElementById('queue-status-msg');
+    const delayMinutes = document.getElementById('delay-minutes').value;
+    const delayReason = document.getElementById('delay-reason').value;
+    btn.disabled = true;
+    try {
+      const response = await fetch('/doctor/queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'broadcast_delay', delayMinutes, delayReason }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to broadcast delay.');
+      if (msg) msg.textContent = data.message;
+      btn.disabled = false;
+    } catch (error) {
+      btn.disabled = false;
+      if (msg) msg.textContent = error.message;
+    }
+  });
+</script>
 <%- include('partials/scripts') %>
