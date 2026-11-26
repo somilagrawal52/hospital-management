@@ -10,6 +10,10 @@
 <main id="main-content" class="console-main">
   <header class="console-page-heading">
     <div><p class="console-eyebrow">Care operations</p><h1>Hospital overview</h1><p>Monitor hospital revenue, OPD &amp; walk-in queues, and coordinate appointments.</p></div>
+    <div class="console-inline">
+      <button type="button" id="dispatch-reminders-btn" class="console-button console-button--quiet">Send Due Visit Reminders</button>
+      <span id="reminders-status" class="console-status" role="status"></span>
+    </div>
   </header>
 
   <section class="console-grid console-grid--metrics" aria-label="Key statistics">
@@ -153,6 +157,10 @@
                       <label><span class="console-skip-link">New appointment status</span><select class="console-field status-select" aria-label="Update appointment status"><option value="">Update status</option><% if (status !== 'confirmed') { %><option value="confirmed">Confirm</option><% } %><option value="completed">Complete</option><option value="cancelled">Cancel</option></select></label>
                       <button type="button" class="console-button console-button--small update-status" data-id="<%= appointment._id %>">Save</button>
                     </div>
+                  <% } else if (status === 'cancelled' && appointment.payment?.refundStatus === 'eligible') { %>
+                    <button type="button" class="console-button console-button--quiet console-button--small process-refund" data-id="<%= appointment._id %>">Mark Refunded (₹<%= appointment.payment.refundAmount || appointment.amount || 0 %>)</button>
+                  <% } else if (status === 'cancelled' && appointment.payment?.refundStatus === 'processed') { %>
+                    <span class="console-pill console-pill--success">Refunded</span>
                   <% } else { %><span class="console-status">Final</span><% } %>
                 </td>
               </tr>
@@ -168,6 +176,18 @@
 <%- include('partials/footer') %>
 <script>
   document.addEventListener('click', async (event) => {
+    const refundBtn = event.target.closest('.process-refund');
+    if (refundBtn) {
+      refundBtn.disabled = true;
+      try {
+        const response = await fetch(`/admin/refunds/${refundBtn.dataset.id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.message || 'Unable to mark refund processed.');
+        window.location.reload();
+      } catch (error) { refundBtn.disabled = false; window.alert(error.message || 'Unable to process refund.'); }
+      return;
+    }
+
     const button = event.target.closest('.update-status');
     if (!button) return;
     const status = button.closest('td').querySelector('.status-select').value;
@@ -199,6 +219,23 @@
       window.location.reload();
     } catch (error) {
       status.textContent = error.message;
+    }
+  });
+
+  document.getElementById('dispatch-reminders-btn')?.addEventListener('click', async (event) => {
+    const btn = event.currentTarget;
+    const status = document.getElementById('reminders-status');
+    btn.disabled = true;
+    if (status) status.textContent = 'Checking upcoming reminders…';
+    try {
+      const response = await fetch('/admin/reminders/dispatch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to dispatch reminders.');
+      if (status) status.textContent = data.message;
+    } catch (error) {
+      if (status) status.textContent = error.message;
+    } finally {
+      btn.disabled = false;
     }
   });
 </script>

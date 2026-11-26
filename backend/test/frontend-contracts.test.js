@@ -29,8 +29,11 @@ test("admin clean-room pages preserve clinician and support form contracts", asy
 
 test("dashboard templates render representative appointments without vendor bundles", async () => {
   const appointment = { _id: "appointment-1", fullname: "Patient", email: "patient@example.test", number: "9999999999", doctor: "Doctor", formattedDate: "20 Oct 2030", status: "pending" };
-  const admin = await render(view("Admin", "admin-dashboard.ejs"), { patientsCount: 4, doctorsCount: 2, todayAppointmentsCount: 1, appointments: [appointment] });
+  const cancelledRefundable = { _id: "appointment-2", fullname: "Refund Patient", doctor: "Doctor", formattedDate: "21 Oct 2030", status: "cancelled", amount: 500, payment: { refundStatus: "eligible", refundAmount: 500 } };
+  const admin = await render(view("Admin", "admin-dashboard.ejs"), { patientsCount: 4, doctorsCount: 2, todayAppointmentsCount: 1, appointments: [appointment, cancelledRefundable] });
   assert.match(admin, /\/appointments\/status/);
+  assert.match(admin, /\/admin\/refunds\//);
+  assert.match(admin, /Mark Refunded/);
   assert.doesNotMatch(admin, /tinymce|simple-datatables|bootstrap\.bundle/i);
 
   const doctor = await render(view("doctor", "doctor-dashboard.ejs"), { doctor: { fullname: "Doctor", available: true }, patientsAssignedCount: 1, fellowDoctorsCount: 2, onlineRequestsCount: 0, upcomingAppointmentsCount: 1, appointments: [appointment] });
@@ -40,6 +43,15 @@ test("dashboard templates render representative appointments without vendor bund
   assert.match(doctor, /\/doctor\/consult\//);
   assert.doesNotMatch(doctor, /cdn\.datatables|jquery|tinymce|simple-datatables/i);
   assert.match(admin, /\/admin\/walk-in/);
+  assert.match(admin, /\/admin\/reminders\/dispatch/);
+
+  const messages = await render(view("doctor", "doctor-messages.ejs"), {
+    doctor: { fullname: "Doctor" },
+    requests: [],
+    scheduledVideoAppointments: [{ _id: "app-9", fullname: "Telehealth Patient", date: new Date("2030-01-15T10:00:00.000Z"), queueToken: 3 }],
+  });
+  assert.match(messages, /\/appointments\/app-9\/video\/join/);
+  assert.match(messages, /\/doctor\/consult\/app-9/);
 });
 
 test("doctor login and availability keep route and dynamic-data contracts", async () => {

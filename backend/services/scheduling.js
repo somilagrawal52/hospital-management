@@ -1,4 +1,5 @@
 const Appointment = require("../models/appointment");
+const Waitlist = require("../models/waitlist");
 
 const PAYMENT_HOLD_MINUTES = 10;
 const ACTIVE_SLOT_STATUSES = ["pending", "confirmed", "online_requested", "created"];
@@ -152,7 +153,7 @@ async function expireStalePaymentHolds(now = new Date()) {
   });
 }
 
-async function availableSlotsForDoctor(doctor, dateKey, { excludeAppointmentId } = {}) {
+async function availableSlotsForDoctor(doctor, dateKey, { excludeAppointmentId, patientId, claimToken } = {}) {
   if (!doctor?.available) return [];
   const rule = availabilityForDate(doctor, dateKey);
   if (!rule.enabled) return [];
@@ -166,14 +167,32 @@ async function availableSlotsForDoctor(doctor, dateKey, { excludeAppointmentId }
     ...activeSlotFilter(),
   };
   if (excludeAppointmentId) query._id = { $ne: excludeAppointmentId };
-  const appointments = await Appointment.find(query).select("date").lean();
+  const [appointments, activePriorityHolds] = await Promise.all([
+    Appointment.find(query).select("date").lean(),
+    Waitlist.find({
+      doctorId: doctor._id,
+      slotDate: dateKey,
+      status: "notified",
+      priorityExpiresAt: { $gt: new Date() },
+      prioritySlotTime: { $exists: true, $ne: "" },
+    }).select("patientId claimToken prioritySlotTime").lean(),
+  ]);
+  const reservedForOthers = new Set(
+    activePriorityHolds
+      .filter((hold) => {
+        const samePatient = patientId && String(hold.patientId) === String(patientId);
+        const sameToken = claimToken && hold.claimToken && hold.claimToken === String(claimToken);
+        return !samePatient && !sameToken;
+      })
+      .map((hold) => hold.prioritySlotTime),
+  );
   const bookedTimes = new Set(appointments.map((appointment) => new Date(appointment.date).getTime()));
   const now = Date.now();
   const slots = [];
   for (let minute = timeToMinutes(rule.startTime); minute + rule.slotMinutes <= timeToMinutes(rule.endTime); minute += rule.slotMinutes) {
     const time = minutesToTime(minute);
     const startsAt = dateTimeForSlot(dateKey, time);
-    if (startsAt.getTime() > now && !bookedTimes.has(startsAt.getTime())) {
+    if (startsAt.getTime() > now && !bookedTimes.has(startsAt.getTime()) && !reservedForOthers.has(time)) {
       slots.push({ time, startsAt: startsAt.toISOString() });
     }
   }

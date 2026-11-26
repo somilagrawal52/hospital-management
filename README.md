@@ -8,16 +8,16 @@ Designed as an end-to-end turnkey solution for hospitals, multi-specialty clinic
 
 ## Key Highlights & Commercial Features
 
-- 🏥 **Multi-Specialty Clinician Directory**: Dynamic department filtering, real-time live doctor search, doctor profile showcase, fees in INR, and verified clinician badges.
-- 📅 **Dynamic Slot Scheduling & Smart Waitlists**: Real-time doctor calendar slots, conflict-free booking, automated waitlists that notify patients via email upon cancellations, and 1-click patient rescheduling.
-- 📹 **HD Telehealth Video Consultations**: In-browser zero-download video visits powered by Jitsi WebRTC with high-entropy rooms, calendar synchronization (`.ics` downloads), and doctor approval workflows.
-- 💳 **Secure Razorpay Payment & Automated Invoices**: Server-side fee calculation, HMAC webhook reconciliation, mock staging simulation support, and automated PDF invoice generation with instant download.
-- 🤖 **24/7 Clinical AI Assistant**: Intelligent health query triage with automated emergency symptom escalation and verified citations from the World Health Organization (WHO) and CDC.
-- 🔍 **WHO Disease Knowledge Base**: Live extraction and parsing of clinical overviews, key statistics, symptoms, treatments, and prevention guidelines directly from official WHO health topics.
-- 💬 **Threaded Patient Support Desk**: Category and priority-tagged inquiry tickets with real-time administration responses and audit timelines.
-- ⚙️ **Executive Hospital Admin Console**: Real-time patient and clinician analytics, appointment status updates, doctor onboarding with credentials, and support inbox management.
-- 🩺 **Dedicated Clinician Workspace**: Weekly recurring schedule configuration, date-specific holiday/hours exceptions, virtual video request queue, and patient records.
-- 🔒 **Enterprise Security**: Signed CSRF token rotation, Same-Origin protection, HTTP-only secure session cookies, password hashing with bcrypt, input sanitization, and isolated staging mode.
+- 🏥 **Multi-Specialty Clinician Directory & Verified Reviews**: Dynamic department filtering, real-time live doctor search, verified post-consultation star ratings, fees in INR, and verified clinician badges.
+- 🎯 **Unified Hybrid OPD Queue, Walk-In Tokens & Delay Broadcast**: Single sequential daily queue uniting pre-booked clinic visits, telehealth, and reception-issued walk-in tokens (`/admin/walk-in`), real-time `Now Serving #X` + wait-time tickers, and 1-click doctor delay alerts.
+- 💊 **Closed-Loop Clinical Intake, e-Prescription PDF & Pharmacy Verification**: 60-second pre-visit symptom/allergy brief, dedicated clinician Rx workspace (`/doctor/consult/:id`) with Indian dosing presets, downloadable PDF prescriptions, `/health-records` longitudinal locker, and public `/rx/verify/:code` pharmacist authenticity verification.
+- 👨‍👩‍👧 **Family & Dependent Care Profiles**: Book OPD & video appointments for parents, spouse, or children under one account with independent blood group, ABHA ID (optional), and allergy alerts.
+- 📅 **Dynamic Slot Scheduling, 10-Min Checkout Locks & Priority Waitlists**: Auto-expiring `payment_pending` slot holds, conflict-free India-timezone booking, 1-click rescheduling, and 15-minute priority waitlist claim links.
+- 📹 **HD Telehealth Video Consultations**: Direct telehealth or in-clinic selection at checkout, browser-based Jitsi WebRTC rooms, `.ics` calendar sync, and linked Rx workspace from video calls.
+- 💳 **Secure Razorpay Payments, Itemized GST Receipts & Reminders**: Server-side fee calculation, HMAC webhook reconciliation, collision/cancellation refund tracking, on-demand SAC `999312` GST tax invoice regeneration, and 24h/2h automated appointment & follow-up reminders.
+- 🤖 **Care-Routed Clinical AI & Resilient Disease Guide**: Multi-turn Gemini/OpenAI assistant with emergency escalation that surfaces live matching OneLife clinicians + earliest open slots, plus offline Indian clinical disease guides (`Dengue`, `Typhoid`, `PCOS`, `BP`, `Diabetes`).
+- 🌐 **Bilingual EN / हिंदी Portal & Print-Ready PWA Pass**: Live English/Hindi patient interface switcher, static-asset service worker for Tier-2/3 mobile speed, and 1-click printable OPD/Health passes.
+- 🔒 **Enterprise Security**: Signed CSRF token rotation, Same-Origin protection, HTTP-only secure session cookies, bcrypt hashing, projected APIs, and isolated staging mode.
 
 ---
 
@@ -66,6 +66,11 @@ For prospective buyers and evaluators, the login portals include 1-click demo cr
 | **Hospital Administrator** | `/admin/login` | `somilagrawal2004@gmail.com` | `admin123` |
 | **Clinician / Doctor** | `/doctorlogin` | `agrawalsomil67@gmail.com` | `doctor123` |
 | **Patient** | `/login` | `sample@gmail.com` | `password123` |
+
+To populate a fresh local or non-staging MongoDB database with these demo showcase accounts, doctors, sample OPD history, and verified digital e-prescription:
+```bash
+ONELIFE_DEMO_SEED=yes npm run seed:demo
+```
 
 ---
 

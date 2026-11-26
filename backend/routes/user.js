@@ -11,6 +11,7 @@ const { isMedicalQuery, MEDICAL_ONLY_FALLBACK } = require("../services/medical-q
 const { isEmergencyMessage, EMERGENCY_MESSAGE } = require("../services/emergency-triage");
 const { doctorImage } = require("../services/doctor-image");
 const { integrationMode, isolatedIntegrations, requireLiveIntegration, paymentVerificationSecret } = require("../services/integrations");
+const { dispatchDueReminders } = require("../services/reminders");
 const crypto = require("node:crypto");
 const { createVideoSession, createVideoCalendarEvent } = require("../services/video-session");
 const { notifyWaitlistForSlot } = require("../services/waitlist");
@@ -44,6 +45,7 @@ const {
   createWalkInAppointment,
   downloadPrescriptionPdf,
   healthRecordsPage,
+  markRefundProcessed,
   removeDependent,
   savePrescription,
   submitDoctorReview,
@@ -853,6 +855,18 @@ router.post("/doctor/consult/:id/prescription", requireAuth, restrictTo(["DOCTOR
 router.post("/doctor/queue", requireAuth, restrictTo(["DOCTOR"]), updateDoctorQueue);
 
 router.post("/admin/walk-in", requireAuth, restrictTo(["ADMIN"]), createWalkInAppointment);
+
+router.post("/admin/refunds/:id", requireAuth, restrictTo(["ADMIN"]), markRefundProcessed);
+
+router.post("/admin/reminders/dispatch", requireAuth, restrictTo(["ADMIN"]), async (req, res) => {
+  try {
+    const summary = await dispatchDueReminders();
+    return res.json({ success: true, ...summary, message: `Reminders dispatched (24h: ${summary.reminders24h}, 2h: ${summary.reminders2h}, follow-up: ${summary.followUps}).` });
+  } catch (error) {
+    console.error("Manual reminder dispatch failed:", error);
+    return res.status(500).json({ success: false, message: "Unable to dispatch reminders." });
+  }
+});
 
 router.post(
   "/change-availability",

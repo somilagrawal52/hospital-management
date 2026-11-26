@@ -12,6 +12,7 @@ const {
   serialiseAvailability,
 } = require("../services/scheduling");
 const { notifyWaitlistForSlot } = require("../services/waitlist");
+const { assignQueueTokenForAppointment } = require("../services/opd-queue");
 
 function validDoctorId(value) {
   return mongoose.isValidObjectId(value);
@@ -33,7 +34,11 @@ async function getPublicSlots(req, res) {
     }
     const doctor = await User.findOne({ _id: req.params.doctorId, role: "DOCTOR" }).select("available availability");
     if (!doctor) return res.status(404).json({ success: false, message: "Doctor not found." });
-    const slots = await availableSlotsForDoctor(doctor, date, { excludeAppointmentId: req.query.excludeAppointmentId });
+    const slots = await availableSlotsForDoctor(doctor, date, {
+      excludeAppointmentId: req.query.excludeAppointmentId,
+      patientId: req.user?._id,
+      claimToken: req.query.claim,
+    });
     return res.json({ success: true, date, slots, unavailable: !doctor.available });
   } catch (error) {
     console.error("Unable to load appointment slots:", error);
@@ -94,6 +99,12 @@ async function rescheduleAppointment(req, res) {
     appointment.date = newDate;
     appointment.slotDate = date;
     appointment.slotTime = time;
+    appointment.queueToken = undefined;
+    appointment.queueState = "waiting";
+    appointment.checkedInAt = undefined;
+    if (appointment.payment?.status === "success" || ["confirmed", "online_requested"].includes(appointment.status)) {
+      await assignQueueTokenForAppointment(appointment);
+    }
     appointment.rescheduleHistory.push({ from: oldDate, to: newDate, changedBy: req.user._id });
     appointment.statusHistory.push({ status: appointment.status, changedBy: req.user._id, source: "patient_reschedule" });
     await appointment.save();

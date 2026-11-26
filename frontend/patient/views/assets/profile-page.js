@@ -90,8 +90,8 @@ if (editButton && saveButton) {
       });
       const data = await response.json();
 
-      if (!data.success) {
-        throw new Error('Failed to update profile');
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to update profile');
       }
 
       document.getElementById('fullname-text').textContent = document.getElementById('fullname-input').value;
@@ -100,6 +100,18 @@ if (editButton && saveButton) {
       document.getElementById('address-text').innerHTML = `${document.getElementById('address-input-1').value}<br />${document.getElementById('address-input-2').value}`;
       document.getElementById('gender-text').textContent = document.getElementById('gender-input').value;
       document.getElementById('dob-text').textContent = document.getElementById('dob-input').value;
+      if (document.getElementById('bloodGroup-text')) {
+        document.getElementById('bloodGroup-text').textContent = document.getElementById('bloodGroup-input')?.value || 'Not specified';
+      }
+      if (document.getElementById('allergies-text')) {
+        document.getElementById('allergies-text').textContent = document.getElementById('allergies-input')?.value || 'None specified';
+      }
+      if (document.getElementById('chronicConditions-text')) {
+        document.getElementById('chronicConditions-text').textContent = document.getElementById('chronicConditions-input')?.value || 'None specified';
+      }
+      if (document.getElementById('abhaId-text')) {
+        document.getElementById('abhaId-text').textContent = document.getElementById('abhaId-input')?.value || 'Optional / Not linked';
+      }
 
       if (imageFile) {
         document.getElementById('profile-image').src = URL.createObjectURL(imageFile);
@@ -109,7 +121,7 @@ if (editButton && saveButton) {
       window.location.reload();
     } catch (error) {
       console.error('Error updating profile:', error);
-      alert('An error occurred while updating the profile.');
+      alert(error.message || 'An error occurred while updating the profile.');
     }
   });
 }

@@ -20,9 +20,12 @@
           <span class="font-extrabold text-sm"><%= patientdata.waitlist.length %></span> On Waitlist
         </div>
       <% } %>
-      <a href="/health-records" class="rounded-2xl border border-teal-200 bg-teal-50 px-4 py-2.5 text-xs font-bold text-teal-800 hover:bg-teal-100 transition">
+      <a href="/health-records" class="no-print rounded-2xl border border-teal-200 bg-teal-50 px-4 py-2.5 text-xs font-bold text-teal-800 hover:bg-teal-100 transition">
         📋 Health Records &amp; Rx &rarr;
       </a>
+      <button type="button" data-print-pass class="no-print rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 hover:border-primary hover:text-primary transition">
+        🖨️ Print OPD Pass
+      </button>
     </div>
   </div>
 
@@ -353,15 +356,27 @@
               <span class="mx-2 text-slate-300">|</span>
               <span>Requested Date: <strong><%= entry.slotDate %></strong></span>
               <span class="mx-2 text-slate-300">|</span>
-              <span class="capitalize font-semibold text-amber-700"><%= entry.status %></span>
+              <span class="capitalize font-semibold <%= entry.status === 'notified' ? 'text-emerald-700' : 'text-amber-700' %>">
+                <%= entry.status === 'notified' ? `Priority Window Open (${entry.prioritySlotTime || 'Open Slot'})` : entry.status %>
+              </span>
             </div>
-            <button
-              type="button"
-              class="waitlist-cancel rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition shadow-2xs"
-              data-waitlist-id="<%= entry._id %>"
-            >
-              Leave Waitlist
-            </button>
+            <div class="flex flex-wrap items-center gap-2">
+              <% if (entry.status === 'notified' && entry.doctorId?._id) { %>
+                <a
+                  href="/appointment/<%= entry.doctorId._id %>?date=<%= encodeURIComponent(entry.slotDate) %><%= entry.claimToken ? `&claim=${encodeURIComponent(entry.claimToken)}` : '' %>"
+                  class="rounded-xl bg-emerald-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 shadow-xs transition"
+                >
+                  🎉 Book Priority Slot &rarr;
+                </a>
+              <% } %>
+              <button
+                type="button"
+                class="waitlist-cancel rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition shadow-2xs"
+                data-waitlist-id="<%= entry._id %>"
+              >
+                Leave Waitlist
+              </button>
+            </div>
           </div>
         <% }) %>
       </div>

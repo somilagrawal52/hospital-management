@@ -92,7 +92,10 @@ async function bookappointment(req, res) {
     if (!doctordata) return res.status(404).json({ success: false, message: "Doctor not found." });
     let appointmentDate;
     try {
-      appointmentDate = await assertSlotAvailable(doctordata, date, time);
+      appointmentDate = await assertSlotAvailable(doctordata, date, time, {
+        patientId: req.user._id,
+        claimToken: req.body.claimToken,
+      });
     } catch (error) {
       return res.status(409).json({ success: false, message: error.message || "This appointment slot is no longer available." });
     }
@@ -358,6 +361,28 @@ async function savePayments(req, res) {
       paymentVerificationSecret()
     );
     if (!isValid) return res.status(400).json({ message: "Payment verification failed." });
+
+    const conflicting = await Appointment.findOne({
+      _id: { $ne: appointment._id },
+      docId: appointment.docId,
+      date: appointment.date,
+      status: { $in: ["pending", "confirmed", "online_requested", "created"] },
+    }).select("_id").lean();
+
+    if (conflicting) {
+      appointment.payment.paymentId = paymentId;
+      appointment.payment.status = "success";
+      appointment.payment.reconciledAt = new Date();
+      appointment.payment.refundStatus = "eligible";
+      appointment.payment.refundAmount = Number(appointment.amount || appointment.payment?.amount || 0);
+      appointment.status = "cancelled";
+      appointment.cancelled = true;
+      appointment.statusHistory.push({ status: "cancelled", changedBy: req.user._id, source: "slot_claimed_refund_eligible" });
+      await appointment.save();
+      return res.status(409).json({
+        message: "This slot expired and was booked by another patient during payment. Your payment has been marked eligible for automatic refund.",
+      });
+    }
 
     await finalizePayment(appointment, { paymentId, source: "browser_verification" });
 

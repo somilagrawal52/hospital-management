@@ -128,6 +128,8 @@ const appointmentschema = new mongoose.Schema(
     },
     prescriptionId: { type: mongoose.Schema.Types.ObjectId, ref: "prescription" },
     reviewId: { type: mongoose.Schema.Types.ObjectId, ref: "review" },
+    reminder24hSentAt: { type: Date },
+    reminder2hSentAt: { type: Date },
     amount: {
       type: Number,
       required: true,

@@ -26,6 +26,17 @@ test("homepage renders with doctors, specialities and navigation without errors"
   assert.match(html, /General physician/);
   assert.match(html, /Dr\. Somil/);
   assert.match(html, /Commercial Evaluation/);
+
+  const hiHtml = await render(view("patient", "views", "index.ejs"), {
+    user: null,
+    patientdata: null,
+    specialityData: [{ speciality: "General physician", image: "/assets/General_physician.svg", description: "Primary care" }],
+    doctors: [{ _id: "doc-1", fullname: "Dr. Somil", speciality: "Neurologist", fees: 50, available: true, image: "/assets/onelife-clinician-generated.png" }],
+    csrfToken: "mock-token",
+    lang: "hi",
+    t: (k, f) => (k === "home.bookBtn" ? "परामर्श बुक करें" : f || k),
+  });
+  assert.match(hiHtml, /परामर्श बुक करें/);
 });
 
 test("all doctors page renders with search and filter controls", async () => {

@@ -8,9 +8,14 @@
       <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2 tracking-tight"><%= translate('records.title', 'Patient Health Records & e-Prescriptions') %></h1>
       <p class="text-xs sm:text-sm text-slate-600 mt-1"><%= translate('records.subtitle', 'View completed consultations, download QR-verified digital prescriptions, allergies, and upcoming follow-up dates.') %></p>
     </div>
-    <a href="/my-profile" class="inline-flex items-center gap-1.5 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 shadow-2xs hover:border-primary hover:text-primary transition shrink-0">
-      <span>Update Clinical Profile</span> &rarr;
-    </a>
+    <div class="flex flex-wrap items-center gap-2 no-print shrink-0">
+      <button type="button" data-print-pass class="rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 shadow-2xs hover:border-primary hover:text-primary transition">
+        🖨️ Print Offline Health Pass
+      </button>
+      <a href="/my-profile" class="inline-flex items-center gap-1.5 rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-800 shadow-2xs hover:border-primary hover:text-primary transition">
+        <span>Update Clinical Profile</span> &rarr;
+      </a>
+    </div>
   </div>
 
   <!-- Clinical Identity & Medical Summary Strip -->

@@ -86,3 +86,20 @@
 .card-shine-effect:hover::after {
   transform: rotate(30deg) translate(20%, 20%);
 }
+
+@media print {
+  nav,
+  footer,
+  .no-print,
+  .fixed {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+  }
+  article,
+  section {
+    break-inside: avoid;
+    box-shadow: none !important;
+  }
+}

@@ -9,6 +9,7 @@
     "test": "node --test backend/test/*.test.js",
     "build:css": "npm --prefix frontend/patient run build:css",
     "watch:css": "npm --prefix frontend/patient run watch:css",
+    "seed:demo": "node backend/scripts/seed-demo.cjs",
     "verify": "node backend/test/verify-static.cjs && node --test backend/test/*.test.js"
   },
   "keywords": [

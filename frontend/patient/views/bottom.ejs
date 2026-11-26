@@ -1,2 +1,14 @@
+<script>
+  (() => {
+    if ('serviceWorker' in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+    document.addEventListener('click', (event) => {
+      if (event.target.closest('[data-print-pass]')) {
+        window.print();
+      }
+    });
+  })();
+</script>
 </body>
 </html>

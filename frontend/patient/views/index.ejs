@@ -1,4 +1,5 @@
 <%- include('partials/page-start', { includeHeroHeader: true, pageTitle: 'OneLife - Modern Hospital & Telehealth Platform' }) %>
+<% const tr = typeof t === 'function' ? t : (k, fallback) => fallback || k; %>
 
 <!-- Commercial Sales Demo Quick Access Bar (Collapsible / Non-intrusive) -->
 <div class="mb-12 rounded-3xl border border-indigo-200/80 bg-gradient-to-r from-indigo-50/90 via-white to-blue-50/80 p-5 shadow-sm backdrop-blur-md">
@@ -33,8 +34,8 @@
 <section class="py-8" id="speciality">
   <div class="text-center max-w-2xl mx-auto mb-12">
     <span class="inline-block rounded-full bg-indigo-50 border border-indigo-100/80 px-4 py-1 text-xs font-bold uppercase tracking-wider text-primary shadow-xs">Clinical Specializations</span>
-    <h2 class="text-2xl sm:text-4xl font-extrabold text-slate-900 mt-3 tracking-tight">Find Doctors by Medical Specialty</h2>
-    <p class="text-sm text-slate-600 mt-2.5">Select a clinical discipline to explore board-certified specialists, examine verified credentials, and book consultation slots.</p>
+    <h2 class="text-2xl sm:text-4xl font-extrabold text-slate-900 mt-3 tracking-tight"><%= tr('home.specTitle', 'Find Doctors by Medical Specialty') %></h2>
+    <p class="text-sm text-slate-600 mt-2.5"><%= tr('home.specSub', 'Select a clinical discipline to explore board-certified specialists, examine verified credentials, and book consultation slots.') %></p>
   </div>
 
   <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
@@ -64,11 +65,11 @@
   <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
     <div>
       <span class="inline-block rounded-full bg-emerald-50 border border-emerald-100 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-emerald-800">Verified Medical Faculty</span>
-      <h2 class="text-2xl sm:text-4xl font-extrabold text-slate-900 mt-2.5 tracking-tight">Available Clinicians &amp; Specialists</h2>
-      <p class="text-sm text-slate-600 mt-1.5">Schedule instant in-clinic visits or launch high-definition video consultations.</p>
+      <h2 class="text-2xl sm:text-4xl font-extrabold text-slate-900 mt-2.5 tracking-tight"><%= tr('home.docsTitle', 'Available Clinicians & Specialists') %></h2>
+      <p class="text-sm text-slate-600 mt-1.5"><%= tr('home.docsSub', 'Schedule instant in-clinic visits or launch high-definition video consultations.') %></p>
     </div>
     <a href="/doctors" class="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:text-indigo-700 transition">
-      <span>View All Clinicians</span>
+      <span><%= tr('home.viewAllDocs', 'View All Clinicians') %></span>
       <span aria-hidden="true">&rarr;</span>
     </a>
   </div>
@@ -124,7 +125,7 @@
               href="/appointment/<%= doc._id %>"
               class="mt-4 flex items-center justify-center gap-1.5 w-full rounded-2xl bg-slate-900 py-3 text-center text-xs font-bold text-white transition-all duration-300 group-hover:bg-primary shadow-xs"
             >
-              <span>Book Consultation</span>
+              <span><%= tr('home.bookBtn', 'Book Consultation') %></span>
               <span aria-hidden="true">&rarr;</span>
             </a>
           </div>
@@ -234,7 +235,7 @@
   >
     <span class="flex h-3 w-3 rounded-full bg-emerald-400 animate-ping"></span>
     <span class="text-lg">🤖</span>
-    <span>Ask AI Assistant</span>
+    <span><%= tr('home.askAiBtn', 'Ask AI Assistant') %></span>
   </a>
 </div>
 

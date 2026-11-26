@@ -6,6 +6,8 @@ if (appointmentForm) {
 
     const formData = new FormData(appointmentForm);
     const payload = Object.fromEntries(formData.entries());
+    const claimToken = new URLSearchParams(window.location.search).get('claim');
+    if (claimToken) payload.claimToken = claimToken;
 
     try {
       const response = await fetch('/appointment', {
@@ -76,7 +78,9 @@ async function loadSlots() {
   slotMessage.textContent = 'Checking the doctor’s live calendar…';
   waitlistPanel?.classList.add('hidden');
   try {
-    const response = await fetch(`/doctors/${window.DOCTOR_ID}/slots?date=${encodeURIComponent(dateInput.value)}`);
+    const claim = new URLSearchParams(window.location.search).get('claim');
+    const claimQuery = claim ? `&claim=${encodeURIComponent(claim)}` : '';
+    const response = await fetch(`/doctors/${window.DOCTOR_ID}/slots?date=${encodeURIComponent(dateInput.value)}${claimQuery}`);
     const data = await response.json();
     if (!response.ok || !data.success) throw new Error(data.message || 'Unable to load appointment slots.');
     timeSelect.replaceChildren(new Option(data.slots.length ? 'Choose an available time' : 'No slots are available', ''));
@@ -94,6 +98,11 @@ async function loadSlots() {
 if (dateInput) {
   dateInput.min = indiaDate();
   dateInput.addEventListener('change', loadSlots);
+  const preDate = new URLSearchParams(window.location.search).get('date');
+  if (preDate && preDate >= dateInput.min) {
+    dateInput.value = preDate;
+    loadSlots();
+  }
 }
 
 const memberSelect = document.getElementById('memberId');

@@ -1,0 +1,16 @@
+{
+  "name": "OneLife Hospital & Telehealth",
+  "short_name": "OneLife",
+  "description": "Indian OPD queue tokens, video telehealth, and QR-verified digital prescriptions.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/assets/onelife-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

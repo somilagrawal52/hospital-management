@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 
 const Prescription = require("../models/prescription");
 const Review = require("../models/review");
+const Waitlist = require("../models/waitlist");
 const { activeSlotFilter, PAYMENT_HOLD_MINUTES } = require("../services/scheduling");
 const { buildQueueEstimate } = require("../services/opd-queue");
 const { buildPrescriptionPdfBuffer, generateVerificationCode } = require("../services/prescription-pdf");
@@ -12,6 +13,8 @@ const { getLocalDiseaseEntry, normaliseDiseaseQuery } = require("../services/dis
 const { inferSpecialityFromText } = require("../services/ai-care-router");
 const { translate } = require("../services/i18n");
 const { computeOperationalAnalytics } = require("../services/care-metrics");
+const { PRIORITY_WINDOW_MINUTES } = require("../services/waitlist");
+const { classifyDueWindow, dispatchDueReminders } = require("../services/reminders");
 const { maskPatientName, parseMedicinesPayload } = require("../controller/clinical");
 
 const ids = {
@@ -172,4 +175,78 @@ test("operational analytics calculates settled INR revenue and care mode distrib
   assert.equal(analytics.clinicCount, 1);
   assert.equal(analytics.completionRate, 50);
   assert.equal(analytics.specialityBreakdown[0].label, "General physician");
+});
+
+test("walk-in prescriptions validate without an account ObjectId and render PDF bytes", async () => {
+  const walkInRx = new Prescription({
+    appointmentId: ids.appointment,
+    walkInKey: "walkin_1732500000000",
+    doctorId: ids.doctor,
+    patientName: "Walk-In Visitor",
+    doctorName: "Somil",
+    visitDate: new Date("2030-01-15T10:00:00.000Z"),
+    verificationCode: generateVerificationCode(new Date("2030-01-15T10:00:00.000Z")),
+    diagnosis: "Seasonal Fever",
+    medicines: [{ name: "Paracetamol", dosage: "650mg", frequency: "1-0-1", duration: "3 days" }],
+  });
+  assert.equal(walkInRx.validateSync(), undefined);
+  const pdf = await buildPrescriptionPdfBuffer(walkInRx.toObject());
+  assert.equal(pdf.subarray(0, 5).toString("utf8"), "%PDF-");
+});
+
+test("priority waitlist entries validate claim window metadata", () => {
+  assert.equal(PRIORITY_WINDOW_MINUTES, 15);
+  const entry = new Waitlist({
+    patientId: ids.patient,
+    doctorId: ids.doctor,
+    slotDate: "2030-01-16",
+    status: "notified",
+    prioritySlotTime: "10:30",
+    priorityExpiresAt: new Date("2030-01-16T04:15:00.000Z"),
+    claimToken: "abcdef1234567890abcdef12",
+  });
+  assert.equal(entry.validateSync(), undefined);
+});
+
+test("reminder engine classifies due windows and honors disabled integration mode", async () => {
+  const now = new Date("2030-01-15T10:00:00.000Z");
+  assert.equal(classifyDueWindow(new Date("2030-01-15T11:30:00.000Z"), now), "2h");
+  assert.equal(classifyDueWindow(new Date("2030-01-16T08:00:00.000Z"), now), "24h");
+  assert.equal(classifyDueWindow(new Date("2030-01-18T10:00:00.000Z"), now), null);
+
+  const prev = process.env.INTEGRATION_MODE;
+  process.env.INTEGRATION_MODE = "disabled";
+  try {
+    const res = await dispatchDueReminders({ now });
+    assert.equal(res.skipped, "disabled");
+  } finally {
+    if (prev === undefined) delete process.env.INTEGRATION_MODE;
+    else process.env.INTEGRATION_MODE = prev;
+  }
+});
+
+test("expanded Hindi dictionary translates patient directory and home CTAs", () => {
+  assert.equal(translate("hi", "home.bookBtn"), "परामर्श बुक करें");
+  assert.equal(translate("hi", "doctors.heading"), "हमारे चिकित्सा विशेषज्ञों से मिलें");
+});
+
+test("appointment payment refund statuses validate allowed states", () => {
+  const Appointment = require("../models/appointment");
+  const eligible = new Appointment({
+    userid: String(ids.patient),
+    patientId: ids.patient,
+    fullname: "Patient",
+    email: "patient@example.test",
+    number: "9999999999",
+    address: { line1: "Line 1", line2: "Pune" },
+    docId: String(ids.doctor),
+    doctor: "Somil",
+    payment: { orderId: "order_r1", amount: 500, currency: "INR", status: "success", refundStatus: "eligible", refundAmount: 500 },
+    date: new Date("2030-01-15T10:00:00.000Z"),
+    amount: 500,
+    userdata: {},
+    doctordata: {},
+    status: "cancelled",
+  });
+  assert.equal(eligible.validateSync(), undefined);
 });

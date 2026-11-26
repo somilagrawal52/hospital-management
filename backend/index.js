@@ -14,6 +14,7 @@ const userRoute = require("./routes/user");
 const { checkforauthentication, restrictTo } = require("./middlewares/auth");
 const { requireSameOrigin, csrfContext } = require("./middlewares/csrf-origin");
 const { integrationMode, isolatedIntegrations } = require("./services/integrations");
+const { dispatchDueReminders } = require("./services/reminders");
 const { i18nMiddleware } = require("./services/i18n");
 const { computeOperationalAnalytics } = require("./services/care-metrics");
 const { localDateKey } = require("./services/scheduling");
@@ -98,6 +99,10 @@ app.use(
   "/assets",
   express.static(path.join(__dirname, "../frontend/patient/views/assets")),
 );
+app.get("/sw.js", (req, res) => {
+  res.type("application/javascript");
+  res.sendFile(path.join(__dirname, "../frontend/patient/views/assets/sw.js"));
+});
 
 app.use("/", userRoute);
 
@@ -209,3 +214,10 @@ app.use((err, req, res, next) => {
 });
 
 server.listen(PORT, () => console.log(`Server started at port: ${PORT}`));
+
+if (process.env.NODE_ENV !== "test" && !isolatedIntegrations()) {
+  const reminderTimer = setInterval(() => {
+    dispatchDueReminders().catch((err) => console.error("Scheduled reminder sweep failed:", err?.message));
+  }, 15 * 60 * 1000);
+  reminderTimer.unref?.();
+}

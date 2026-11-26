@@ -24,8 +24,14 @@ const prescriptionSchema = new mongoose.Schema(
     patientId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "user",
-      required: true,
+      required: false,
       index: true,
+    },
+    walkInKey: {
+      type: String,
+      trim: true,
+      maxlength: 80,
+      default: "",
     },
     doctorId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -60,6 +66,7 @@ const prescriptionSchema = new mongoose.Schema(
     labTests: [{ type: String, trim: true, maxlength: 200 }],
     advice: { type: String, trim: true, maxlength: 2000, default: "" },
     followUpDate: { type: String, match: /^(\d{4}-\d{2}-\d{2}|)$/, default: "" },
+    followUpReminderSentAt: { type: Date },
   },
   { timestamps: true },
 );

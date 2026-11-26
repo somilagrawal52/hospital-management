@@ -33,7 +33,27 @@ async function razorpayWebhook(req, res) {
   if (!appointment) return res.status(204).end();
 
   if (event.event === "payment.captured") {
-    await finalizePayment(appointment, { paymentId: payment.id, source: "razorpay_webhook" });
+    if (appointment.payment?.status === "success") return res.status(204).end();
+    const conflicting = await Appointment.findOne({
+      _id: { $ne: appointment._id },
+      docId: appointment.docId,
+      date: appointment.date,
+      status: { $in: ["pending", "confirmed", "online_requested", "created"] },
+    }).select("_id").lean();
+
+    if (conflicting) {
+      appointment.payment.paymentId = payment.id;
+      appointment.payment.status = "success";
+      appointment.payment.reconciledAt = new Date();
+      appointment.payment.refundStatus = "eligible";
+      appointment.payment.refundAmount = Number(appointment.amount || appointment.payment?.amount || 0);
+      appointment.status = "cancelled";
+      appointment.cancelled = true;
+      appointment.statusHistory.push({ status: "cancelled", source: "webhook_slot_claimed_refund_eligible" });
+      await appointment.save();
+    } else {
+      await finalizePayment(appointment, { paymentId: payment.id, source: "razorpay_webhook" });
+    }
   } else if (event.event === "payment.failed" && appointment.payment.status !== "success") {
     appointment.payment.status = "failed";
     appointment.status = "payment_failed";

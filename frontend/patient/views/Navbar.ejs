@@ -14,8 +14,8 @@
     </div>
     <div class="flex items-center gap-3 text-slate-300 text-xs">
       <div class="inline-flex items-center rounded-lg border border-white/15 bg-white/5 p-0.5 text-[10px] font-bold" role="group" aria-label="Language switcher">
-        <a href="?lang=en" class="rounded-md px-2 py-0.5 transition <%= currentLang === 'en' ? 'bg-white text-slate-900' : 'text-slate-300 hover:text-white' %>">EN</a>
-        <a href="?lang=hi" class="rounded-md px-2 py-0.5 transition <%= currentLang === 'hi' ? 'bg-white text-slate-900' : 'text-slate-300 hover:text-white' %>">हिंदी</a>
+        <a href="?lang=en" data-lang-switch="en" class="lang-switch rounded-md px-2 py-0.5 transition <%= currentLang === 'en' ? 'bg-white text-slate-900' : 'text-slate-300 hover:text-white' %>">EN</a>
+        <a href="?lang=hi" data-lang-switch="hi" class="lang-switch rounded-md px-2 py-0.5 transition <%= currentLang === 'hi' ? 'bg-white text-slate-900' : 'text-slate-300 hover:text-white' %>">हिंदी</a>
       </div>
       <a href="tel:+919399304021" class="hidden sm:inline-flex items-center gap-1.5 hover:text-white transition group">
         <span class="text-slate-400">Emergency Helpline:</span> <strong class="text-white group-hover:text-emerald-300 transition font-bold tracking-wide">+91 93993 04021</strong>
@@ -243,4 +243,9 @@
       alert('Unable to sign out. Please try again.');
     });
   }
+  document.querySelectorAll('.lang-switch').forEach((link) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('lang', link.dataset.langSwitch || 'en');
+    link.href = `${url.pathname}${url.search}`;
+  });
 </script>

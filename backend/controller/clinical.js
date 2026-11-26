@@ -139,15 +139,20 @@ async function consultWorkspacePage(req, res) {
     if (!appointment || appointment.docId !== String(req.user._id)) {
       return res.status(404).render("error-404", { title: "Consultation Not Found", message: "This consultation is not assigned to you." });
     }
+    const rawPatientId = appointment.patientId || appointment.userid;
+    const validPatientObjectId = mongoose.isValidObjectId(rawPatientId) ? rawPatientId : null;
+
     const [prescription, priorPrescriptions, patientAccount] = await Promise.all([
       Prescription.findOne({ appointmentId: appointment._id }).lean(),
-      Prescription.find({ patientId: appointment.patientId || appointment.userid, doctorId: req.user._id })
-        .sort({ visitDate: -1 })
-        .limit(5)
-        .lean(),
-      mongoose.isValidObjectId(appointment.userid)
-        ? User.findById(appointment.userid).select("bloodGroup allergies chronicConditions abhaId emergencyContact dob gender").lean()
-        : null,
+      validPatientObjectId
+        ? Prescription.find({ patientId: validPatientObjectId, doctorId: req.user._id })
+            .sort({ visitDate: -1 })
+            .limit(5)
+            .lean()
+        : Promise.resolve([]),
+      validPatientObjectId
+        ? User.findById(validPatientObjectId).select("bloodGroup allergies chronicConditions abhaId emergencyContact dob gender").lean()
+        : Promise.resolve(null),
     ]);
 
     return res.render("doctor-consult", {
@@ -198,10 +203,12 @@ async function savePrescription(req, res) {
       weight: String(req.body.weight || "").trim(),
     };
 
+    const rawPatientId = appointment.patientId || appointment.userid;
+    const validPatientId = mongoose.isValidObjectId(rawPatientId) ? rawPatientId : undefined;
     const existing = await Prescription.findOne({ appointmentId: appointment._id });
     const prescriptionPayload = {
       appointmentId: appointment._id,
-      patientId: appointment.patientId || appointment.userid,
+      ...(validPatientId ? { patientId: validPatientId } : { walkInKey: String(appointment.userid || appointment._id) }),
       doctorId: req.user._id,
       patientName: appointment.patientMember?.fullname || appointment.fullname,
       patientRelation: appointment.patientMember?.relation || "Self",
@@ -277,7 +284,7 @@ async function downloadPrescriptionPdf(req, res) {
 
     const isOwner =
       req.user.role === "ADMIN" ||
-      String(prescription.patientId) === String(req.user._id) ||
+      (prescription.patientId && String(prescription.patientId) === String(req.user._id)) ||
       String(prescription.doctorId) === String(req.user._id);
     if (!isOwner) return res.status(404).send("Prescription not found.");
 
@@ -578,12 +585,33 @@ async function submitDoctorReview(req, res) {
   }
 }
 
+async function markRefundProcessed(req, res) {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) {
+      return res.status(404).json({ success: false, message: "Appointment not found." });
+    }
+    const appointment = await Appointment.findById(req.params.id);
+    if (!appointment) return res.status(404).json({ success: false, message: "Appointment not found." });
+    if (appointment.payment?.refundStatus !== "eligible" && appointment.payment?.refundStatus !== "initiated") {
+      return res.status(409).json({ success: false, message: "No pending eligible refund on this booking." });
+    }
+    appointment.payment.refundStatus = "processed";
+    appointment.statusHistory.push({ status: appointment.status, changedBy: req.user._id, source: "admin_refund_processed" });
+    await appointment.save();
+    return res.json({ success: true, message: `Refund of Rs. ${appointment.payment.refundAmount || appointment.amount || 0} marked processed.` });
+  } catch (error) {
+    console.error("Failed updating refund status:", error);
+    return res.status(500).json({ success: false, message: "Unable to mark refund processed." });
+  }
+}
+
 module.exports = {
   addDependent,
   consultWorkspacePage,
   createWalkInAppointment,
   downloadPrescriptionPdf,
   healthRecordsPage,
+  markRefundProcessed,
   maskPatientName,
   parseMedicinesPayload,
   removeDependent,
